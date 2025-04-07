@@ -73,7 +73,7 @@ const MainTableRow = observer(({ row }: { row: ShortMultipoolData }) => {
 
 				<td className="px-3 py-4 text-left">{row.current_price}</td>
 				<td className="py-4 pl-4 ">
-					s{" "}
+					{" "}
 					{new BigNumber(Number(row?.total_supply) * Number(row?.current_price))
 						.multipliedBy(10 ** -8)
 						.toString()}
