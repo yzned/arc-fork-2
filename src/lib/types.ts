@@ -12,7 +12,8 @@ export type Token = {
 	tags?: string[];
 	links?: string[];
 	creationId?: string;
-	chainId: number;
+	share?: string;
+	chainId?: number;
 	priceFeedType?:
 		| "UniswapV3"
 		| "UniswapV2"

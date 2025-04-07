@@ -24,6 +24,7 @@ export const useTokensInformation = () => {
 
 	const priceFeeds = [nativeToken, ...ARBITRUM_TOKENS];
 	const { data: prices } = useReadContracts({
+		//@ts-ignore
 		contracts: priceFeeds.map((item) => ({
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,

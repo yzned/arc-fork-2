@@ -132,7 +132,6 @@ const DropdownRaw = <T extends DropdownItemType>(
 		onSelect,
 		defaultItem,
 		withXMark = true,
-		onDeleteItem,
 	}: DropdownProps<T>,
 	ref: ForwardedRef<HTMLDivElement>,
 ) => {

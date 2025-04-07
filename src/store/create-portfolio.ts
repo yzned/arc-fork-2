@@ -192,6 +192,7 @@ export class CreatePortfolioStore {
 	addNewToken() {
 		this.tokens.push({
 			id: uuidv4(),
+			//@ts-ignore
 			address: "",
 			name: "",
 			creationState: "new",

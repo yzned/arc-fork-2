@@ -44,7 +44,7 @@ function RouteComponent() {
 				const filteredPools = poolsData?.filter(
 					(pool) => pool?.liquidity !== undefined,
 				);
-
+				//@ts-ignore
 				setPools(filteredPools);
 			} catch (err) {
 				console.error(err);
@@ -163,59 +163,63 @@ function RouteComponent() {
 				<div className="flex h-full flex-col pt-8">
 					<p className="px-8 pb-8 text-text-primary">{t("selectOracle")}</p>
 					<div className="flex min-h-0 flex-grow flex-col gap-2 overflow-y-auto px-8 pb-1">
-						{pools?.map((pool) => (
-							<button
-								type="button"
-								className={cn(
-									"flex h-[140px] w-full cursor-pointer flex-col gap-6 rounded-[8px] border-[1px] border-fill-secondary p-4",
-									selectedOracle === pool?.poolAddress &&
-										"border-fill-secondary bg-fill-secondary",
-								)}
-								onClick={() => setSelectedOracle(pool?.poolAddress)}
-								key={pool?.priceFeedType}
-							>
-								<div className="flex items-center justify-between text-text-primary">
-									<div className="flex items-center gap-4 ">
-										<span className="">{pool?.priceFeedType}</span>
-										<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
-											{pool?.fee / 1000} %
-										</span>
-									</div>
-									{selectedOracle === pool?.poolAddress && (
-										<CheckIcon className="scale-190 text-fill-brand-primary-700" />
+						{
+							//@ts-ignore
+							pools?.map((pool) => (
+								<button
+									type="button"
+									className={cn(
+										"flex h-[140px] w-full cursor-pointer flex-col gap-6 rounded-[8px] border-[1px] border-fill-secondary p-4",
+										selectedOracle === pool?.poolAddress &&
+											"border-fill-secondary bg-fill-secondary",
 									)}
-								</div>
-								<div className="flex flex-col gap-1">
-									<div className="flex items-center justify-between text-[12px]">
-										<span className="text-text-secondary whitespace-nowrap">
-											{t("currentPrice")}
-										</span>
-										<span className="text-text-primary whitespace-nowrap">
-											{pool?.price?.toFixed(18).toString()} ETH{" "}
-											{/* <span className="text-text-secondary">($27,82)</span> */}
-										</span>
+									onClick={() => setSelectedOracle(pool?.poolAddress)}
+									key={pool?.priceFeedType}
+								>
+									<div className="flex items-center justify-between text-text-primary">
+										<div className="flex items-center gap-4 ">
+											<span className="">{pool?.priceFeedType}</span>
+											<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
+												{pool?.fee / 1000} %
+											</span>
+										</div>
+										{selectedOracle === pool?.poolAddress && (
+											<CheckIcon className="scale-190 text-fill-brand-primary-700" />
+										)}
 									</div>
-									<div className="flex items-center justify-between text-[12px]">
-										<span className="text-text-secondary">
-											{t("liquidity")}
-										</span>
-										<span className="text-text-primary ">
-											{new BigNumber(pool?.liquidity).toFixed(6).toString()} ETH
-											{/* <span className="text-text-secondary">($27,82)</span> */}
-										</span>
-									</div>
-									<div className="flex items-center justify-between text-[12px]">
-										{/* <span className="text-text-secondary">
+									<div className="flex flex-col gap-1">
+										<div className="flex items-center justify-between text-[12px]">
+											<span className="text-text-secondary whitespace-nowrap">
+												{t("currentPrice")}
+											</span>
+											<span className="text-text-primary whitespace-nowrap">
+												{pool?.price?.toFixed(18).toString()} ETH{" "}
+												{/* <span className="text-text-secondary">($27,82)</span> */}
+											</span>
+										</div>
+										<div className="flex items-center justify-between text-[12px]">
+											<span className="text-text-secondary">
+												{t("liquidity")}
+											</span>
+											<span className="text-text-primary ">
+												{new BigNumber(pool?.liquidity).toFixed(6).toString()}{" "}
+												ETH
+												{/* <span className="text-text-secondary">($27,82)</span> */}
+											</span>
+										</div>
+										<div className="flex items-center justify-between text-[12px]">
+											{/* <span className="text-text-secondary">
 											{t("24hVolume")}
 										</span> */}
-										{/* <span className="text-text-primary ">
+											{/* <span className="text-text-primary ">
 											{oracle["24h"]}ETH{" "}
 											<span className="text-text-secondary">($27,82)</span>
 										</span> */}
+										</div>
 									</div>
-								</div>
-							</button>
-						))}
+								</button>
+							))
+						}
 					</div>
 					<div className="border-t-[1px] border-t-fill-secondary p-4">
 						<Button

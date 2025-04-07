@@ -1,4 +1,4 @@
-import { TokenSetup } from "@/components/createPortfolio/TokenSetup";
+import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
 import { CreatePortfolioStore } from "@/store/create-portfolio";
 import { StoreProvider } from "@/store/store-context";
 import { createFileRoute } from "@tanstack/react-router";

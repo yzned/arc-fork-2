@@ -5,7 +5,6 @@ import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
 import MenuIcon from "@/icons/menu.svg?react";
 import SettingsIcon from "@/icons/settingsGear.svg?react";
-import WalletIcon from "@/icons/wallet.svg?react";
 import { type Chain, Chains } from "@/lib/constants";
 import { APP_LANGUAGES, changeLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";

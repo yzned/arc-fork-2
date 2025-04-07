@@ -27,6 +27,8 @@ export const LinearChart = ({
 		if (chartContainerRef.current) {
 			const chart = createChart(chartContainerRef.current, {
 				timeScale: {
+					//@ts-ignore
+
 					tickMarkFormatter: (time) => {
 						const date = new Date(time);
 						return date.toLocaleDateString("en-US", {
@@ -50,6 +52,8 @@ export const LinearChart = ({
 					vertLines: { color: gridColor },
 					horzLines: { color: gridColor },
 				},
+				//@ts-ignore
+
 				width: chartContainerRef.current.clientWidth,
 				height: height,
 			});
@@ -62,10 +66,14 @@ export const LinearChart = ({
 			});
 
 			if (data) {
+				//@ts-ignore
+
 				newSeries.setData(data);
 			}
 
 			const handleResize = () => {
+				//@ts-ignore
+
 				chart.applyOptions({ width: chartContainerRef.current.clientWidth });
 			};
 

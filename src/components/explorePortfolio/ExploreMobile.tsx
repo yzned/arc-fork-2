@@ -3,7 +3,7 @@ import FallIcon from "@/icons/fall.svg?react";
 import RiseIcon from "@/icons/rise.svg?react";
 import { useEffect, useRef, useState } from "react";
 
-import { ARBITRUM_TOKENS, PORTFOLIO_ASSETS } from "@/lib/constants";
+import { PORTFOLIO_ASSETS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
@@ -15,8 +15,6 @@ import LinearIcon from "@/icons/linear.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
 import { Link, useParams } from "@tanstack/react-router";
 import { BottomSheet } from "react-spring-bottom-sheet";
-import { CandleChart } from "../ui/charts/CandleChart";
-import { LinearChart } from "../ui/charts/LinearChart";
 import { Toggle } from "../ui/toggle";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
@@ -25,6 +23,8 @@ import { PositionsTable } from "./tables/PositionsTable";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { observer } from "mobx-react-lite";
 import BigNumber from "bignumber.js";
+import { CandleChart } from "@/components/ui/Charts/CandleChart";
+import { LinearChart } from "@/components/ui/Charts/LinearChart";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
@@ -112,7 +112,9 @@ export const ExploreMobile = observer(() => {
 							)}
 						>
 							<FindAsset
+								//@ts-ignore
 								defaultAsset={currentPortfolio || allPortfolios[0]}
+								//@ts-ignore
 								assets={allPortfolios}
 								className="h-[60svh] w-full bg-floor-2 px-4 pt-6"
 							/>

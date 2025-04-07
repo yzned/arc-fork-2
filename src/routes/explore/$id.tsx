@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 
-import { LinearChart } from "@/components/ui/charts/LinearChart";
 import { Input } from "@/components/ui/input";
 import { ModalBase } from "@/components/ui/modalBase";
 import { cn } from "@/lib/utils";
@@ -26,7 +25,6 @@ import { BalancesTable } from "@/components/explorePortfolio/tables/BalanceTable
 import { HistoryTable } from "@/components/explorePortfolio/tables/HistoryTable";
 import { PortfolioTable } from "@/components/explorePortfolio/tables/PortfolioTable";
 import { PositionsTable } from "@/components/explorePortfolio/tables/PositionsTable";
-import { CandleChart } from "@/components/ui/charts/CandleChart";
 import { FindAsset } from "@/components/ui/findAsset";
 import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
@@ -35,6 +33,8 @@ import { useTranslation } from "react-i18next";
 import { useChart } from "@/hooks/queries/useChart";
 import BigNumber from "bignumber.js";
 import { ARBITRUM_CHAIN_ID, PORTFOLIO_ASSETS } from "@/lib/constants";
+import { CandleChart } from "@/components/ui/Charts/CandleChart";
+import { LinearChart } from "@/components/ui/Charts/LinearChart";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -163,7 +163,11 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
+								//@ts-ignore
+
 								defaultAsset={currentPortfolio || allPortfolios[0]}
+								//@ts-ignore
+
 								assets={allPortfolios}
 								className="h-[540px] w-full border-fill-secondary border-t px-4 pt-6"
 							/>
@@ -764,8 +768,7 @@ export const RightSection = observer(() => {
 });
 
 export const AssetsModalContent = observer(() => {
-	const { setIsOpenAssetModal, portfolioTokens, changeSelectedAsset } =
-		useExplorePortfolio();
+	const { setIsOpenAssetModal, changeSelectedAsset } = useExplorePortfolio();
 	const { t } = useTranslation(["main"]);
 
 	return (
@@ -795,6 +798,7 @@ export const AssetsModalContent = observer(() => {
 			</span>
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
+				//@ts-ignore
 				assets={PORTFOLIO_ASSETS.map((item) => {
 					return {
 						address: item.address,

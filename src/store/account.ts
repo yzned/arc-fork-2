@@ -26,7 +26,7 @@ export class AccountStore {
 				price: undefined,
 			}),
 		);
-
+		//@ts-ignore
 		this.nativeToken = {
 			address: wETH_ADDRESS,
 			decimals: 18,

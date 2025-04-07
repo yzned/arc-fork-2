@@ -3,61 +3,24 @@ import {
 	FeeAmount,
 	Pool,
 	Route,
-	SwapOptions,
 	SwapQuoter,
-	SwapRouter,
 	Trade,
 } from "@uniswap/v3-sdk";
-import {
-	decodeAbiParameters,
-	encodeFunctionData,
-	getContract,
-	parseUnits,
-	type Address,
-} from "viem";
+import { decodeAbiParameters, parseUnits, type Address } from "viem";
 import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 
-import {
-	CurrencyAmount,
-	Ether,
-	Percent,
-	Token,
-	TradeType,
-} from "@uniswap/sdk-core";
+import { CurrencyAmount, Ether, Token, TradeType } from "@uniswap/sdk-core";
 
-import { arbitrumPublicClient, walletClient } from "@/lib/config";
+import { arbitrumPublicClient } from "@/lib/config";
 import {
 	ARBITRUM_CHAIN_ID,
 	UNI_FEES,
 	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
 	UNISWAP_QUOTER_CONTRACT_ADDRESS,
-	UNISWAP_SWAP_ROUTER_ADDRESS,
 	wETH_ADDRESS,
 } from "@/lib/constants";
 import ERC20 from "@/lib/abi/ERC20";
 import BigNumber from "bignumber.js";
-import { simulateContract } from "viem/actions";
-
-const externalTokens: Array<Address> = [
-	"0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f",
-	"0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-	"0x912CE59144191C1204E64559FE8253a0e49E6548",
-	"0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
-	"0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
-	"0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
-	"0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-	"0x2297aEbD383787A160DD0d9F71508148769342E3",
-	"0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
-	"0x371c7ec6D8039ff7933a2AA28EB827Ffe1F52f07",
-	"0x6694340fc020c5E6B96567843da2df01b2CE1eb6",
-	"0x5979D7b546E38E414F7E9822514be443A4800529",
-	"0x3082CC23568eA640225c2467653dB90e9250AaA0",
-	"0xfc5a1a6eb076a2c7ad06ed22c90d7e710e35ad0a",
-	"0x0341c0c0ec423328621788d4854119b97f44e391",
-	"0x539bde0d7dbd336b79148aa742883198bbf60342",
-	"0x51fc0f6660482ea73330e414efd7808811a57fa2",
-	"0x0c880f6761f1af8d9aa9c466984b80dab9a8c9e8",
-];
 
 export interface Calls {
 	data: string;
@@ -123,6 +86,8 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 	];
 
 	const rawResult = await arbitrumPublicClient.multicall({
+		//@ts-ignore
+
 		contracts: contracts.flat(),
 	});
 
@@ -149,7 +114,10 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 		};
 
 		if (poolData.token0 && poolData.token1 && poolData.slot0) {
+			//@ts-ignore
+
 			const tick = poolData.slot0[1];
+			//@ts-ignore
 
 			const sqrtPriceX96 = poolData.slot0[0].toString();
 
@@ -187,6 +155,7 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
 	try {
 		const decimals = await arbitrumPublicClient.multicall({
+			//@ts-ignore
 			contracts: addresses?.map((address) => {
 				return {
 					address: address as Address,
@@ -298,7 +267,7 @@ export const getPoolInfo = async (poolAddress: Address) => {
 			functionName: "slot0",
 		},
 	];
-
+	//@ts-ignore
 	const rawResult = await arbitrumPublicClient.multicall({ contracts });
 
 	if (rawResult.some((res) => res.status !== "success")) {
@@ -312,8 +281,9 @@ export const getPoolInfo = async (poolAddress: Address) => {
 	if (!token0 || !token1 || !slot0) {
 		throw new Error("Некорректные данные пула");
 	}
-
+	//@ts-ignore
 	const tick = slot0[1];
+	//@ts-ignore
 	const sqrtPriceX96 = slot0[0].toString();
 
 	const decimals = await getDecimals({
@@ -375,7 +345,7 @@ export const createPoolsRoute = async (
 			console.error(`Error checking pool for fee ${fee}:`, e);
 		}
 	}
-
+	//@ts-ignore
 	if (!directPoolAddress) {
 		const WETH = new Token(ARBITRUM_CHAIN_ID, wETH_ADDRESS, 18);
 
@@ -412,7 +382,7 @@ export const createPoolsRoute = async (
 				console.error(`Error checking pool2 (LUAUSD) for fee ${fee}:`, e);
 			}
 		}
-
+		//@ts-ignore
 		if (bestPool1 && bestPool2) {
 			const swapRoute = new Route([bestPool1, bestPool2], tokenIn, tokenOut);
 
@@ -449,6 +419,7 @@ export const getOutputQuote = async (
 
 	const [outValue] = decodeAbiParameters(
 		[{ name: "amountOut", type: "uint256" }],
+		//@ts-ignore
 		data,
 	);
 

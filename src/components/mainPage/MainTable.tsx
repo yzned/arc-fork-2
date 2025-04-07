@@ -1,5 +1,3 @@
-import type { Token } from "@/lib/types";
-
 import { observer } from "mobx-react-lite";
 
 import LinkToPageIcon from "@/icons/linkToPage.svg?react";

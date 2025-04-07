@@ -10,9 +10,9 @@ export function useMpAssets() {
 		mutationFn: async () => {
 			return await GetMulpipools();
 		},
-		onSuccess: (data) => {
-			// setAllPortfolios(data);
-		},
+		// onSuccess: (data) => {
+		// 	// setAllPortfolios(data);
+		// },
 	});
 
 	return useQuery({

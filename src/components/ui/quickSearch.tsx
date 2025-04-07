@@ -177,6 +177,7 @@ export const QuickSearch = forwardRef(
 							onFocus={() => setIsInputFocused(true)} // Устанавливаем фокус в true
 							onBlur={() => setIsInputFocused(false)}
 							value={currentValue}
+							//@ts-ignore
 							ref={ref ? ref : quickSearchRef}
 							onChange={handleInputChange}
 							className="w-full cursor-pointer placeholder:text-text-secondary focus:outline-none "
@@ -203,7 +204,7 @@ export const QuickSearch = forwardRef(
 								filteredItems.length !== 0 && "py-2",
 							)}
 						>
-							{filteredItems.map((item, index) => (
+							{filteredItems.map((item) => (
 								<QuickSearchItem
 									currentValue={currentValue}
 									item={item}

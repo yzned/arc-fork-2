@@ -34,6 +34,7 @@ export const CandleChart = observer(
 			if (chartContainerRef.current) {
 				const chart = createChart(chartContainerRef.current, {
 					timeScale: {
+						//@ts-ignore
 						tickMarkFormatter: (time) => {
 							const date = new Date(time);
 							return date.toLocaleDateString("en-US", {
@@ -58,6 +59,8 @@ export const CandleChart = observer(
 						vertLines: { color: gridColor },
 						horzLines: { color: gridColor },
 					},
+					//@ts-ignore
+
 					width: chartContainerRef.current.clientWidth,
 					height: height,
 				});
@@ -74,18 +77,22 @@ export const CandleChart = observer(
 				});
 
 				if (data) {
+					//@ts-ignore
+
 					newSeries.setData(data);
 				}
 
 				chart.subscribeCrosshairMove((item) => {
 					if (item.seriesData) {
 						for (const [_, value] of item.seriesData) {
+							//@ts-ignore
 							setCandleData(value);
 						}
 					}
 				});
 
 				const handleResize = () => {
+					//@ts-ignore
 					chart.applyOptions({ width: chartContainerRef.current.clientWidth });
 				};
 

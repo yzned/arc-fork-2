@@ -1,14 +1,10 @@
-import type { Token } from "@/lib/types";
 import { observer } from "mobx-react-lite";
 
-import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { InfoTooltip } from "../../ui/tooltips/InformationTooltip";
 import { PORTFOLIO_ASSETS, PortfolioAsset } from "@/lib/constants";
 import BigNumber from "bignumber.js";
 
 export const PortfolioTable = observer(() => {
-	const { portfolioTokens } = useExplorePortfolio();
-
 	return (
 		<div className="max-h-[590px] w-full overflow-auto">
 			<table className="w-full border-collapse ">

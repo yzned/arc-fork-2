@@ -1,5 +1,5 @@
 import { createConfig } from "@privy-io/wagmi";
-import { createPublicClient, createWalletClient, custom } from "viem";
+import { createPublicClient, createWalletClient } from "viem";
 import { http } from "wagmi";
 import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";
 import {

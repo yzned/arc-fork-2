@@ -1,4 +1,3 @@
-import { TokenSetup } from "@/components/createPortfolio/TokenSetup";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file";
@@ -26,6 +25,7 @@ import { ARBITRUM_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import type { PriceData, TokenPriceData } from "@/lib/types";
 import { formatAddress } from "@/lib/utils";
+import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
 
 export const Route = createFileRoute("/create")({
 	component: RouteComponent,
@@ -33,6 +33,7 @@ export const Route = createFileRoute("/create")({
 
 function RouteComponent() {
 	const { data: prices } = useReadContracts({
+		//@ts-ignore
 		contracts: ARBITRUM_TOKENS.map((item) => ({
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,

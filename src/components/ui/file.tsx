@@ -115,6 +115,8 @@ function FileInput({
 					if (!inputRef.current) return;
 					inputRef.current.value = "";
 					setFileSelected(null);
+					//@ts-ignore
+
 					onSelect?.(null);
 				}}
 			/>
