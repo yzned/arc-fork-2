@@ -694,7 +694,7 @@ export const RightSection = observer(() => {
 								>
 									<div className="flex items-center gap-2 ">
 										<img
-											src={selectedAsset.logo}
+											src={selectedAsset.logo || "/icons/empty-token.svg"}
 											alt="no icon"
 											className="h-6 w-6"
 										/>

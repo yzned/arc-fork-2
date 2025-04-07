@@ -3,6 +3,7 @@ import type {
 	LinearDataFormated,
 	ShortMultipoolData,
 } from "@/api/types";
+import { PORTFOLIO_ASSETS } from "@/lib/constants";
 import type { Token } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 
@@ -145,7 +146,7 @@ export class ExplorePortfolioStore {
 		},
 	];
 
-	selectedAsset: Token = this.portfolioTokens[0];
+	selectedAsset: Token = PORTFOLIO_ASSETS[0];
 	slippage: string;
 
 	constructor() {
