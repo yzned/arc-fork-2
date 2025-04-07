@@ -1,4 +1,4 @@
-const apiRoot = "http://13.217.200.88:8080";
+const apiRoot = "http://54.208.246.70:8080";
 
 export class ApiError extends Error {
 	constructor(description: string, error: string, trace_id: string) {
