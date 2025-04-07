@@ -1,0 +1,312 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+@config "../tailwind.config.ts";
+
+[data-rsbs-overlay],
+[data-rsbs-backdrop],
+[data-rsbs-root]:after {
+	z-index: 1000 !important;
+}
+
+[data-rsbs-backdrop] {
+	background-color: #33334080 !important;
+}
+
+[data-rsbs-overlay] {
+	background-color: #17161b !important;
+}
+
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+* {
+	scrollbar-width: none; 
+	-ms-overflow-style: none; 
+  }
+  
+  *::-webkit-scrollbar {
+	display: none; 
+  }
+
+:root {
+	--color-text-primary: #eaeaea;
+	--color-text-secondary: #8a8b8c;
+	--color-text-tertiary: #646466;
+	--color-text-quaternary: #505153;
+	--color-text-quinary: #3d3e40;
+	--color-text-accent: #18171c;
+
+	--color-brand-primary: #0148fe;
+	--color-brand-secondary: #3d73ff;
+	--color-brand-tertiary: #243560;
+
+	--color-fill-primary-900: #18171c;
+	--color-fill-primary-800: #201f27;
+	--color-fill-primary-700: #26252b;
+	--color-fill-secondary: #323138;
+	--color-fill-tertiary: #4a4a54;
+	--color-fill-quaternary: #63636f;
+	--color-fill-quinary: #7d7d8b;
+	--color-fill-accent: #eaeaea;
+	--color-fill-brand-tertiary-900: #243560;
+	--color-fill-brand-800: #133fae;
+	--color-fill-brand-primary-700: #0148fe;
+	--color-fill-brand-600: #1f5efe;
+	--color-fill-brand-secondary-500: #3d73ff;
+	--color-fill-brand-400: #5483ff;
+
+	--color-alert-positive-primary: #12a610;
+	--color-alert-positive-secondary: #087410;
+	--color-alert-positive-tertiary: #354a35;
+	--color-alert-negative-primary: #d10f0f;
+	--color-alert-negative-secondary: #a40204;
+	--color-alert-negative-tertiary: #5c3030;
+	--color-alert-attention-primary: #fa8b1c;
+	--color-alert-attention-secondary: #c05e11;
+	--color-alert-attention-tertiary: #4c3c2c;
+
+	/* Accent Colors */
+	--color-accent-purple: #c983d6;
+	--color-accent-violet: #a38df1;
+	--color-accent-blue: #6683cc;
+	--color-accent-turquoise: #66becc;
+	--color-accent-green: #86ce83;
+	--color-accent-yellow: #eccd73;
+	--color-accent-orange: #f37a6d;
+	--color-accent-red: #ed6486;
+	--color-accent-gradient: linear-gradient(90deg, #f37968, #ed6486);
+
+	/* Background Colors */
+	--color-bg-floor-0: #0d0b0d;
+	--color-bg-floor-1: #17161b;
+	--color-bg-floor-2: #201f27;
+	--color-bg-floor-3: #2a2934;
+	--color-bg-floor-4: #333340;
+	--color-bg-floor-5: #434355;
+	--color-bg-floor-accent: #eaeaea;
+	--color-bg-overlay: #333340;
+}
+
+.dark {
+	--background: hsl(0 0% 3.9%);
+	--foreground: hsl(0 0% 98%);
+	--card: hsl(0 0% 3.9%);
+	--card-foreground: hsl(0 0% 98%);
+	--popover: hsl(0 0% 3.9%);
+	--popover-foreground: hsl(0 0% 98%);
+	--primary: hsl(0 0% 98%);
+	--primary-foreground: hsl(0 0% 9%);
+	--secondary: hsl(0 0% 14.9%);
+	--secondary-foreground: hsl(0 0% 98%);
+	--muted: hsl(0 0% 14.9%);
+	--muted-foreground: hsl(0 0% 63.9%);
+	--accent: hsl(0 0% 14.9%);
+	--accent-foreground: hsl(0 0% 98%);
+	--destructive: hsl(0 62.8% 30.6%);
+	--destructive-foreground: hsl(0 0% 98%);
+	--border: hsl(0 0% 14.9%);
+	--input: hsl(0 0% 14.9%);
+	--ring: hsl(0 0% 83.1%);
+	--chart-1: hsl(220 70% 50%);
+	--chart-2: hsl(160 60% 45%);
+	--chart-3: hsl(30 80% 55%);
+	--chart-4: hsl(280 65% 60%);
+	--chart-5: hsl(340 75% 55%);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+
+	--color-text-primary: #eaeaea;
+	--color-text-secondary: #8a8b8c;
+	--color-text-tertiary: #646466;
+	--color-text-quartinary: #505153;
+	--color-text-quinary: #3d3e40;
+	--color-text-accent: #18171c;
+
+	--color-text-brand-primary: #0148fe;
+	--color-text-brand-secondary: #3d73ff;
+	--color-text-brand-tertiary: #243560;
+
+	--color-fill-primary-900: #18171c;
+	--color-fill-primary-800: #201f27;
+	--color-fill-primary-700: #26252b;
+	--color-fill-secondary: #323138;
+	--color-fill-tertiary: #4a4a54;
+	--color-fill-quaternary: #63636f;
+	--color-fill-quinary: #7d7d8b;
+	--color-fill-accent: #eaeaea;
+
+	--color-fill-brand-tertiary-900: #243560;
+	--color-fill-brand-800: #133fae;
+	--color-fill-brand-primary-700: #0148fe;
+	--color-fill-brand-600: #1f5efe;
+	--color-fill-brand-secondary-500: #3d73ff;
+	--color-fill-brand-400: #5483ff;
+
+	--color-positive-primary: #12a610;
+	--color-positive-secondary: #087410;
+	--color-positive-tertiary: #354a35;
+
+	--color-negative-primary: #d10f0f;
+	--color-negative-secondary: #a40204;
+	--color-negative-tertiary: #5c3030;
+
+	--color-attention-primary: #fa8b1c;
+	--color-attention-secondary: #c05e11;
+	--color-attention-tertiary: #4c3c2c;
+
+	--color-accent-purple: #c983d6;
+	--color-accent-violet: #a38df1;
+	--color-accent-blue: #6683cc;
+	--color-accent-turquoise: #66becc;
+	--color-accent-green: #86ce83;
+	--color-accent-yellow: #eccd73;
+	--color-accent-orange: #f37a6d;
+	--color-accent-red: #ed6486;
+	--color-accent-gradient: linear-gradient(90deg, #f37968 0%, #ed6486 100%);
+
+	--color-bg-floor-0: #0d0b0d;
+	--color-bg-floor-1: #17161b;
+	--color-bg-floor-2: #201f27;
+	--color-bg-floor-3: #2a2934;
+	--color-bg-floor-4: #333340;
+	--color-bg-floor-5: #434355;
+	--color-bg-floor-accent: #eaeaea;
+	--color-bg-overlay: rgba(51, 51, 64, 0.5);
+
+	--font-droid: "droid";
+	--font-namu: "namu";
+}
+
+.truncate-dots {
+	text-overflow: "…" "…";
+}
+
+@font-face {
+	font-family: droid;
+	src: url("/fonts/droid/droid-mono.ttf") format("truetype");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 100;
+	font-display: swap;
+	src: url("/fonts/namu/namu-100.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 200;
+	font-display: swap;
+	src: url("/fonts/namu/namu-200.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url("/fonts/namu/namu-300.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url("/fonts/namu/namu-400.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url("/fonts/namu/namu-500.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url("/fonts/namu/namu-600.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url("/fonts/namu/namu-700.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 800;
+	font-display: swap;
+	src: url("/fonts/namu/namu-800.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: namu;
+	font-style: normal;
+	font-weight: 900;
+	font-display: swap;
+	src: url("/fonts/namu/namu-900.woff2") format("woff2");
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+
+	body {
+		@apply bg-background text-foreground;
+	}
+}
+
+textarea:focus,
+input:focus {
+	outline: none;
+}
