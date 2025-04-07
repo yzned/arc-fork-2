@@ -182,7 +182,7 @@ export const MainSection = observer(() => {
 									{t("price")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {currentPortfolio?.current_price}
+									$ {Number(currentPortfolio?.current_price).toFixed(2)}
 								</span>
 							</div>
 						</div>
@@ -198,6 +198,7 @@ export const MainSection = observer(() => {
 											Number(currentPortfolio?.current_price),
 									)
 										.multipliedBy(10 ** -8)
+										.toFixed(2)
 										.toString()}
 								</span>
 							</div>
@@ -209,7 +210,9 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									<PriceChange
-										value={currentPortfolio?.change_24h || "0"}
+										value={
+											Number(currentPortfolio?.change_24h).toFixed(2) || "0"
+										}
 										growing={Number(currentPortfolio?.change_24h) > 0}
 										unit="dollars"
 									/>
@@ -222,7 +225,7 @@ export const MainSection = observer(() => {
 									{t("24hHigh")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {currentPortfolio?.high_24h}
+									$ {Number(currentPortfolio?.high_24h).toFixed(2)}
 								</span>
 							</div>
 						</div>
@@ -232,7 +235,7 @@ export const MainSection = observer(() => {
 									{t("24hLow")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {currentPortfolio?.low_24h}
+									$ {Number(currentPortfolio?.low_24h).toFixed(2)}
 								</span>
 							</div>
 						</div>
