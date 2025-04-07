@@ -145,7 +145,7 @@ export class ExplorePortfolioStore {
 			price: "0.0012",
 		},
 	];
-
+	//@ts-ignore
 	selectedAsset: Token = PORTFOLIO_ASSETS[0];
 	slippage: string;
 
