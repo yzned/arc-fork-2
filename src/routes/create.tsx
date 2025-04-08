@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/Input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textArea";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -11,20 +11,20 @@ import { observer } from "mobx-react-lite";
 import Chevron from "@/icons/chevron.svg?react";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 
-import SettingsIcon from "@/icons/settings.svg?react";
-import TemplatesIcon from "@/icons/templates.svg?react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import {
 	CreatePortfolioProvider,
 	useCreatePortfolio,
 } from "@/contexts/CreatePortfolioContext";
-import { useDeployPortfolio } from "@/hooks/useDeployPortfolio";
-import { useReadContracts } from "wagmi";
-import { ARBITRUM_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
+import { useDeployPortfolio } from "@/hooks/mutations/useDeployPortfolio";
+import SettingsIcon from "@/icons/settings.svg?react";
+import TemplatesIcon from "@/icons/templates.svg?react";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
-import type { PriceData, TokenPriceData } from "@/lib/types";
+import { ARBITRUM_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
+import type { UniswapPriceData, TokenPriceData } from "@/lib/types";
 import { formatAddress } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useReadContracts } from "wagmi";
 import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
 
 export const Route = createFileRoute("/create")({
@@ -33,7 +33,6 @@ export const Route = createFileRoute("/create")({
 
 function RouteComponent() {
 	const { data: prices } = useReadContracts({
-		//@ts-ignore
 		contracts: ARBITRUM_TOKENS.map((item) => ({
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,
@@ -48,7 +47,7 @@ function RouteComponent() {
 		if (!prices) return;
 		const formattedPrices: TokenPriceData[] = prices
 			.filter(
-				(item): item is { result: PriceData; status: "success" } =>
+				(item): item is { result: UniswapPriceData; status: "success" } =>
 					item.status === "success" && item.result !== undefined,
 			)
 			.map(({ result }, index) => ({
@@ -243,12 +242,12 @@ const Overview = observer(({ className }: { className?: string }) => {
 							<span className="text-text-secondary">
 								{t("initialLiquidity")}
 							</span>
-							<span className="ml-auto text-text-secondary whitespace-nowrap">
+							<span className="ml-auto whitespace-nowrap text-text-secondary">
 								<span className="text-text-primary">0.54 ETH</span> (
 								{dollarPrice.toFixed(2)} $)
 							</span>
 							<span className="text-text-secondary">{t("tokens")}</span>
-							<div className="ml-auto flex items-center gap-2  text-text-secondary">
+							<div className="ml-auto flex items-center gap-2 text-text-secondary">
 								<span>
 									{
 										tokens?.filter((item) => item.creationState === "readed")
@@ -263,7 +262,7 @@ const Overview = observer(({ className }: { className?: string }) => {
 											<img
 												alt="no-logo"
 												src={item.logo}
-												className="w-4 h-4"
+												className="h-4 w-4"
 												key={item.address}
 											/>
 										))}
@@ -555,7 +554,7 @@ const Fees = observer(({ className }: { className?: string }) => {
 					<button
 						type="button"
 						onClick={() => setAdvOpen(!advOpen)}
-						className="flex flex-row gap-2 cursor-pointer"
+						className="flex cursor-pointer flex-row gap-2"
 					>
 						<SettingsIcon className="size-6 text-text-primary" />
 						<span className="font-droid font-normal text-base text-text-primary">

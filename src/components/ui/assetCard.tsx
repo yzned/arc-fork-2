@@ -1,13 +1,13 @@
+import type { ShortMultipoolData } from "@/api/types";
 import LinkIcon from "@/icons/link.svg?react";
 import LinkToPageIcon from "@/icons/linkToPage.svg?react";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { useMediaQuery } from "@uidotdev/usehooks";
+import BigNumber from "bignumber.js";
 import type { FC } from "react";
 import { useTranslation } from "react-i18next";
 import { PriceChange } from "./priceChange";
-import type { ShortMultipoolData } from "@/api/types";
-import BigNumber from "bignumber.js";
 
 interface AssetCardProps {
 	className?: string;
@@ -73,7 +73,7 @@ export const AssetCard: FC<AssetCardProps> = ({
 								{t("price")}
 							</span>
 							<span className="text-[14px] text-text-primary">
-								${asset.current_price}
+								${formatNumber(Number(asset.current_price))}
 							</span>
 						</div>
 						<div
@@ -85,11 +85,13 @@ export const AssetCard: FC<AssetCardProps> = ({
 							</span>
 							<span className="text-[14px] text-text-primary">
 								$
-								{new BigNumber(
-									Number(asset.total_supply) * Number(asset.current_price),
-								)
-									.multipliedBy(10 ** -8)
-									.toString()}
+								{formatNumber(
+									new BigNumber(
+										Number(asset.total_supply) * Number(asset.current_price),
+									)
+										.multipliedBy(10 ** -8)
+										.toNumber(),
+								)}
 							</span>
 						</div>
 
@@ -107,8 +109,14 @@ export const AssetCard: FC<AssetCardProps> = ({
 					>
 						<span className="text-text-secondary ">{t("24HChange")}</span>
 						<div className="flex items-center gap-2">
-							<span className="text-text-primary ">{asset.current_price}</span>
-							<PriceChange growing value="2" className="text-[12px]" />
+							<span className="text-text-primary ">
+								{formatNumber(Number(asset.current_price))}
+							</span>
+							<PriceChange
+								value={asset?.change_24h || "0"}
+								growing={Number(asset?.change_24h) > 0}
+								className="text-[12px]"
+							/>
 						</div>
 					</div>
 				</div>

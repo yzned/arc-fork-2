@@ -8,8 +8,8 @@ export interface SetupToken {
 	id: string;
 	name: string;
 	symbol: string;
-	address: Address;
-	logo: string;
+	address?: Address;
+	logo?: string;
 	priceFeedType?:
 		| "UniswapV3"
 		| "UniswapV2"
@@ -126,7 +126,7 @@ export class CreatePortfolioStore {
 	setDescription(description: string) {
 		this.description = description;
 	}
-	setLogo(logo: File) {
+	setLogo(logo?: File) {
 		this.logo = logo;
 	}
 
@@ -192,8 +192,6 @@ export class CreatePortfolioStore {
 	addNewToken() {
 		this.tokens.push({
 			id: uuidv4(),
-			//@ts-ignore
-			address: "",
 			name: "",
 			creationState: "new",
 			symbol: "",

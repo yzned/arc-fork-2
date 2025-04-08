@@ -13,7 +13,7 @@ interface PriceChangeProps {
 export const PriceChange: FC<PriceChangeProps> = ({
 	growing,
 	unit = "percents",
-
+	decimals = 2,
 	value,
 	className,
 }) => {
@@ -28,7 +28,7 @@ export const PriceChange: FC<PriceChangeProps> = ({
 		>
 			<span>
 				{unit === "dollars" && "$"}
-				{value}
+				{Number(value).toFixed(decimals)}
 				{unit === "percents" && "%"}
 			</span>
 			<ArrowIcon className={cn("mb-[2px]", !growing && "rotate-180")} />

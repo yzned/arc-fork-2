@@ -1,5 +1,10 @@
 import type { LinearDataFormated } from "@/api/types";
-import { AreaSeries, ColorType, createChart } from "lightweight-charts";
+import {
+	AreaSeries,
+	ColorType,
+	createChart,
+	type Time,
+} from "lightweight-charts";
 import { useEffect, useRef } from "react";
 
 type LinearChartProps = {
@@ -21,15 +26,13 @@ export const LinearChart = ({
 	height = 400,
 	data,
 }: LinearChartProps) => {
-	const chartContainerRef = useRef(null);
+	const chartContainerRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
 		if (chartContainerRef.current) {
 			const chart = createChart(chartContainerRef.current, {
 				timeScale: {
-					//@ts-ignore
-
-					tickMarkFormatter: (time) => {
+					tickMarkFormatter: (time: number) => {
 						const date = new Date(time);
 						return date.toLocaleDateString("en-US", {
 							month: "short",
@@ -52,8 +55,6 @@ export const LinearChart = ({
 					vertLines: { color: gridColor },
 					horzLines: { color: gridColor },
 				},
-				//@ts-ignore
-
 				width: chartContainerRef.current.clientWidth,
 				height: height,
 			});
@@ -66,15 +67,15 @@ export const LinearChart = ({
 			});
 
 			if (data) {
-				//@ts-ignore
-
-				newSeries.setData(data);
+				newSeries.setData(
+					data.map((item) => {
+						return { ...item, time: item.time as Time };
+					}),
+				);
 			}
 
 			const handleResize = () => {
-				//@ts-ignore
-
-				chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+				chart.applyOptions({ width: chartContainerRef?.current?.clientWidth });
 			};
 
 			window.addEventListener("resize", handleResize);

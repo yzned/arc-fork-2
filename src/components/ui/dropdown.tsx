@@ -13,7 +13,7 @@ import ChevronIcon from "../../icons/chevron.svg?react";
 import SmallXIcon from "../../icons/smallX.svg?react";
 
 export interface DropdownItemType {
-	name: string;
+	name?: string;
 	iconLeft?: string;
 	iconRight?: string;
 	rightText?: string;
@@ -102,7 +102,8 @@ export const DropdownItem = <T extends DropdownItemType>({
 						/>
 					)}
 					<div className=" max-w-[200px] truncate whitespace-nowrap">
-						{currentValue && highlightText(item.name, currentValue?.name)}
+						{currentValue &&
+							highlightText(item?.name || "", currentValue?.name || "")}
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
@@ -188,7 +189,7 @@ const DropdownRaw = <T extends DropdownItemType>(
 		setCurrentValue({ name: value } as T);
 
 		const filtered = items.filter((item) =>
-			item.name.toLowerCase().startsWith(value.toLowerCase()),
+			item?.name?.toLowerCase().startsWith(value.toLowerCase()),
 		);
 		setFilteredItems(filtered);
 	};

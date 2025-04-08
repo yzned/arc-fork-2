@@ -82,7 +82,7 @@ export const QuickSearchItem: FC<QuickSearchItemProps> = ({
 export const QuickSearch = forwardRef(
 	(
 		{ items, placeholder, className }: QuickSearchProps,
-		ref: ForwardedRef<HTMLDivElement>,
+		ref: ForwardedRef<HTMLInputElement>,
 	) => {
 		const [isInputFocused, setIsInputFocused] = useState(false);
 
@@ -91,7 +91,7 @@ export const QuickSearch = forwardRef(
 
 		const [filteredItems, setFilteredItems] = useState<string[]>(items);
 
-		const quickSearchRef = useRef<HTMLDivElement>(null);
+		const quickSearchRef = useRef<HTMLInputElement>(null);
 
 		useEffect(() => {
 			const handleClickOutside = (event: MouseEvent) => {
@@ -174,10 +174,9 @@ export const QuickSearch = forwardRef(
 
 						<input
 							placeholder={placeholder}
-							onFocus={() => setIsInputFocused(true)} // Устанавливаем фокус в true
+							onFocus={() => setIsInputFocused(true)}
 							onBlur={() => setIsInputFocused(false)}
 							value={currentValue}
-							//@ts-ignore
 							ref={ref ? ref : quickSearchRef}
 							onChange={handleInputChange}
 							className="w-full cursor-pointer placeholder:text-text-secondary focus:outline-none "

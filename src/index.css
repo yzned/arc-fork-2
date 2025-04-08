@@ -17,25 +17,24 @@
 	background-color: #17161b !important;
 }
 
-
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+	-webkit-appearance: none;
+	margin: 0;
 }
 
 input[type="number"] {
-  -moz-appearance: textfield;
+	-moz-appearance: textfield;
 }
 
 * {
-	scrollbar-width: none; 
-	-ms-overflow-style: none; 
-  }
-  
-  *::-webkit-scrollbar {
-	display: none; 
-  }
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+	display: none;
+}
 
 :root {
 	--color-text-primary: #eaeaea;

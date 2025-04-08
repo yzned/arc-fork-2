@@ -1,25 +1,28 @@
+import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 import {
-	computePoolAddress,
 	FeeAmount,
 	Pool,
 	Route,
 	SwapQuoter,
 	Trade,
+	computePoolAddress,
 } from "@uniswap/v3-sdk";
-import { decodeAbiParameters, parseUnits, type Address } from "viem";
-import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
-
-import { CurrencyAmount, Ether, Token, TradeType } from "@uniswap/sdk-core";
-
+import { type Abi, type Address, decodeAbiParameters, parseUnits } from "viem";
+import {
+	CurrencyAmount,
+	type Ether,
+	Token,
+	TradeType,
+} from "@uniswap/sdk-core";
+import ERC20 from "@/lib/abi/ERC20";
 import { arbitrumPublicClient } from "@/lib/config";
 import {
 	ARBITRUM_CHAIN_ID,
-	UNI_FEES,
 	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
 	UNISWAP_QUOTER_CONTRACT_ADDRESS,
+	UNI_FEES,
 	wETH_ADDRESS,
 } from "@/lib/constants";
-import ERC20 from "@/lib/abi/ERC20";
 import BigNumber from "bignumber.js";
 
 export interface Calls {
@@ -59,35 +62,33 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 		poolAddresses.map((address) => [
 			{
 				address: address as Address,
-				abi: IUniswapV3PoolABI.abi,
+				abi: IUniswapV3PoolABI.abi as Abi,
 				functionName: "token0",
 			},
 			{
 				address: address as Address,
-				abi: IUniswapV3PoolABI.abi,
+				abi: IUniswapV3PoolABI.abi as Abi,
 				functionName: "token1",
 			},
 			{
 				address: address as Address,
-				abi: IUniswapV3PoolABI.abi,
+				abi: IUniswapV3PoolABI.abi as Abi,
 				functionName: "fee",
 			},
 			{
 				address: address as Address,
-				abi: IUniswapV3PoolABI.abi,
+				abi: IUniswapV3PoolABI.abi as Abi,
 				functionName: "liquidity",
 			},
 			{
 				address: address as Address,
-				abi: IUniswapV3PoolABI.abi,
+				abi: IUniswapV3PoolABI.abi as Abi,
 				functionName: "slot0",
 			},
 		]),
 	];
 
 	const rawResult = await arbitrumPublicClient.multicall({
-		//@ts-ignore
-
 		contracts: contracts.flat(),
 	});
 
@@ -109,15 +110,12 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 					: undefined,
 			slot0:
 				rawResult[i + 4]?.status === "success"
-					? rawResult[i + 4].result
+					? (rawResult[i + 4].result as number[])
 					: undefined,
 		};
 
 		if (poolData.token0 && poolData.token1 && poolData.slot0) {
-			//@ts-ignore
-
 			const tick = poolData.slot0[1];
-			//@ts-ignore
 
 			const sqrtPriceX96 = poolData.slot0[0].toString();
 
@@ -155,14 +153,12 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
 	try {
 		const decimals = await arbitrumPublicClient.multicall({
-			//@ts-ignore
-			contracts: addresses?.map((address) => {
-				return {
+			contracts:
+				addresses?.map((address) => ({
 					address: address as Address,
-					abi: ERC20,
+					abi: ERC20 as Abi,
 					functionName: "decimals",
-				};
-			}),
+				})) ?? [],
 		});
 
 		const decimalsResult = decimals.map((item) => {
@@ -243,31 +239,31 @@ export const getPoolInfo = async (poolAddress: Address) => {
 	const contracts = [
 		{
 			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi,
+			abi: IUniswapV3PoolABI.abi as Abi,
 			functionName: "token0",
 		},
 		{
 			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi,
+			abi: IUniswapV3PoolABI.abi as Abi,
 			functionName: "token1",
 		},
 		{
 			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi,
+			abi: IUniswapV3PoolABI.abi as Abi,
 			functionName: "fee",
 		},
 		{
 			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi,
+			abi: IUniswapV3PoolABI.abi as Abi,
 			functionName: "liquidity",
 		},
 		{
 			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi,
+			abi: IUniswapV3PoolABI.abi as Abi,
 			functionName: "slot0",
 		},
 	];
-	//@ts-ignore
+
 	const rawResult = await arbitrumPublicClient.multicall({ contracts });
 
 	if (rawResult.some((res) => res.status !== "success")) {
@@ -277,14 +273,14 @@ export const getPoolInfo = async (poolAddress: Address) => {
 	const [token0, token1, fee, liquidity, slot0] = rawResult.map(
 		(res) => res.result,
 	);
+	const slot0Number = slot0 as number[];
 
 	if (!token0 || !token1 || !slot0) {
-		throw new Error("Некорректные данные пула");
+		throw new Error("Uncorrect pool data");
 	}
-	//@ts-ignore
-	const tick = slot0[1];
-	//@ts-ignore
-	const sqrtPriceX96 = slot0[0].toString();
+
+	const tick = slot0Number[1];
+	const sqrtPriceX96 = slot0Number[0].toString();
 
 	const decimals = await getDecimals({
 		addresses: [token0 as Address, token1 as Address],
@@ -326,7 +322,7 @@ export const createPoolsRoute = async (
 		Number(decimals[1]),
 	);
 
-	let directPoolAddress: string;
+	let directPoolAddress: string | undefined;
 
 	for (const fee of UNI_FEES) {
 		try {
@@ -345,11 +341,11 @@ export const createPoolsRoute = async (
 			console.error(`Error checking pool for fee ${fee}:`, e);
 		}
 	}
-	//@ts-ignore
+
 	if (!directPoolAddress) {
 		const WETH = new Token(ARBITRUM_CHAIN_ID, wETH_ADDRESS, 18);
 
-		let bestPool1: Pool;
+		let bestPool1: Pool | undefined;
 
 		for (const fee of UNI_FEES) {
 			try {
@@ -366,7 +362,7 @@ export const createPoolsRoute = async (
 			}
 		}
 
-		let bestPool2: Pool;
+		let bestPool2: Pool | undefined;
 
 		for (const fee of UNI_FEES) {
 			try {
@@ -382,7 +378,7 @@ export const createPoolsRoute = async (
 				console.error(`Error checking pool2 (LUAUSD) for fee ${fee}:`, e);
 			}
 		}
-		//@ts-ignore
+
 		if (bestPool1 && bestPool2) {
 			const swapRoute = new Route([bestPool1, bestPool2], tokenIn, tokenOut);
 
@@ -417,16 +413,17 @@ export const getOutputQuote = async (
 		data: calldata as Address,
 	});
 
-	const [outValue] = decodeAbiParameters(
-		[{ name: "amountOut", type: "uint256" }],
-		//@ts-ignore
-		data,
-	);
+	if (data) {
+		const [outValue] = decodeAbiParameters(
+			[{ name: "amountOut", type: "uint256" }],
+			data,
+		);
 
-	return {
-		amountOut: new BigNumber(outValue.toString()),
-		ethValue: new BigNumber(value),
-	};
+		return {
+			amountOut: new BigNumber(outValue.toString()),
+			ethValue: new BigNumber(value),
+		};
+	}
 };
 
 export const createUnckeckedTrade = (
@@ -446,295 +443,3 @@ export const createUnckeckedTrade = (
 
 	return uncheckedTrade;
 };
-
-// export const getAmountOut = async (
-// 	route: Route<Token | Ether, Token>,
-
-// 	amountIn: BigNumber,
-// ) => {
-// 	const { calldata, value } = SwapQuoter.quoteCallParameters(
-// 		route,
-// 		CurrencyAmount.fromRawAmount(route.input, amountIn.toFixed(0)),
-// 		TradeType.EXACT_INPUT,
-// 		{
-// 			useQuoterV2: true,
-// 		},
-// 	);
-
-// 	const { data } = await arbitrumPublicClient.call({
-// 		to: "0x61fFE014bA17989E743c5F6cB21bF9697530B21e",
-// 		data: calldata as Address,
-// 	});
-
-// 	const [outValue] = decodeAbiParameters(
-// 		[{ name: "amountOut", type: "uint256" }],
-// 		data!,
-// 	);
-
-// 	return {
-// 		amountOut: new BigNumber(outValue.toString()),
-// 		ethValue: new BigNumber(value),
-// 	};
-// };
-
-// export const createRoute = (
-// 	pools: Array<Pool>,
-// 	inputToken: Token | Ether,
-// 	outputToken: Token,
-// ) => {
-// 	if (inputToken.equals(outputToken)) {
-// 		throw new Error("Input token equals output token");
-// 	}
-
-// 	if (inputToken.isNative) {
-// 		const pool = pools.find((pool) => {
-// 			return pool.token0.equals(outputToken) || pool.token1.equals(outputToken);
-// 		});
-
-// 		if (!pool) {
-// 			throw new Error("Pool not found");
-// 		}
-
-// 		const route = new Route([pool], inputToken, outputToken);
-
-// 		return route;
-// 	}
-
-// 	// easy case for weth as output
-// 	if (
-// 		outputToken.address.toLocaleLowerCase() === wETH_ADDRESS.toLocaleLowerCase()
-// 	) {
-// 		const pool = pools.find((pool) => {
-// 			return pool.token0.equals(inputToken) || pool.token1.equals(inputToken);
-// 		});
-
-// 		if (!pool) {
-// 			throw new Error("Pool not found");
-// 		}
-
-// 		const route = new Route([pool], inputToken, outputToken);
-// 		// console.log("HUY");
-// 		return route;
-// 	}
-
-// 	// easy case for weth as input
-// 	if (
-// 		inputToken.address.toLocaleLowerCase() === wETH_ADDRESS.toLocaleLowerCase()
-// 	) {
-// 		const pool = pools.find((pool) => {
-// 			return pool.token0.equals(outputToken) || pool.token1.equals(outputToken);
-// 		});
-
-// 		if (!pool) {
-// 			throw new Error("Pool not found");
-// 		}
-
-// 		const route = new Route([pool], inputToken, outputToken);
-
-// 		return route;
-// 	}
-// 	// pools contains all the pools also those that are not used in the route
-// 	// so we need to filter them
-// 	const poolsUsed = pools.filter((pool) => {
-// 		return (
-// 			Same(pool.token0.address, inputToken.address) ||
-// 			Same(pool.token1.address, inputToken.address) ||
-// 			Same(pool.token0.address, outputToken.address) ||
-// 			Same(pool.token1.address, outputToken.address)
-// 		);
-// 	});
-
-// 	// sort pools so first pool contains input token
-// 	poolsUsed.sort((a, b) => {
-// 		if (a.token0.equals(inputToken) || a.token1.equals(inputToken)) {
-// 			return -1;
-// 		}
-// 		if (b.token0.equals(inputToken) || b.token1.equals(inputToken)) {
-// 			return 1;
-// 		}
-// 		return 0;
-// 	});
-
-// 	const route = new Route(poolsUsed, inputToken, outputToken);
-
-// 	return route;
-// };
-
-// export const createTrade = (
-// 	route: Route<Token | Ether, Token>,
-// 	amountIn: BigNumber,
-// 	amountOut: BigNumber,
-// ) => {
-// 	const uncheckedTrade = Trade.createUncheckedTrade({
-// 		route: route,
-// 		inputAmount: CurrencyAmount.fromRawAmount(route.input, amountIn.toFixed(0)),
-// 		outputAmount: CurrencyAmount.fromRawAmount(
-// 			route.output,
-// 			amountOut.toFixed(0),
-// 		),
-// 		tradeType: TradeType.EXACT_OUTPUT,
-// 	});
-
-// 	return uncheckedTrade;
-// };
-
-// export const swapToCalldata = async (
-// 	inputAsset: Address,
-// 	outputAsset: Address,
-// 	inputAmount: BigNumber,
-// 	multipoolAddress: Address,
-// ): Promise<Calls> => {
-// 	const pools = await getPoolsData(inputAsset, outputAsset);
-
-// 	const inputDecimals = await getDecimals({
-// 		addresses: [inputAsset.toLocaleLowerCase() as Address],
-// 	});
-
-// 	if (!inputDecimals) {
-// 		throw new Error("Decimals not found");
-// 	}
-// 	const inputToken =
-// 		inputAsset.toLocaleLowerCase() !==
-// 		"0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE".toLocaleLowerCase()
-// 			? new Token(42161, inputAsset, Number(inputDecimals[0]))
-// 			: new Token(42161, wETH_ADDRESS, Number(inputDecimals[0]));
-
-// 	const outputDecimals = await getDecimals({
-// 		addresses: [outputAsset.toLocaleLowerCase() as Address],
-// 	});
-
-// 	if (!outputDecimals) {
-// 		throw new Error("Decimals not found");
-// 	}
-
-// 	const outputToken = new Token(42161, outputAsset, Number(outputDecimals[0]));
-
-// 	const swapRoute = createRoute(pools, inputToken, outputToken);
-
-// 	const { amountOut } = await getAmountOut(
-// 		swapRoute,
-// 		inputAmount.multipliedBy(0.995),
-// 	);
-// 	const trade = createTrade(swapRoute, inputAmount, amountOut);
-
-// 	const options: SwapOptions = {
-// 		slippageTolerance: new Percent(70, 10_000), // 50 bips, or 0.50%
-// 		deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
-// 		recipient: multipoolAddress,
-// 	};
-
-// 	const methodParameters = SwapRouter.swapCallParameters([trade], options);
-
-// 	return {
-// 		data: methodParameters.calldata,
-// 		to: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-// 		value: methodParameters.value,
-// 		asset: outputAsset,
-// 		amountOut: amountOut,
-// 		note: `Swap ${inputAmount.toString()} ${inputToken.symbol} to ${amountOut.toString()} ${outputToken.symbol}`,
-// 	};
-// };
-
-// export const create = async (
-// 	targetShares: Map<Address, BigNumber>,
-// 	shares: Map<Address, BigNumber>,
-// 	inputAsset: Address,
-// 	amountIn: BigNumber,
-// 	multipoolAddress: Address,
-// ) => {
-// 	if (amountIn === undefined) {
-// 		throw new Error("AmountIn is undefined");
-// 	}
-
-// 	// filter out shares with 0
-// 	shares.forEach((value, key) => {
-// 		if (value.isEqualTo(0)) {
-// 			shares.delete(key);
-// 		}
-// 	});
-
-// 	for (const [_, amount] of shares.entries()) {
-// 		if (amount.isLessThanOrEqualTo(0)) {
-// 			throw new Error("Amount is less than or equal to 0");
-// 		}
-// 	}
-
-// 	if (shares.values().next().value === new BigNumber(0)) {
-// 		throw new Error("Shares is empty");
-// 	}
-
-// 	// move shares to targetShares
-// 	for (const [address, amount] of targetShares.entries()) {
-// 		if (shares.has(address)) {
-// 			shares.set(address, amount);
-// 		}
-// 	}
-
-// 	const pools = await getPoolsData(wETH_ADDRESS, inputAsset);
-
-// 	const inputDecimals = await getDecimals({
-// 		addresses: [inputAsset.toLocaleLowerCase() as Address],
-// 	});
-
-// 	if (!inputDecimals) {
-// 		throw new Error("Decimals not found");
-// 	}
-// 	const inputToken =
-// 		inputAsset.toLocaleLowerCase() !==
-// 		"0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE".toLocaleLowerCase()
-// 			? new Token(42161, inputAsset, Number(inputDecimals[0]))
-// 			: new Token(42161, wETH_ADDRESS, Number(inputDecimals[0]));
-
-// 	const callDatas: Array<Calls> = [];
-// 	const outs: Map<Address, BigNumber> = new Map();
-
-// 	for (const [address, amount] of shares.entries()) {
-// 		const outDecimal = await getDecimals({
-// 			addresses: [address.toLocaleLowerCase() as Address],
-// 		});
-
-// 		if (!outDecimal) {
-// 			throw new Error("Decimals not found");
-// 		}
-// 		const outputToken = new Token(
-// 			42161,
-// 			address as Address,
-// 			Number(outDecimal[0]),
-// 		);
-
-// 		const swapRoute = createRoute(pools, inputToken, outputToken);
-
-// 		const amountInShare = amountIn.multipliedBy(amount).dividedBy(100);
-// 		const { amountOut } = await getAmountOut(
-// 			swapRoute,
-// 			amountInShare.multipliedBy(0.995),
-// 		);
-// 		const trade = createTrade(swapRoute, amountInShare, amountOut);
-
-// 		outs.set(address, amountOut);
-
-// 		const options: SwapOptions = {
-// 			slippageTolerance: new Percent(70, 10_000), // 50 bips, or 0.50%
-// 			deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes from the current Unix time
-// 			recipient: multipoolAddress,
-// 		};
-
-// 		const methodParameters = SwapRouter.swapCallParameters([trade], options);
-
-// 		const tx = {
-// 			data: methodParameters.calldata,
-// 			to: "0xE592427A0AEce92De3Edee1F18E0157C05861564",
-// 			value: methodParameters.value,
-// 			asset: address,
-// 			amountOut: amountOut,
-// 			note: `Swap ${amountInShare.toString()} ${inputToken.symbol} to ${amountOut.toString()} ${outputToken.symbol}`,
-// 		};
-
-// 		callDatas.push(tx);
-// 	}
-
-// 	return {
-// 		calldata: callDatas,
-// 		selectedAssets: outs,
-// 	};
-// };

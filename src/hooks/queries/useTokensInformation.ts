@@ -2,7 +2,7 @@ import { useAccountStore } from "@/contexts/AccountContext";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import ERC20 from "@/lib/abi/ERC20";
 import { ARBITRUM_TOKENS } from "@/lib/constants";
-import type { PriceData } from "@/lib/types";
+import type { UniswapPriceData } from "@/lib/types";
 import { useWallets } from "@privy-io/react-auth";
 import BigNumber from "bignumber.js";
 import { runInAction } from "mobx";
@@ -23,13 +23,13 @@ export const useTokensInformation = () => {
 	});
 
 	const priceFeeds = [nativeToken, ...ARBITRUM_TOKENS];
+
 	const { data: prices } = useReadContracts({
-		//@ts-ignore
 		contracts: priceFeeds.map((item) => ({
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,
 			functionName: "latestRoundData",
-			chainId: item.chainId,
+			chainId: item?.chainId,
 		})),
 	});
 
@@ -45,7 +45,7 @@ export const useTokensInformation = () => {
 					: new BigNumber(0);
 			});
 
-			const nativePrice = prices[0]?.result as PriceData;
+			const nativePrice = prices[0]?.result as UniswapPriceData;
 			nativeToken.price = nativePrice?.[1]
 				? new BigNumber(nativePrice[1].toString())
 						.multipliedBy(10 ** -6)
@@ -56,7 +56,7 @@ export const useTokensInformation = () => {
 				const tokenInfo = tokensInformation.find(
 					(t) => t.address === arbToken.address,
 				);
-				const priceData = prices[index + 1]?.result as PriceData;
+				const priceData = prices[index + 1]?.result as UniswapPriceData;
 
 				if (tokenInfo) {
 					tokenInfo.price = priceData?.[1]

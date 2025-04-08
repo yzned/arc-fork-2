@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/button";
 import { Dropdown } from "../ui/dropdown";
-import { Input } from "../ui/input";
+import { Input } from "../ui/Input";
 import { Label } from "../ui/label";
 
 import PlusRoundedIcon from "@/icons/plus-rounded.svg?react";
@@ -15,11 +15,11 @@ import RoundedCheckIcon from "../../icons/roundedCheck.svg?react";
 import SearchAssetIcon from "../../icons/searchAsset.svg?react";
 import TrashIcon from "../../icons/trash.svg?react";
 
+import { useAccountStore } from "@/contexts/AccountContext";
+import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { CopyButton } from "../ui/copyButton";
-import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
-import { useAccountStore } from "@/contexts/AccountContext";
 
 import type { SetupToken } from "@/store/create-portfolio";
 
@@ -310,8 +310,8 @@ const ReadOnlyTableRow = observer(({ row }: { row: SetupToken }) => {
 			</td>
 			<td className="border-b border-b-fill-primary-700 px-4 py-4 text-left text-fill-brand-secondary-500">
 				<CopyButton
-					copyValue={row.address}
-				>{`${row.address.slice(0, 5)}...${row.address.slice(-4)}`}</CopyButton>
+					copyValue={row.address || ""}
+				>{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}</CopyButton>
 			</td>
 			<td className="border-b border-b-fill-primary-700 px-4 py-4 text-left text-fill-brand-secondary-500">
 				{row.priceFeedType}
@@ -391,8 +391,8 @@ const EditTableRow = observer(({ row }: { row: SetupToken }) => {
 											address: item.address,
 											id: row.id,
 											logo: item.logo,
-											name: item.name,
-											symbol: item.symbol,
+											name: item.name || "",
+											symbol: item.symbol || "",
 											priceFeedType: item.priceFeedType,
 										}),
 									)
@@ -400,7 +400,7 @@ const EditTableRow = observer(({ row }: { row: SetupToken }) => {
 							>
 								<div className=" mt-[1px] flex w-[248px] justify-between border-fill-secondary border-b py-2">
 									{row.logo && row.symbol ? (
-										<div className="flex items-center gap-2 h-[21px]">
+										<div className="flex h-[21px] items-center gap-2">
 											<img src={row.logo} className="h-4 w-4" alt="no-logo" />
 											<span className="text-[16px]">{row.symbol}</span>
 										</div>
@@ -419,7 +419,7 @@ const EditTableRow = observer(({ row }: { row: SetupToken }) => {
 								<Input
 									type="number"
 									ref={inputRef}
-									className="mt-[10px] w-[254px] pr-8 text-text-primary overflow-hidden"
+									className="mt-[10px] w-[254px] overflow-hidden pr-8 text-text-primary"
 									placeholder={t("enterShare")}
 									value={row.share?.toString()}
 									onKeyDown={(e) => {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ChainSelector } from "@/components/ui/chain-select";
-import { Input } from "@/components/ui/input";
+import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
 import MenuIcon from "@/icons/menu.svg?react";
@@ -18,7 +18,7 @@ import GitIcon from "/public/icons/socials/github.svg?react";
 import TelegramIcon from "/public/icons/socials/telegram.svg?react";
 import TwitterIcon from "/public/icons/socials/twitter.svg?react";
 import { ConnectWallet } from "./ConnectWallet";
-import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { Input } from "@/components/ui/Input";
 
 export const AppHeader = () => {
 	const location = useLocation();

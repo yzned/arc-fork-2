@@ -12,6 +12,7 @@ export class AccountStore {
 	//for assetSelector page
 	onSelectAsset?: (item: Token) => void;
 	nativeToken: Token;
+	currentChain: { name: string; id: number };
 
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
@@ -26,7 +27,7 @@ export class AccountStore {
 				price: undefined,
 			}),
 		);
-		//@ts-ignore
+
 		this.nativeToken = {
 			address: wETH_ADDRESS,
 			decimals: 18,
@@ -34,9 +35,14 @@ export class AccountStore {
 			chainId: ARBITRUM_CHAIN_ID,
 			priceFeedAddress: "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612",
 		};
+		this.currentChain = { id: ARBITRUM_CHAIN_ID, name: "Arbitrum" };
 	}
 
 	setOnSelectAsset(func: (item: Token) => void) {
 		this.onSelectAsset = func;
+	}
+
+	setCurrentChain({ id, name }: { id: number; name: string }) {
+		this.currentChain = { id, name };
 	}
 }

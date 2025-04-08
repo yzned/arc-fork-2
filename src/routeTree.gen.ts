@@ -12,7 +12,6 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as TradeImport } from './routes/trade'
-import { Route as StakeImport } from './routes/stake'
 import { Route as DocsImport } from './routes/docs'
 import { Route as CreateImport } from './routes/create'
 import { Route as AssetsSelectorImport } from './routes/assetsSelector'
@@ -25,12 +24,6 @@ import { Route as ExploreIdImport } from './routes/explore/$id'
 const TradeRoute = TradeImport.update({
   id: '/trade',
   path: '/trade',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const StakeRoute = StakeImport.update({
-  id: '/stake',
-  path: '/stake',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -102,13 +95,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsImport
       parentRoute: typeof rootRoute
     }
-    '/stake': {
-      id: '/stake'
-      path: '/stake'
-      fullPath: '/stake'
-      preLoaderRoute: typeof StakeImport
-      parentRoute: typeof rootRoute
-    }
     '/trade': {
       id: '/trade'
       path: '/trade'
@@ -140,7 +126,6 @@ export interface FileRoutesByFullPath {
   '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
-  '/stake': typeof StakeRoute
   '/trade': typeof TradeRoute
   '/explore/$id': typeof ExploreIdRoute
   '/portfolio/$id': typeof PortfolioIdRoute
@@ -151,7 +136,6 @@ export interface FileRoutesByTo {
   '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
-  '/stake': typeof StakeRoute
   '/trade': typeof TradeRoute
   '/explore/$id': typeof ExploreIdRoute
   '/portfolio/$id': typeof PortfolioIdRoute
@@ -163,7 +147,6 @@ export interface FileRoutesById {
   '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
-  '/stake': typeof StakeRoute
   '/trade': typeof TradeRoute
   '/explore/$id': typeof ExploreIdRoute
   '/portfolio/$id': typeof PortfolioIdRoute
@@ -176,7 +159,6 @@ export interface FileRouteTypes {
     | '/assetsSelector'
     | '/create'
     | '/docs'
-    | '/stake'
     | '/trade'
     | '/explore/$id'
     | '/portfolio/$id'
@@ -186,7 +168,6 @@ export interface FileRouteTypes {
     | '/assetsSelector'
     | '/create'
     | '/docs'
-    | '/stake'
     | '/trade'
     | '/explore/$id'
     | '/portfolio/$id'
@@ -196,7 +177,6 @@ export interface FileRouteTypes {
     | '/assetsSelector'
     | '/create'
     | '/docs'
-    | '/stake'
     | '/trade'
     | '/explore/$id'
     | '/portfolio/$id'
@@ -208,7 +188,6 @@ export interface RootRouteChildren {
   AssetsSelectorRoute: typeof AssetsSelectorRoute
   CreateRoute: typeof CreateRoute
   DocsRoute: typeof DocsRoute
-  StakeRoute: typeof StakeRoute
   TradeRoute: typeof TradeRoute
   ExploreIdRoute: typeof ExploreIdRoute
   PortfolioIdRoute: typeof PortfolioIdRoute
@@ -219,7 +198,6 @@ const rootRouteChildren: RootRouteChildren = {
   AssetsSelectorRoute: AssetsSelectorRoute,
   CreateRoute: CreateRoute,
   DocsRoute: DocsRoute,
-  StakeRoute: StakeRoute,
   TradeRoute: TradeRoute,
   ExploreIdRoute: ExploreIdRoute,
   PortfolioIdRoute: PortfolioIdRoute,
@@ -239,7 +217,6 @@ export const routeTree = rootRoute
         "/assetsSelector",
         "/create",
         "/docs",
-        "/stake",
         "/trade",
         "/explore/$id",
         "/portfolio/$id"
@@ -256,9 +233,6 @@ export const routeTree = rootRoute
     },
     "/docs": {
       "filePath": "docs.tsx"
-    },
-    "/stake": {
-      "filePath": "stake.tsx"
     },
     "/trade": {
       "filePath": "trade.tsx"

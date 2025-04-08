@@ -4,21 +4,22 @@ import ChevronIcon from "../../icons/chevron.svg?react";
 
 import type * as React from "react";
 
-import { type Chain, Chains } from "@/lib/constants";
+import { Chains } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { observer } from "mobx-react-lite";
+import { useAccountStore } from "@/contexts/AccountContext";
 
-function Select({
-	...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-	return (
-		<SelectPrimitive.Root
-			defaultValue="Ethereum"
-			data-slot="select"
-			{...props}
-		/>
-	);
-}
+const Select = observer(
+	({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) => {
+		return (
+			<SelectPrimitive.Root
+				defaultValue="Ethereum"
+				data-slot="select"
+				{...props}
+			/>
+		);
+	},
+);
 
 function SelectValue({
 	...props
@@ -37,17 +38,19 @@ function SelectTrigger({
 			className={cn(
 				"group flex h-full w-full items-center justify-between gap-2 whitespace-nowrap bg-transparent px-6 py-2 text-sm text-text-primary outline-none transition-colors ",
 				"data-[chain=arbitrum]:bg-[color-mix(in_srgb,var(--bg-arbitrum),black_20%)] data-[chain=arbitrum]:hover:bg-[var(--bg-arbitrum)]",
-				"data-[chain=aurora]:bg-[color-mix(in_srgb,var(--bg-aurora),black_20%)] data-[chain=aurora]:hover:bg-[var(--bg-aurora)]",
-				"data-[chain=avalanche]:bg-[color-mix(in_srgb,var(--bg-avalanche),black_20%)] data-[chain=avalanche]:hover:bg-[var(--bg-avalanche)]",
-				"data-[chain=base]:bg-[color-mix(in_srgb,var(--bg-base),black_20%)] data-[chain=base]:hover:bg-[var(--bg-base)]",
-				"data-[chain=bsc]:bg-[color-mix(in_srgb,var(--bg-bsc),black_20%)] data-[chain=bsc]:hover:bg-[var(--bg-bsc)]",
-				"data-[chain=ethereum]:bg-[color-mix(in_srgb,var(--bg-ethereum),black_20%)] data-[chain=ethereum]:hover:bg-[var(--bg-ethereum)]",
-				"data-[chain=gnosis]:bg-[color-mix(in_srgb,var(--bg-gnosis),black_20%)] data-[chain=gnosis]:hover:bg-[var(--bg-gnosis)]",
-				"data-[chain=kaia]:bg-[color-mix(in_srgb,var(--bg-kaia),black_20%)] data-[chain=kaia]:text-text-accent data-[chain=kaia]:hover:bg-[var(--bg-kaia)]",
-				"data-[chain=optimism]:bg-[color-mix(in_srgb,var(--bg-optimism),black_20%)] data-[chain=optimism]:hover:bg-[var(--bg-optimism)]",
-				"data-[chain=polygon]:bg-[color-mix(in_srgb,var(--bg-polygon),black_20%)] data-[chain=polygon]:hover:bg-[var(--bg-polygon)]",
-				"data-[chain=fantom]:bg-[color-mix(in_srgb,var(--bg-fantom),black_20%)] data-[chain=fantom]:hover:bg-[var(--bg-fantom)]",
-				"data-[chain=zksync]:bg-[color-mix(in_srgb,var(--bg-zksync),black_20%)] data-[chain=zksync]:hover:bg-[var(--bg-zksync)]",
+				"data-[chain=monad]:bg-[color-mix(in_srgb,var(--bg-monad),black_20%)] data-[chain=monad]:hover:bg-[var(--bg-monad)]",
+
+				// "data-[chain=aurora]:bg-[color-mix(in_srgb,var(--bg-aurora),black_20%)] data-[chain=aurora]:hover:bg-[var(--bg-aurora)]",
+				// "data-[chain=avalanche]:bg-[color-mix(in_srgb,var(--bg-avalanche),black_20%)] data-[chain=avalanche]:hover:bg-[var(--bg-avalanche)]",
+				// "data-[chain=base]:bg-[color-mix(in_srgb,var(--bg-base),black_20%)] data-[chain=base]:hover:bg-[var(--bg-base)]",
+				// "data-[chain=bsc]:bg-[color-mix(in_srgb,var(--bg-bsc),black_20%)] data-[chain=bsc]:hover:bg-[var(--bg-bsc)]",
+				// "data-[chain=ethereum]:bg-[color-mix(in_srgb,var(--bg-ethereum),black_20%)] data-[chain=ethereum]:hover:bg-[var(--bg-ethereum)]",
+				// "data-[chain=gnosis]:bg-[color-mix(in_srgb,var(--bg-gnosis),black_20%)] data-[chain=gnosis]:hover:bg-[var(--bg-gnosis)]",
+				// "data-[chain=kaia]:bg-[color-mix(in_srgb,var(--bg-kaia),black_20%)] data-[chain=kaia]:text-text-accent data-[chain=kaia]:hover:bg-[var(--bg-kaia)]",
+				// "data-[chain=optimism]:bg-[color-mix(in_srgb,var(--bg-optimism),black_20%)] data-[chain=optimism]:hover:bg-[var(--bg-optimism)]",
+				// "data-[chain=polygon]:bg-[color-mix(in_srgb,var(--bg-polygon),black_20%)] data-[chain=polygon]:hover:bg-[var(--bg-polygon)]",
+				// "data-[chain=fantom]:bg-[color-mix(in_srgb,var(--bg-fantom),black_20%)] data-[chain=fantom]:hover:bg-[var(--bg-fantom)]",
+				// "data-[chain=zksync]:bg-[color-mix(in_srgb,var(--bg-zksync),black_20%)] data-[chain=zksync]:hover:bg-[var(--bg-zksync)]",
 				className,
 			)}
 			{...props}
@@ -124,21 +127,21 @@ const ChainsColors = Chains.reduce((acc: { [key: string]: string }, chain) => {
 	return acc;
 }, {});
 
-export function ChainSelector() {
-	const [selectedChain, setSelectedChain] = useState<Chain>(Chains[0]);
+export const ChainSelector = observer(() => {
+	const { setCurrentChain, currentChain } = useAccountStore();
 
 	return (
 		<Select
-			value={selectedChain.name}
-			onValueChange={(value) =>
-				setSelectedChain(
+			value={currentChain.name}
+			onValueChange={(value) => {
+				setCurrentChain(
 					Chains.find((chain) => chain.name === value) || Chains[0],
-				)
-			}
+				);
+			}}
 		>
 			<SelectTrigger
 				className="w-[202px] cursor-pointer border-fill-secondary border-l "
-				data-chain={selectedChain.name.toLowerCase()}
+				data-chain={currentChain.name.toLowerCase()}
 				style={ChainsColors}
 			>
 				<SelectValue />
@@ -157,4 +160,4 @@ export function ChainSelector() {
 			</SelectContent>
 		</Select>
 	);
-}
+});

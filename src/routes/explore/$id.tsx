@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 
-import { Input } from "@/components/ui/input";
+import { LinearChart } from "@/components/ui/charts/LinearChart";
+import { Input } from "@/components/ui/Input";
 import { ModalBase } from "@/components/ui/modalBase";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
@@ -25,25 +26,31 @@ import { BalancesTable } from "@/components/explorePortfolio/tables/BalanceTable
 import { HistoryTable } from "@/components/explorePortfolio/tables/HistoryTable";
 import { PortfolioTable } from "@/components/explorePortfolio/tables/PortfolioTable";
 import { PositionsTable } from "@/components/explorePortfolio/tables/PositionsTable";
+import { CandleChart } from "@/components/ui/charts/CandleChart";
 import { FindAsset } from "@/components/ui/findAsset";
 import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { useTranslation } from "react-i18next";
 import { useChart } from "@/hooks/queries/useChart";
+import { ARBITRUM_CHAIN_ID } from "@/lib/constants";
 import BigNumber from "bignumber.js";
-import { ARBITRUM_CHAIN_ID, PORTFOLIO_ASSETS } from "@/lib/constants";
-import { CandleChart } from "@/components/ui/Charts/CandleChart";
-import { LinearChart } from "@/components/ui/Charts/LinearChart";
+import { useTranslation } from "react-i18next";
+import type { Address } from "viem";
+import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
 });
 
 function RouteComponent() {
+	const { id } = useParams({ from: "/explore/$id" });
+
+	useChart();
+	useMultipoolInfo(id as Address);
+
 	return (
 		<>
-			<div className=" grid-cols-[1fr_329px] grid-rows-1 gap-0  hidden md:grid">
+			<div className=" hidden grid-cols-[1fr_329px] grid-rows-1 gap-0 md:grid">
 				<MainSection />
 				<RightSection />
 			</div>
@@ -83,8 +90,6 @@ export const MainSection = observer(() => {
 	const { id } = useParams({ from: "/explore/$id" });
 
 	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
-
-	useChart();
 
 	const { portfolioCandlesData, portfolioLinearData } = useExplorePortfolio();
 
@@ -163,12 +168,32 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
-								//@ts-ignore
-
-								defaultAsset={currentPortfolio || allPortfolios[0]}
-								//@ts-ignore
-
-								assets={allPortfolios}
+								defaultAsset={
+									currentPortfolio
+										? {
+												address: currentPortfolio?.multipool as Address,
+												price: currentPortfolio?.current_price,
+												symbol: currentPortfolio?.symbol,
+												name: currentPortfolio?.name,
+												logo: currentPortfolio?.logo,
+											}
+										: {
+												address: allPortfolios[0]?.multipool as Address,
+												price: allPortfolios[0]?.current_price,
+												symbol: allPortfolios[0]?.symbol,
+												name: allPortfolios[0]?.name,
+												logo: allPortfolios[0]?.logo,
+											}
+								}
+								assets={allPortfolios.map((item) => {
+									return {
+										address: item.multipool as Address,
+										price: item.current_price,
+										symbol: item.symbol,
+										name: item.name,
+										logo: item.logo,
+									};
+								})}
 								className="h-[540px] w-full border-fill-secondary border-t px-4 pt-6"
 							/>
 						</div>
@@ -182,7 +207,10 @@ export const MainSection = observer(() => {
 									{t("price")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {Number(currentPortfolio?.current_price).toFixed(2)}
+									${" "}
+									{new BigNumber(currentPortfolio?.current_price || 0)
+										.toFixed(4)
+										.toString()}
 								</span>
 							</div>
 						</div>
@@ -198,7 +226,7 @@ export const MainSection = observer(() => {
 											Number(currentPortfolio?.current_price),
 									)
 										.multipliedBy(10 ** -8)
-										.toFixed(2)
+										.toFixed(4)
 										.toString()}
 								</span>
 							</div>
@@ -210,9 +238,7 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									<PriceChange
-										value={
-											Number(currentPortfolio?.change_24h).toFixed(2) || "0"
-										}
+										value={currentPortfolio?.change_24h || "0"}
 										growing={Number(currentPortfolio?.change_24h) > 0}
 										unit="dollars"
 									/>
@@ -225,7 +251,10 @@ export const MainSection = observer(() => {
 									{t("24hHigh")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {Number(currentPortfolio?.high_24h).toFixed(2)}
+									${" "}
+									{new BigNumber(currentPortfolio?.high_24h || 0)
+										.toFixed(4)
+										.toString()}
 								</span>
 							</div>
 						</div>
@@ -235,7 +264,10 @@ export const MainSection = observer(() => {
 									{t("24hLow")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$ {Number(currentPortfolio?.low_24h).toFixed(2)}
+									${" "}
+									{new BigNumber(currentPortfolio?.low_24h || 0)
+										.toFixed(4)
+										.toString()}
 								</span>
 							</div>
 						</div>
@@ -692,18 +724,18 @@ export const RightSection = observer(() => {
 
 								<Button
 									variant={"tertiary"}
-									className="w-[103px] p-0 font-droid"
+									className="min-w-[90px] p-0 px-1 font-droid flex items-center justify-between "
 									onClick={() => setIsOpenAssetModal(true)}
 								>
-									<div className="flex items-center gap-2 ">
+									<div className="flex items-center gap-2">
 										<img
 											src={selectedAsset.logo || "/icons/empty-token.svg"}
 											alt="no icon"
 											className="h-6 w-6"
 										/>
-										<span>{selectedAsset.symbol}</span>
-										<ChevronIcon className="h-4 w-4 rotate-90 scale-90" />
+										<span>{selectedAsset?.symbol || "-"}</span>
 									</div>
+									<ChevronIcon className="h-4 w-4 rotate-90 scale-90" />
 								</Button>
 							</div>
 
@@ -771,7 +803,8 @@ export const RightSection = observer(() => {
 });
 
 export const AssetsModalContent = observer(() => {
-	const { setIsOpenAssetModal, changeSelectedAsset } = useExplorePortfolio();
+	const { setIsOpenAssetModal, changeSelectedAsset, portfolioAssets } =
+		useExplorePortfolio();
 	const { t } = useTranslation(["main"]);
 
 	return (
@@ -801,19 +834,28 @@ export const AssetsModalContent = observer(() => {
 			</span>
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
-				//@ts-ignore
-				assets={PORTFOLIO_ASSETS.map((item) => {
-					return {
-						address: item.address,
-						chainId: ARBITRUM_CHAIN_ID,
-						logo: "/icons/empty-token.svg",
-						name: item.symbol,
-						symbol: item.symbol,
-						price: new BigNumber(item.price.value)
-							.multipliedBy(10 ** -25)
-							.toString(),
-					};
-				})}
+				defaultAsset={{
+					address: portfolioAssets?.[0].address as Address,
+					chainId: ARBITRUM_CHAIN_ID,
+					logo: "/icons/empty-token.svg",
+					name: portfolioAssets?.[0].symbol,
+					symbol: portfolioAssets?.[0].symbol,
+					price: new BigNumber(
+						portfolioAssets?.[0].price.price || 0,
+					).toString(),
+				}}
+				assets={
+					portfolioAssets?.map((item) => {
+						return {
+							address: item.address as Address,
+							chainId: ARBITRUM_CHAIN_ID,
+							logo: "/icons/empty-token.svg",
+							name: item.symbol,
+							symbol: item.symbol,
+							price: new BigNumber(item.price.price).toString(),
+						};
+					}) ?? []
+				}
 				onSelectAsset={changeSelectedAsset}
 				filters={["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6", "Tag7"]}
 			/>

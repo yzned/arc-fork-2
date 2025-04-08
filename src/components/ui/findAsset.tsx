@@ -1,31 +1,31 @@
-import { Input } from "@/components/ui/input";
-import type { Token } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { type FC, useEffect, useRef, useState } from "react";
+import { Input } from "@/components/ui/Input";
+import { cn, formatNumber } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 import FilterIcon from "/src/icons/filter.svg?react";
 import SearchIcon from "/src/icons/search.svg?react";
 import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
+import type { Token } from "@/lib/types";
 
-interface FindAssetProps {
-	assets: Token[];
+interface FindAssetProps<T> {
+	assets: T[];
 	filters?: string[];
-	onSelectAsset?: (asset: Token) => void;
+	onSelectAsset?: (asset: T) => void;
 	className?: string;
-	defaultAsset: Token;
+	defaultAsset: T;
 	listClassName?: string;
 }
 
-export const FindAsset: FC<FindAssetProps> = ({
+export function FindAsset<T extends Token>({
 	assets,
 	filters,
 	onSelectAsset,
 	className,
 	listClassName,
 	defaultAsset,
-}) => {
-	const [asset, setAsset] = useState<Token>(defaultAsset);
+}: FindAssetProps<T>) {
+	const [asset, setAsset] = useState<T>(defaultAsset);
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
@@ -175,7 +175,7 @@ export const FindAsset: FC<FindAssetProps> = ({
 							/>
 							<div className="flex flex-col items-start justify-center">
 								<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
-									{item.symbol}
+									{item?.symbol || "-"}
 								</span>
 								<span className="font-[600] font-namu text-[14px] text-text-tertiary">
 									{item.name}
@@ -184,7 +184,7 @@ export const FindAsset: FC<FindAssetProps> = ({
 						</div>
 						<div className="flex flex-col justify-center text-[14px]">
 							<span className=" text-text-primary">
-								{item.price ? item.price : item.current_price} $
+								{formatNumber(Number(item.price))} $
 							</span>
 							{/* <PriceChange growing value="23.23" /> */}
 						</div>
@@ -193,4 +193,4 @@ export const FindAsset: FC<FindAssetProps> = ({
 			</div>
 		</div>
 	);
-};
+}

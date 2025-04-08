@@ -15,28 +15,28 @@ export enum queryKeys {
 // 	current_price: "14.2200";
 // 	total_supply: "1000000";
 // };
-export type CandleDataRequest = {
+export interface CandleDataRequest {
 	t: string[]; // time: string[];
 	o: string[]; // open: number;
 	h: string[]; // high: number;
 	l: string[]; // low: number;
 	c: string[]; // close: number;
-};
+}
 
-export type CandleDataFormated = {
+export interface CandleDataFormated {
 	time: number; // time: string[];
 	open: number; // open: number;
 	high: number; // high: number;
 	low: number; // low: number;
 	close: number; // close: number;
-};
+}
 
-export type LinearDataFormated = {
+export interface LinearDataFormated {
 	time: number;
 	value: number;
-};
+}
 
-export type ShortMultipoolData = {
+export interface ShortMultipoolData {
 	logo?: string;
 	name: string;
 	symbol: string;
@@ -48,4 +48,37 @@ export type ShortMultipoolData = {
 	high_24h: string;
 	current_price: string;
 	total_supply: string;
-};
+}
+
+export interface Price {
+	timestamp: number;
+	value: string;
+}
+
+export interface MultipoolAsset {
+	symbol?: string;
+	address: string;
+	collected_cashbacks: string;
+	price: Price;
+	price_data: string;
+	quantity: string;
+	share: number;
+}
+
+export interface MultipoolInfo {
+	assets: MultipoolAsset[];
+	base_fee: number;
+	cashback_fee: number;
+	chain_id: number;
+	contract_address: string;
+	deviation_increase_fee: number;
+	deviation_limit: number;
+	initial_share_price: string;
+	management_fee: number;
+	management_fee_receiver: string;
+	oracle_address: string;
+	owner: string;
+	strategy_manager: string;
+	total_supply: string;
+	total_target_shares: number;
+}

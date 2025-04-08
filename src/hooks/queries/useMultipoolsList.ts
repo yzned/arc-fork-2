@@ -1,25 +1,20 @@
-import { GetMulpipools } from "@/api/explore";
+import { GetMultipools } from "@/api/explore";
 import { queryKeys } from "@/api/types";
+import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
-export function useMultipoolsList() {
+export const useMultipoolsList = () => {
 	const { setAllPortfolios } = useExplorePortfolio();
-
-	const { mutateAsync } = useMutation({
-		mutationKey: [queryKeys.multipoolsList],
-		mutationFn: async () => {
-			return await GetMulpipools();
-		},
-		onSuccess: (data) => {
-			setAllPortfolios(data);
-		},
-	});
+	const { currentChain } = useAccountStore();
 
 	return useQuery({
-		queryKey: [queryKeys.multipoolsList],
+		queryKey: [queryKeys.multipoolsList, currentChain.id],
 		queryFn: async () => {
-			return await mutateAsync();
+			const data = await GetMultipools(currentChain.id);
+			setAllPortfolios(data);
+			return data;
 		},
+		enabled: !!currentChain.id,
 	});
-}
+};

@@ -1,6 +1,11 @@
 import type { CandleDataFormated } from "@/api/types";
 import { cn } from "@/lib/utils";
-import { CandlestickSeries, ColorType, createChart } from "lightweight-charts";
+import {
+	CandlestickSeries,
+	ColorType,
+	createChart,
+	type Time,
+} from "lightweight-charts";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 
@@ -24,7 +29,7 @@ export const CandleChart = observer(
 		height = 400,
 		data,
 	}: CandleChartProps) => {
-		const chartContainerRef = useRef(null);
+		const chartContainerRef = useRef<HTMLDivElement>(null);
 
 		const [candleData, setCandleData] = useState<CandleDataFormated>(
 			data[data?.length - 1],
@@ -34,8 +39,7 @@ export const CandleChart = observer(
 			if (chartContainerRef.current) {
 				const chart = createChart(chartContainerRef.current, {
 					timeScale: {
-						//@ts-ignore
-						tickMarkFormatter: (time) => {
+						tickMarkFormatter: (time: number) => {
 							const date = new Date(time);
 							return date.toLocaleDateString("en-US", {
 								month: "short",
@@ -59,8 +63,6 @@ export const CandleChart = observer(
 						vertLines: { color: gridColor },
 						horzLines: { color: gridColor },
 					},
-					//@ts-ignore
-
 					width: chartContainerRef.current.clientWidth,
 					height: height,
 				});
@@ -77,23 +79,24 @@ export const CandleChart = observer(
 				});
 
 				if (data) {
-					//@ts-ignore
-
-					newSeries.setData(data);
+					newSeries.setData(
+						data.map((item) => {
+							return { ...item, time: item.time as Time };
+						}),
+					);
 				}
 
 				chart.subscribeCrosshairMove((item) => {
-					if (item.seriesData) {
-						for (const [_, value] of item.seriesData) {
-							//@ts-ignore
-							setCandleData(value);
-						}
+					const data = item.seriesData as Map<unknown, CandleDataFormated>;
+					for (const [, value] of data) {
+						setCandleData(value);
 					}
 				});
 
 				const handleResize = () => {
-					//@ts-ignore
-					chart.applyOptions({ width: chartContainerRef.current.clientWidth });
+					chart.applyOptions({
+						width: chartContainerRef?.current?.clientWidth,
+					});
 				};
 
 				window.addEventListener("resize", handleResize);
@@ -108,7 +111,7 @@ export const CandleChart = observer(
 		return (
 			<div className="relative h-full w-full ">
 				<div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-transparent font-droid text-[10px] text-text-secondary sm:text-[14px]">
-					<div className="flex-row gap-4 hidden md:flex">
+					<div className="hidden flex-row gap-4 md:flex">
 						<span>
 							O{" "}
 							<span

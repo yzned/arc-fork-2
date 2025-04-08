@@ -2,9 +2,9 @@ import DisconnectIcon from "@/icons/disconnect.svg?react";
 import WalletIcon from "@/icons/wallet.svg?react";
 import { useLogout, usePrivy, useWallets } from "@privy-io/react-auth";
 import { useTranslation } from "react-i18next";
-import { CopyButton } from "../ui/copyButton";
-import { Button } from "../ui/button";
 import CopyIcon from "../../icons/copy.svg?react";
+import { Button } from "../ui/button";
+import { CopyButton } from "../ui/copyButton";
 
 export const ConnectWallet = () => {
 	const { t } = useTranslation(["main"]);
@@ -23,7 +23,7 @@ export const ConnectWallet = () => {
 	if (user && ready && wallets.length > 0) {
 		return (
 			<>
-				<div className="hidden md:flex w-[256px] items-center justify-center gap-4 p-6 text-text-primary ">
+				<div className="hidden w-[256px] items-center justify-center gap-4 p-6 text-text-primary md:flex ">
 					<div className="flex items-center gap-2">
 						<img
 							src={wallets[0].meta.icon}
@@ -43,13 +43,13 @@ export const ConnectWallet = () => {
 						<DisconnectIcon width={15} className="text-text-secondary" />
 					</button>
 				</div>
-				<div className="w-full flex flex-col md:hidden gap-2">
+				<div className="flex w-full flex-col gap-2 md:hidden">
 					<button
 						type="button"
 						onClick={() => handleCopy(wallets[0].address)}
-						className="h-[60px] bg-fill-primary-900 items-center px-6 flex rounded-[4px] justify-between"
+						className="flex h-[60px] items-center justify-between rounded-[4px] bg-fill-primary-900 px-6"
 					>
-						<div className="text-fill-brand-secondary-500 flex items-center gap-2">
+						<div className="flex items-center gap-2 text-fill-brand-secondary-500">
 							<img
 								src={wallets[0].meta.icon}
 								alt={wallets[0].meta.name}
@@ -63,7 +63,7 @@ export const ConnectWallet = () => {
 					</button>
 
 					<Button
-						className="h-[48px] w-full flex md:hidden"
+						className="flex h-[48px] w-full md:hidden"
 						onClick={() => logout()}
 					>
 						Disconnect wallet <DisconnectIcon className="text-text-primary" />
@@ -80,14 +80,14 @@ export const ConnectWallet = () => {
 				onClick={() => {
 					login();
 				}}
-				className="hidden md:flex  cursor-pointer flex-row items-center border-fill-secondary border-r border-l px-6 font-droid text-fill-brand-secondary-500 text-sm tracking-[0.01em] transition-colors hover:bg-fill-secondary"
+				className="hidden cursor-pointer flex-row items-center border-fill-secondary border-r border-l px-6 font-droid text-fill-brand-secondary-500 text-sm tracking-[0.01em] transition-colors hover:bg-fill-secondary md:flex"
 			>
 				{t("connectWallet")}
 				<WalletIcon className="ml-2" />
 			</button>
 
 			<Button
-				className="h-[48px] flex md:hidden"
+				className="flex h-[48px] md:hidden"
 				onClick={() => {
 					login();
 				}}

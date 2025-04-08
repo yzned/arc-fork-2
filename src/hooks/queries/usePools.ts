@@ -1,8 +1,8 @@
-import BigNumber from "bignumber.js";
-import type { Address } from "viem";
-import { Pool } from "@uniswap/v3-sdk";
 import { getDecimals, getPoolsData, priceInNativeToken } from "@/api/uniswap";
 import { wETH_ADDRESS } from "@/lib/constants";
+import { Pool } from "@uniswap/v3-sdk";
+import BigNumber from "bignumber.js";
+import type { Address } from "viem";
 
 const UNI_FEES = [500, 1000, 3000];
 

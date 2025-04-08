@@ -3,13 +3,14 @@ import { observer } from "mobx-react-lite";
 import LinkToPageIcon from "@/icons/linkToPage.svg?react";
 import SortAsc from "../../icons/sortAsc.svg?react";
 
+import type { ShortMultipoolData } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { Link } from "@tanstack/react-router";
+import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 import { PriceChange } from "../ui/priceChange";
 import { InfoTooltip } from "../ui/tooltips/InformationTooltip";
-import { ShortMultipoolData } from "@/api/types";
-import BigNumber from "bignumber.js";
+import { formatNumber } from "@/lib/utils";
 
 export const MainTable = observer(() => {
 	const { allPortfolios } = useExplorePortfolio();
@@ -71,16 +72,22 @@ const MainTableRow = observer(({ row }: { row: ShortMultipoolData }) => {
 
 				<td className="px-3 py-4">{row.name}</td>
 
-				<td className="px-3 py-4 text-left">{row.current_price}</td>
+				<td className="px-3 py-4 text-left">
+					{formatNumber(Number(row.current_price))}
+				</td>
 				<td className="py-4 pl-4 ">
-					{" "}
-					{new BigNumber(Number(row?.total_supply) * Number(row?.current_price))
-						.multipliedBy(10 ** -8)
-						.toString()}
+					{formatNumber(
+						new BigNumber(
+							Number(row?.total_supply) * Number(row?.current_price),
+						)
+							.multipliedBy(10 ** -8)
+							.toNumber(),
+					)}
 				</td>
 
 				<td className="flex gap-2 py-4 pl-4">
-					{row.current_price} <PriceChange growing value="12" />
+					{formatNumber(Number(row.current_price))}{" "}
+					<PriceChange growing value="12" />
 				</td>
 				<a
 					onClick={(e) => {

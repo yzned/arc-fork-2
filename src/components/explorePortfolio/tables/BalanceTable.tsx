@@ -7,7 +7,7 @@ import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SmallXIcon from "@/icons/smallX.svg?react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+import { Input } from "../../ui/Input";
 import { ModalBase } from "../../ui/modalBase";
 
 export const BalancesTable = observer(() => {
@@ -80,7 +80,7 @@ const BalancesTableRow = observer(({ row }: { row: BalancesToken }) => {
 				href={`https://arbiscan.io/token/${row.address}`}
 				className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
 			>
-				{`${row.address.slice(0, 5)}...${row.address.slice(-4)}`}
+				{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}
 			</a>
 
 			<td className=" flex items-center justify-center">

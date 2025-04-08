@@ -3,28 +3,28 @@ import FallIcon from "@/icons/fall.svg?react";
 import RiseIcon from "@/icons/rise.svg?react";
 import { useEffect, useRef, useState } from "react";
 
-import { PORTFOLIO_ASSETS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, formatNumber } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { FindAsset } from "../ui/findAsset";
 import { PriceChange } from "../ui/priceChange";
 
+import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import CandlesIcon from "@/icons/candles.svg?react";
 import LinearIcon from "@/icons/linear.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
 import { Link, useParams } from "@tanstack/react-router";
+import BigNumber from "bignumber.js";
+import { observer } from "mobx-react-lite";
 import { BottomSheet } from "react-spring-bottom-sheet";
+import { CandleChart } from "../ui/charts/CandleChart";
+import { LinearChart } from "../ui/charts/LinearChart";
 import { Toggle } from "../ui/toggle";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
-import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { observer } from "mobx-react-lite";
-import BigNumber from "bignumber.js";
-import { CandleChart } from "@/components/ui/Charts/CandleChart";
-import { LinearChart } from "@/components/ui/Charts/LinearChart";
+import type { Address } from "viem";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
@@ -42,14 +42,15 @@ export const ExploreMobile = observer(() => {
 
 	const {
 		portfolioCandlesData,
+		portfolioAssets,
 		portfolioLinearData,
 		chartResolution,
 		setChartResolution,
+		allPortfolios,
 	} = useExplorePortfolio();
 
 	const { t } = useTranslation(["main"]);
 
-	const { allPortfolios } = useExplorePortfolio();
 	const { id } = useParams({ from: "/explore/$id" });
 
 	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
@@ -112,10 +113,32 @@ export const ExploreMobile = observer(() => {
 							)}
 						>
 							<FindAsset
-								//@ts-ignore
-								defaultAsset={currentPortfolio || allPortfolios[0]}
-								//@ts-ignore
-								assets={allPortfolios}
+								defaultAsset={
+									currentPortfolio
+										? {
+												address: currentPortfolio?.multipool as Address,
+												price: currentPortfolio?.current_price,
+												symbol: currentPortfolio?.symbol,
+												name: currentPortfolio?.name,
+												logo: currentPortfolio?.logo,
+											}
+										: {
+												address: allPortfolios[0]?.multipool as Address,
+												price: allPortfolios[0]?.current_price,
+												symbol: allPortfolios[0]?.symbol,
+												name: allPortfolios[0]?.name,
+												logo: allPortfolios[0]?.logo,
+											}
+								}
+								assets={allPortfolios.map((item) => {
+									return {
+										address: item.multipool as Address,
+										price: item.current_price,
+										symbol: item.symbol,
+										name: item.name,
+										logo: item.logo,
+									};
+								})}
 								className="h-[60svh] w-full bg-floor-2 px-4 pt-6"
 							/>
 						</div>
@@ -123,7 +146,7 @@ export const ExploreMobile = observer(() => {
 				</div>
 				<div className="my-20 flex flex-col justify-center">
 					<span className="text-center text-[32px] text-text-primary">
-						${currentPortfolio?.current_price}
+						${formatNumber(Number(currentPortfolio?.current_price))}
 					</span>
 					<span className="text-center text-[14px] text-text-secondary">
 						{t("tvl")}{" "}
@@ -145,7 +168,7 @@ export const ExploreMobile = observer(() => {
 								<RiseIcon />
 							</div>
 							<span className="text-text-primary">
-								${currentPortfolio?.high_24h}
+								${formatNumber(Number(currentPortfolio?.high_24h))}
 							</span>
 						</div>
 						<div className="flex h-[63px] w-full flex-col justify-center rounded-[2px] bg-bg-floor-2 px-4">
@@ -154,7 +177,7 @@ export const ExploreMobile = observer(() => {
 								<FallIcon />
 							</div>
 							<span className="text-text-primary">
-								${currentPortfolio?.low_24h}
+								${formatNumber(Number(currentPortfolio?.low_24h))}
 							</span>
 						</div>
 					</div>
@@ -162,7 +185,7 @@ export const ExploreMobile = observer(() => {
 						<span className="text-text-secondary ">{t("24HChange")}</span>
 						<div className="flex items-center gap-2">
 							<PriceChange
-								growing
+								growing={Number(currentPortfolio?.change_24h) > 0}
 								value={currentPortfolio?.change_24h || "0"}
 								unit="dollars"
 								className="text-[12px] "
@@ -284,7 +307,7 @@ export const ExploreMobile = observer(() => {
 					<p className="font-[600] font-namu text-[24px] text-text-primary uppercase leading-[24px]">
 						{t("porfolio")}
 					</p>
-					{PORTFOLIO_ASSETS.length > 10 && (
+					{portfolioAssets?.length && portfolioAssets?.length > 10 && (
 						<Link
 							to="/portfolio/$id"
 							params={{ id: currentPortfolio?.multipool || "" }}

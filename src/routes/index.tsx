@@ -5,13 +5,10 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import RoundedPlusIcon from "@/icons/plus-rounded.svg?react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMediaQuery } from "@uidotdev/usehooks";
+import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 
-export const Route = createFileRoute("/")({
-	component: Index,
-});
-
-function Index() {
+const Index = observer(() => {
 	const navigate = useNavigate();
 
 	const { t } = useTranslation(["main"]);
@@ -117,4 +114,8 @@ function Index() {
 			</div>
 		</div>
 	);
-}
+});
+
+export const Route = createFileRoute("/")({
+	component: Index,
+});

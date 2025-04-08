@@ -18,7 +18,7 @@ function FileInput({
 	className?: string;
 	label: string;
 	required: boolean;
-	onSelect?: (file: File) => void;
+	onSelect?: (file?: File) => void;
 }) {
 	const [fileSelected, setFileSelected] = useState<FileList | null>(null);
 	const inputRef = useRef<HTMLInputElement | null>(null);
@@ -115,9 +115,7 @@ function FileInput({
 					if (!inputRef.current) return;
 					inputRef.current.value = "";
 					setFileSelected(null);
-					//@ts-ignore
-
-					onSelect?.(null);
+					onSelect?.(undefined);
 				}}
 			/>
 		</div>

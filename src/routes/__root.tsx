@@ -1,10 +1,11 @@
 import { useMediaQuery } from "@uidotdev/usehooks";
 
 import { AppHeader, AppHeaderMobile } from "@/components/header/AppHeader";
+import { useMultipoolsList } from "@/hooks/queries/useMultipoolsList";
+import { useTokensInformation } from "@/hooks/queries/useTokensInformation";
 import { Outlet, createRootRoute, useRouter } from "@tanstack/react-router";
 import React, { Suspense, useEffect } from "react";
-import { useTokensInformation } from "@/hooks/useTokensInformation";
-import { useMultipoolsList } from "@/hooks/queries/useMultipoolsList";
+import { observer } from "mobx-react-lite";
 
 const TanStackRouterDevtools =
 	process.env.NODE_ENV === "production"
@@ -33,11 +34,11 @@ const ScrollToTop = () => {
 };
 
 export const Route = createRootRoute({
-	component: () => {
+	component: observer(() => {
 		const isMobile = useMediaQuery("(max-width: 768px)");
 
 		useTokensInformation();
-		useMultipoolsList(); ///rebase to Index page
+		useMultipoolsList();
 
 		return (
 			<div className="relative max-w-full bg-bg-floor-0">
@@ -50,7 +51,7 @@ export const Route = createRootRoute({
 				<ScrollToTop />
 			</div>
 		);
-	},
+	}),
 });
 
 // import { computePoolAddress } from "@uniswap/v3-sdk";

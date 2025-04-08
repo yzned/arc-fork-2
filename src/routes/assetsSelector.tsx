@@ -2,21 +2,29 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { FindAsset } from "@/components/ui/findAsset";
+import { useAccountStore } from "@/contexts/AccountContext";
+import { usePools } from "@/hooks/queries/usePools";
 import CheckIcon from "@/icons/checkMark.svg?react";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import LinkIcon from "@/icons/link.svg?react";
 import { ARBITRUM_TOKENS, wETH_ADDRESS } from "@/lib/constants";
+import type { Token } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAccountStore } from "@/contexts/AccountContext";
-import type { Token } from "@/lib/types";
-import { usePools } from "@/hooks/usePools";
-import BigNumber from "bignumber.js";
 
 export const Route = createFileRoute("/assetsSelector")({
 	component: RouteComponent,
 });
+
+type SelectPoolType = {
+	priceFeedType: string;
+	poolAddress: string;
+	liquidity: string | number;
+	price: number;
+	fee: number;
+};
 
 function RouteComponent() {
 	const { t } = useTranslation(["main"]);
@@ -34,7 +42,7 @@ function RouteComponent() {
 	const [selectedOracle, setSelectedOracle] = useState("AAA");
 
 	const [selectedAsset, setSelectedAsset] = useState<Token>(ARBITRUM_TOKENS[0]);
-	const [pools, setPools] = useState();
+	const [pools, setPools] = useState<SelectPoolType[]>();
 
 	useEffect(() => {
 		async function fetchPools() {
@@ -44,7 +52,6 @@ function RouteComponent() {
 				const filteredPools = poolsData?.filter(
 					(pool) => pool?.liquidity !== undefined,
 				);
-				//@ts-ignore
 				setPools(filteredPools);
 			} catch (err) {
 				console.error(err);
@@ -163,63 +170,59 @@ function RouteComponent() {
 				<div className="flex h-full flex-col pt-8">
 					<p className="px-8 pb-8 text-text-primary">{t("selectOracle")}</p>
 					<div className="flex min-h-0 flex-grow flex-col gap-2 overflow-y-auto px-8 pb-1">
-						{
-							//@ts-ignore
-							pools?.map((pool) => (
-								<button
-									type="button"
-									className={cn(
-										"flex h-[140px] w-full cursor-pointer flex-col gap-6 rounded-[8px] border-[1px] border-fill-secondary p-4",
-										selectedOracle === pool?.poolAddress &&
-											"border-fill-secondary bg-fill-secondary",
-									)}
-									onClick={() => setSelectedOracle(pool?.poolAddress)}
-									key={pool?.priceFeedType}
-								>
-									<div className="flex items-center justify-between text-text-primary">
-										<div className="flex items-center gap-4 ">
-											<span className="">{pool?.priceFeedType}</span>
-											<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
-												{pool?.fee / 1000} %
-											</span>
-										</div>
-										{selectedOracle === pool?.poolAddress && (
-											<CheckIcon className="scale-190 text-fill-brand-primary-700" />
-										)}
+						{pools?.map((pool) => (
+							<button
+								type="button"
+								className={cn(
+									"flex h-[140px] w-full cursor-pointer flex-col gap-6 rounded-[8px] border-[1px] border-fill-secondary p-4",
+									selectedOracle === pool?.poolAddress &&
+										"border-fill-secondary bg-fill-secondary",
+								)}
+								onClick={() => setSelectedOracle(pool?.poolAddress)}
+								key={pool?.priceFeedType}
+							>
+								<div className="flex items-center justify-between text-text-primary">
+									<div className="flex items-center gap-4 ">
+										<span className="">{pool?.priceFeedType}</span>
+										<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
+											{pool?.fee / 1000} %
+										</span>
 									</div>
-									<div className="flex flex-col gap-1">
-										<div className="flex items-center justify-between text-[12px]">
-											<span className="text-text-secondary whitespace-nowrap">
-												{t("currentPrice")}
-											</span>
-											<span className="text-text-primary whitespace-nowrap">
-												{pool?.price?.toFixed(18).toString()} ETH{" "}
-												{/* <span className="text-text-secondary">($27,82)</span> */}
-											</span>
-										</div>
-										<div className="flex items-center justify-between text-[12px]">
-											<span className="text-text-secondary">
-												{t("liquidity")}
-											</span>
-											<span className="text-text-primary ">
-												{new BigNumber(pool?.liquidity).toFixed(6).toString()}{" "}
-												ETH
-												{/* <span className="text-text-secondary">($27,82)</span> */}
-											</span>
-										</div>
-										<div className="flex items-center justify-between text-[12px]">
-											{/* <span className="text-text-secondary">
+									{selectedOracle === pool?.poolAddress && (
+										<CheckIcon className="scale-190 text-fill-brand-primary-700" />
+									)}
+								</div>
+								<div className="flex flex-col gap-1">
+									<div className="flex items-center justify-between text-[12px]">
+										<span className="whitespace-nowrap text-text-secondary">
+											{t("currentPrice")}
+										</span>
+										<span className="whitespace-nowrap text-text-primary">
+											{pool?.price?.toFixed(18).toString()} ETH{" "}
+											{/* <span className="text-text-secondary">($27,82)</span> */}
+										</span>
+									</div>
+									<div className="flex items-center justify-between text-[12px]">
+										<span className="text-text-secondary">
+											{t("liquidity")}
+										</span>
+										<span className="text-text-primary ">
+											{new BigNumber(pool?.liquidity).toFixed(6).toString()} ETH
+											{/* <span className="text-text-secondary">($27,82)</span> */}
+										</span>
+									</div>
+									<div className="flex items-center justify-between text-[12px]">
+										{/* <span className="text-text-secondary">
 											{t("24hVolume")}
 										</span> */}
-											{/* <span className="text-text-primary ">
+										{/* <span className="text-text-primary ">
 											{oracle["24h"]}ETH{" "}
 											<span className="text-text-secondary">($27,82)</span>
 										</span> */}
-										</div>
 									</div>
-								</button>
-							))
-						}
+								</div>
+							</button>
+						))}
 					</div>
 					<div className="border-t-[1px] border-t-fill-secondary p-4">
 						<Button
