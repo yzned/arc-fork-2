@@ -23,8 +23,8 @@ import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
 import type { Address } from "viem";
-import { CandleChart } from "@/components/ui/charts/CandleChart";
-import { LinearChart } from "@/components/ui/charts/LinearChart";
+import { CandleChart } from "@/components/ui/Charts/CandleChart";
+import { LinearChart } from "@/components/ui/Charts/LinearChart";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);

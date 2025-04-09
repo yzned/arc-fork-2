@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 
-import { LinearChart } from "@/components/ui/charts/LinearChart";
+import { LinearChart } from "@/components/ui/Charts/LinearChart";
 import { Input } from "@/components/ui/Input";
 import { ModalBase } from "@/components/ui/modalBase";
 import { cn } from "@/lib/utils";
@@ -26,7 +26,7 @@ import { BalancesTable } from "@/components/explorePortfolio/tables/BalanceTable
 import { HistoryTable } from "@/components/explorePortfolio/tables/HistoryTable";
 import { PortfolioTable } from "@/components/explorePortfolio/tables/PortfolioTable";
 import { PositionsTable } from "@/components/explorePortfolio/tables/PositionsTable";
-import { CandleChart } from "@/components/ui/charts/CandleChart";
+import { CandleChart } from "@/components/ui/Charts/CandleChart";
 import { FindAsset } from "@/components/ui/findAsset";
 import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
