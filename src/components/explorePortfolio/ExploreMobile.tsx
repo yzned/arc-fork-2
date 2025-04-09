@@ -17,14 +17,14 @@ import { Link, useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
 import { BottomSheet } from "react-spring-bottom-sheet";
-import { CandleChart } from "../ui/charts/CandleChart";
-import { LinearChart } from "../ui/charts/LinearChart";
 import { Toggle } from "../ui/toggle";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
 import type { Address } from "viem";
+import { CandleChart } from "@/components/ui/charts/CandleChart";
+import { LinearChart } from "@/components/ui/charts/LinearChart";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
