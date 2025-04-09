@@ -20,7 +20,7 @@ type CandleChartProps = {
 	height?: number;
 };
 
-export const CandleChart = observer(
+const CandleChart = observer(
 	({
 		backgroundColor = "#17161B",
 		gridColor = "#1F1F1F",
@@ -181,3 +181,6 @@ export const CandleChart = observer(
 		);
 	},
 );
+
+CandleChart.displayName = "CandleChart";
+export { CandleChart };
