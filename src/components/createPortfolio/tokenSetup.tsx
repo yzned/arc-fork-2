@@ -12,16 +12,14 @@ import TemplatesIcon from "@/icons/templates.svg?react";
 import ChevronIcon from "../../icons/chevron.svg?react";
 import EditIcon from "../../icons/edit.svg?react";
 import RoundedCheckIcon from "../../icons/roundedCheck.svg?react";
-import SearchAssetIcon from "../../icons/searchAsset.svg?react";
 import TrashIcon from "../../icons/trash.svg?react";
 
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
-import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { CopyButton } from "../ui/copyButton";
 
 import type { SetupToken } from "@/store/create-portfolio";
+import { AssetSelector } from "../ui/assetSelector";
 
 export const TokenSetup = observer(() => {
 	const { t } = useTranslation(["main"]);
@@ -29,8 +27,8 @@ export const TokenSetup = observer(() => {
 	const [isFocused, setIsFocused] = useState(false);
 	const [isHovered, setIsHovered] = useState(false);
 
-	const [opened, setOpened] = useState(false);
-	const [selectedId, setSelectedId] = useState(0);
+	const [opened, setOpened] = useState(true);
+	const [selectedId, setSelectedId] = useState(100);
 
 	const {
 		sharePercentsSum,
@@ -338,7 +336,6 @@ const EditTableRow = observer(({ row }: { row: SetupToken }) => {
 	const { t } = useTranslation(["main"]);
 
 	const { deleteToken, cancelEditToken, editToken } = useCreatePortfolio();
-	const { setOnSelectAsset } = useAccountStore();
 
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [percentOffset, setPercentOffset] = useState(0);
@@ -382,36 +379,21 @@ const EditTableRow = observer(({ row }: { row: SetupToken }) => {
 						<div>
 							<Label text="Select token" isRequired />
 
-							<Link
-								to="/assetsSelector"
-								onClick={() =>
-									setOnSelectAsset((item) =>
-										editToken({
-											...row,
-											address: item.address,
-											id: row.id,
-											logo: item.logo,
-											name: item.name || "",
-											symbol: item.symbol || "",
-											priceFeedType: item.priceFeedType,
-										}),
-									)
+							<AssetSelector
+								logo={row.logo}
+								symbol={row.symbol}
+								onSelectAsset={(item) =>
+									editToken({
+										...row,
+										address: item.address,
+										id: row.id,
+										logo: item.logo,
+										name: item.name || "",
+										symbol: item.symbol || "",
+										priceFeedType: item.priceFeedType,
+									})
 								}
-							>
-								<div className=" mt-[1px] flex w-[248px] justify-between border-fill-secondary border-b py-2">
-									{row.logo && row.symbol ? (
-										<div className="flex h-[21px] items-center gap-2">
-											<img src={row.logo} className="h-4 w-4" alt="no-logo" />
-											<span className="text-[16px]">{row.symbol}</span>
-										</div>
-									) : (
-										<span className="text-text-secondary">
-											{t("selectToken")}
-										</span>
-									)}
-									<SearchAssetIcon className="mt-2" />
-								</div>
-							</Link>
+							/>
 						</div>
 						<div>
 							<Label text={t("enterShare")} isRequired />

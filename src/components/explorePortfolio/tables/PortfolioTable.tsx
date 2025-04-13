@@ -86,7 +86,7 @@ const PortfolioTableRow = observer(
 				</td>
 
 				<td className="px-3 py-4 text-right">
-					{formatNumber(new BigNumber(row.price.price).toNumber())}
+					{formatNumber(new BigNumber(row?.price?.price || 0).toNumber())}
 				</td>
 
 				<td className="px-3 py-4 text-right">{row.share}</td>

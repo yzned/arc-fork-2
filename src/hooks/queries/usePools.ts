@@ -1,12 +1,15 @@
-import { getDecimals, getPoolsData, priceInNativeToken } from "@/api/uniswap";
-import { wETH_ADDRESS } from "@/lib/constants";
+import { getPoolsData } from "@/api/uniswap";
+import type { ShortPoolData } from "@/lib/types";
 import { Pool } from "@uniswap/v3-sdk";
 import BigNumber from "bignumber.js";
 import type { Address } from "viem";
 
 const UNI_FEES = [500, 1000, 3000];
 
-export const usePools = async (addressA: string, addressB: string) => {
+export const usePools = async (
+	addressA: string,
+	addressB: string,
+): Promise<ShortPoolData[]> => {
 	try {
 		const pools = await getPoolsData(addressA as Address, addressB as Address);
 
@@ -36,18 +39,11 @@ export const usePools = async (addressA: string, addressB: string) => {
 
 		const poolsResult = await Promise.all(
 			pools.map(async (pool, index) => {
-				const decimals = await getDecimals({
-					addresses: [
-						pool.token0.address as Address,
-						pool.token1.address as Address,
-					],
-				});
-
-				const priceConverted = priceInNativeToken(
-					BigInt(pool.sqrtRatioX96.toString()),
-					Number(decimals[pool.token0.address === wETH_ADDRESS ? 1 : 0]),
-					Number(decimals[pool.token0.address === wETH_ADDRESS ? 0 : 1]),
-				);
+				// const priceConverted = priceInNativeToken(
+				// 	BigInt(pool.sqrtRatioX96.toString()),
+				// 	Number(decimals[pool.token0.address === wETH_ADDRESS ? 1 : 0]),
+				// 	Number(decimals[pool.token0.address === wETH_ADDRESS ? 0 : 1]),
+				// );
 
 				const liquidity = new BigNumber(pool.liquidity.toString());
 
@@ -60,15 +56,15 @@ export const usePools = async (addressA: string, addressB: string) => {
 				return {
 					priceFeedType: "UniswapV3",
 					poolAddress: poolAddress,
-					liquidity: liquidityInToken0.toString() || 0,
-					price: priceConverted,
+					liquidity: liquidityInToken0.toString() || "0",
 					fee: UNI_FEES[index],
 				};
 			}),
 		);
 
 		return poolsResult;
-	} catch {
+	} catch (e) {
+		console.log("e: ", e);
 		return [];
 	}
 };

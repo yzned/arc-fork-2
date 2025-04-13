@@ -28,6 +28,7 @@ export async function GetMultipoolChartData(params: {
 
 export async function GetMultipoolInfo(params: {
 	multipool_address: Address;
+	chain_id: number;
 }): Promise<MultipoolInfo> {
 	return await api.get("/portfolio", params);
 }

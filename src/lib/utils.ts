@@ -2,7 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import MultipoolFactory from "@/lib/abi/MultipoolFactory";
 import {
-	ARBITRUM_CHAIN_ID,
+	ARBITRUM_SEPOLIA_CHAIN_ID,
 	ARCANUM_POOL_FACTORY_ADDRESS,
 } from "@/lib/constants";
 import { encodePacked, getContractAddress, keccak256, toBytes } from "viem";
@@ -12,16 +12,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatNumber(num: number, significantDigits = 2): string {
-	// Handle zero case
 	if (num === 0) return "0";
 
-	// For small numbers (between 0 and 1)
+	if (Math.abs(num) < 1e-10) {
+		return num.toExponential(significantDigits);
+	}
+
 	if (num < 1 && num > 0) {
-		// Convert to string and extract decimal part
-		const decimalStr = num.toString().split(".")[1];
+		const decimalStr =
+			num.toLocaleString("fullwide", { useGrouping: false }).split(".")[1] ||
+			"";
 		let leadingZeros = 0;
 
-		// Count leading zeros
 		for (const char of decimalStr) {
 			if (char === "0") {
 				leadingZeros++;
@@ -30,9 +32,10 @@ export function formatNumber(num: number, significantDigits = 2): string {
 			}
 		}
 
-		// Format with precision = leadingZeros + significantDigits
 		return num.toFixed(leadingZeros + significantDigits);
 	}
+
+	// Для обычных чисел
 	return num.toFixed(significantDigits);
 }
 
@@ -70,7 +73,7 @@ export const getMultipoolContractAddress = () => {
 		salt: keccak256(
 			encodePacked(
 				["uint256", "uint256"],
-				[BigInt(ARBITRUM_CHAIN_ID), BigInt(nonce)],
+				[BigInt(ARBITRUM_SEPOLIA_CHAIN_ID), BigInt(nonce)],
 			),
 		),
 		bytecode: MultipoolFactory.bytecode.object,

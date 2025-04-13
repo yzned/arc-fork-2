@@ -5,7 +5,7 @@ import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
 import MenuIcon from "@/icons/menu.svg?react";
 import SettingsIcon from "@/icons/settingsGear.svg?react";
-import { type Chain, Chains } from "@/lib/constants";
+import { type ArcChain, Chains } from "@/lib/constants";
 import { APP_LANGUAGES, changeLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
@@ -413,7 +413,7 @@ export const AppHeaderMobile = () => {
 
 const SelectChain = () => {
 	const [isOpenChainSelect, setIsOpenChainSelect] = useState(false);
-	const [selectedChain, setSelectedChain] = useState<Chain>(Chains[0]);
+	const [selectedChain, setSelectedChain] = useState<ArcChain>(Chains[0]);
 
 	const ChainsColors = Chains.reduce(
 		(acc: { [key: string]: string }, chain) => {

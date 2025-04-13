@@ -17,14 +17,14 @@ import { Link, useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
 import { BottomSheet } from "react-spring-bottom-sheet";
+import { CandleChart } from "../ui/Charts/CandleChart";
+import { LinearChart } from "../ui/Charts/LinearChart";
 import { Toggle } from "../ui/toggle";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
 import type { Address } from "viem";
-import { CandleChart } from "@/components/ui/Charts/CandleChart";
-import { LinearChart } from "@/components/ui/Charts/LinearChart";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
@@ -113,7 +113,7 @@ export const ExploreMobile = observer(() => {
 							)}
 						>
 							<FindAsset
-								defaultAsset={
+								defaultActiveItem={
 									currentPortfolio
 										? {
 												address: currentPortfolio?.multipool as Address,
@@ -130,7 +130,7 @@ export const ExploreMobile = observer(() => {
 												logo: allPortfolios[0]?.logo,
 											}
 								}
-								assets={allPortfolios.map((item) => {
+								data={allPortfolios.map((item) => {
 									return {
 										address: item.multipool as Address,
 										price: item.current_price,

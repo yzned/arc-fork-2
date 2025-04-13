@@ -87,7 +87,10 @@ const MainTableRow = observer(({ row }: { row: ShortMultipoolData }) => {
 
 				<td className="flex gap-2 py-4 pl-4">
 					{formatNumber(Number(row.current_price))}{" "}
-					<PriceChange growing value="12" />
+					<PriceChange
+						value={row?.change_24h || "0"}
+						growing={Number(row?.change_24h) > 0}
+					/>
 				</td>
 				<a
 					onClick={(e) => {

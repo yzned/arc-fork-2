@@ -7,7 +7,7 @@ import {
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
 import ERC20 from "@/lib/abi/ERC20";
 import {
-	ARBITRUM_CHAIN_ID,
+	ARBITRUM_SEPOLIA_CHAIN_ID,
 	ARCANUM_POOL_FACTORY_ADDRESS,
 	MAX_FEE_PER_GAS,
 	MAX_PRIORITY_FEE_PER_GAS,
@@ -52,7 +52,7 @@ export const useDeployPortfolio = () => {
 			ARCANUM_POOL_FACTORY_ADDRESS as Address,
 			BigInt(initialLiquidityAmount || 0),
 		],
-		chainId: ARBITRUM_CHAIN_ID,
+		chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
 		account: wallets[0]?.address as Address,
 	});
 
@@ -61,7 +61,7 @@ export const useDeployPortfolio = () => {
 		abi: ERC20,
 		functionName: "approve",
 		args: [UNISWAP_SWAP_ROUTER_ADDRESS as Address, BigInt(2000)], ///change to correct token amount
-		chainId: ARBITRUM_CHAIN_ID,
+		chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
 		account: wallets[0]?.address as Address,
 	});
 
@@ -100,6 +100,7 @@ export const useDeployPortfolio = () => {
 				],
 				account: wallets[0].address as Address,
 			});
+
 			console.log("tx: ", tx);
 		}
 	};

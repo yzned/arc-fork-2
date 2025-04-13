@@ -19,7 +19,7 @@ import { useDeployPortfolio } from "@/hooks/mutations/useDeployPortfolio";
 import SettingsIcon from "@/icons/settings.svg?react";
 import TemplatesIcon from "@/icons/templates.svg?react";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
-import { ARBITRUM_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
+import { ARBITRUM_SEPOLIA_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
 import type { UniswapPriceData, TokenPriceData } from "@/lib/types";
 import { formatAddress } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -37,7 +37,7 @@ function RouteComponent() {
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,
 			functionName: "latestRoundData",
-			chainId: ARBITRUM_CHAIN_ID,
+			chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
 		})),
 	});
 
@@ -329,8 +329,8 @@ const Overview = observer(({ className }: { className?: string }) => {
 });
 
 const Fees = observer(({ className }: { className?: string }) => {
-	const [opened, setOpened] = useState(false);
-	const [selectedId, setSelectedId] = useState(0);
+	const [opened, setOpened] = useState(true);
+	const [selectedId, setSelectedId] = useState(100);
 	const [advOpen, setAdvOpen] = useState(false);
 
 	const { t } = useTranslation(["main"]);

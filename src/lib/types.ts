@@ -29,6 +29,13 @@ export type Token = {
 	priceFeedAddress?: Address;
 };
 
+export type ShortPoolData = {
+	priceFeedType?: string;
+	poolAddress: string;
+	liquidity?: string;
+	fee: number;
+};
+
 export type BalancesToken = {
 	logo?: string;
 	symbol?: string;

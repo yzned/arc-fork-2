@@ -14,7 +14,6 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as TradeImport } from './routes/trade'
 import { Route as DocsImport } from './routes/docs'
 import { Route as CreateImport } from './routes/create'
-import { Route as AssetsSelectorImport } from './routes/assetsSelector'
 import { Route as IndexImport } from './routes/index'
 import { Route as PortfolioIdImport } from './routes/portfolio/$id'
 import { Route as ExploreIdImport } from './routes/explore/$id'
@@ -36,12 +35,6 @@ const DocsRoute = DocsImport.update({
 const CreateRoute = CreateImport.update({
   id: '/create',
   path: '/create',
-  getParentRoute: () => rootRoute,
-} as any)
-
-const AssetsSelectorRoute = AssetsSelectorImport.update({
-  id: '/assetsSelector',
-  path: '/assetsSelector',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -72,13 +65,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/assetsSelector': {
-      id: '/assetsSelector'
-      path: '/assetsSelector'
-      fullPath: '/assetsSelector'
-      preLoaderRoute: typeof AssetsSelectorImport
       parentRoute: typeof rootRoute
     }
     '/create': {
@@ -123,7 +109,6 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
@@ -133,7 +118,6 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
@@ -144,7 +128,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
-  '/assetsSelector': typeof AssetsSelectorRoute
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
@@ -156,25 +139,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/assetsSelector'
     | '/create'
     | '/docs'
     | '/trade'
     | '/explore/$id'
     | '/portfolio/$id'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/assetsSelector'
-    | '/create'
-    | '/docs'
-    | '/trade'
-    | '/explore/$id'
-    | '/portfolio/$id'
+  to: '/' | '/create' | '/docs' | '/trade' | '/explore/$id' | '/portfolio/$id'
   id:
     | '__root__'
     | '/'
-    | '/assetsSelector'
     | '/create'
     | '/docs'
     | '/trade'
@@ -185,7 +159,6 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AssetsSelectorRoute: typeof AssetsSelectorRoute
   CreateRoute: typeof CreateRoute
   DocsRoute: typeof DocsRoute
   TradeRoute: typeof TradeRoute
@@ -195,7 +168,6 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AssetsSelectorRoute: AssetsSelectorRoute,
   CreateRoute: CreateRoute,
   DocsRoute: DocsRoute,
   TradeRoute: TradeRoute,
@@ -214,7 +186,6 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/assetsSelector",
         "/create",
         "/docs",
         "/trade",
@@ -224,9 +195,6 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
-    },
-    "/assetsSelector": {
-      "filePath": "assetsSelector.tsx"
     },
     "/create": {
       "filePath": "create.tsx"

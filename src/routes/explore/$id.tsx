@@ -32,11 +32,13 @@ import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useChart } from "@/hooks/queries/useChart";
-import { ARBITRUM_CHAIN_ID } from "@/lib/constants";
+import { ARBITRUM_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
+import { useMintBurn } from "@/hooks/mutations/useMintBurn";
+import { useAccountStore } from "@/contexts/AccountContext";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -168,7 +170,7 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
-								defaultAsset={
+								defaultActiveItem={
 									currentPortfolio
 										? {
 												address: currentPortfolio?.multipool as Address,
@@ -185,7 +187,7 @@ export const MainSection = observer(() => {
 												logo: allPortfolios[0]?.logo,
 											}
 								}
-								assets={allPortfolios.map((item) => {
+								data={allPortfolios.map((item) => {
 									return {
 										address: item.multipool as Address,
 										price: item.current_price,
@@ -502,10 +504,10 @@ export const MainSection = observer(() => {
 });
 
 export const RightSection = observer(() => {
-	const [amount, setCurrentAmout] = useState("");
+	const [percentOffset, setPercentOffset] = useState(0);
 
 	const { t } = useTranslation(["main"]);
-
+	const { nativeToken } = useAccountStore();
 	const {
 		setIsOpenAssetModal,
 		selectedAsset,
@@ -513,7 +515,16 @@ export const RightSection = observer(() => {
 		changeRightPanelState,
 		setSlippage,
 		slippage,
+		allPortfolios,
+		portfolioAssets,
+		mintBurnAmount,
+		setMintBurnAmount,
 	} = useExplorePortfolio();
+
+	const selectedAssetData = portfolioAssets?.find(
+		(item) => item.address === selectedAsset.address,
+	);
+	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		let value = e.target.value.replace(",", ".");
@@ -525,13 +536,9 @@ export const RightSection = observer(() => {
 		if (/^\d*\.?\d*$/.test(value)) {
 			const numericValue = value === "" ? "" : value;
 
-			setCurrentAmout(numericValue);
+			setMintBurnAmount(numericValue);
 		}
 	};
-
-	const inputRef = useRef<HTMLInputElement>(null);
-
-	const [percentOffset, setPercentOffset] = useState(0);
 
 	const handleSlippageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		let value = e.target.value.replace(",", ".");
@@ -549,7 +556,6 @@ export const RightSection = observer(() => {
 		}
 	};
 
-	const { allPortfolios } = useExplorePortfolio();
 	const { id } = useParams({ from: "/explore/$id" });
 	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 
@@ -570,8 +576,7 @@ export const RightSection = observer(() => {
 		}
 	}, [slippage]);
 
-	const fetchBalances = () => {};
-
+	const { handleSimulate } = useMintBurn();
 	return (
 		<div className="h-full bg-black ">
 			<div className="sticky top-[72px] h-[calc(100svh-72px)] w-[329px] overflow-scroll border-fill-secondary border-l-[1px] bg-bg-floor-2 text-text-primary">
@@ -743,14 +748,32 @@ export const RightSection = observer(() => {
 								<Input
 									onChange={(e) => handleAmountChange(e)}
 									type="token"
-									value={amount}
+									value={mintBurnAmount}
 									placeholder={t("enterAmount")}
 									className="h-[40px] font-[600] font-namu text-[24px] text-white placeholder:font-droid placeholder:text-[14px]"
 								/>
 								<div className="flex w-full justify-between text-text-secondary">
-									<span className="font-droid text-[12px]">~$ 0</span>
 									<span className="font-droid text-[12px]">
-										{t("balance")} 0
+										~${" "}
+										{new BigNumber(
+											selectedAssetData?.walletBalance?.toString() || "0",
+										)
+											.multipliedBy(
+												new BigNumber(10)
+													.pow(-(nativeToken?.decimals || 0))
+													.multipliedBy(
+														new BigNumber(selectedAsset?.price || 0),
+													),
+											)
+											.toString()}
+									</span>
+									<span className="font-droid text-[12px]">
+										{t("balance")}{" "}
+										{new BigNumber(
+											selectedAssetData?.walletBalance?.toString() || "0",
+										)
+											.multipliedBy(new BigNumber(10).pow(-18))
+											.toString()}
 									</span>
 								</div>
 							</div>
@@ -778,7 +801,7 @@ export const RightSection = observer(() => {
 							</div>
 							<Button
 								className="mt-4 h-10 w-full"
-								onClick={() => fetchBalances()}
+								onClick={() => handleSimulate()}
 							>
 								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>
 							</Button>
@@ -803,7 +826,7 @@ export const RightSection = observer(() => {
 });
 
 export const AssetsModalContent = observer(() => {
-	const { setIsOpenAssetModal, changeSelectedAsset, portfolioAssets } =
+	const { setIsOpenAssetModal, setSelectedAsset, portfolioAssets } =
 		useExplorePortfolio();
 	const { t } = useTranslation(["main"]);
 
@@ -834,29 +857,29 @@ export const AssetsModalContent = observer(() => {
 			</span>
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
-				defaultAsset={{
+				defaultActiveItem={{
 					address: portfolioAssets?.[0].address as Address,
-					chainId: ARBITRUM_CHAIN_ID,
+					chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
 					logo: "/icons/empty-token.svg",
 					name: portfolioAssets?.[0].symbol,
 					symbol: portfolioAssets?.[0].symbol,
 					price: new BigNumber(
-						portfolioAssets?.[0].price.price || 0,
+						portfolioAssets?.[0]?.price?.price || 0,
 					).toString(),
 				}}
-				assets={
+				data={
 					portfolioAssets?.map((item) => {
 						return {
 							address: item.address as Address,
-							chainId: ARBITRUM_CHAIN_ID,
+							chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
 							logo: "/icons/empty-token.svg",
 							name: item.symbol,
 							symbol: item.symbol,
-							price: new BigNumber(item.price.price).toString(),
+							price: new BigNumber(item?.price?.price || 0).toString(),
 						};
 					}) ?? []
 				}
-				onSelectAsset={changeSelectedAsset}
+				onSelectAsset={setSelectedAsset}
 				filters={["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6", "Tag7"]}
 			/>
 		</div>

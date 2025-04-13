@@ -1,20 +1,23 @@
+import { arbitrumSepolia, monadTestnet, type Chain } from "viem/chains";
 import type { Token } from "./types";
 
-export type Chain = {
+export type ArcChain = {
 	logo: string;
 	name: string;
 	id: number;
 	color: string;
 	nativeTokenAddress: string;
+	chain?: Chain;
 };
 
-export const Chains: Array<Chain> = [
+export const Chains: Array<ArcChain> = [
 	{
 		logo: "/icons/chains/arbitrum.svg",
 		name: "Arbitrum",
 		id: 421614,
 		color: "#2D374B",
 		nativeTokenAddress: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+		chain: arbitrumSepolia,
 	},
 	{
 		name: "Monad",
@@ -22,6 +25,7 @@ export const Chains: Array<Chain> = [
 		color: "#836EF9",
 		logo: "/icons/chains/monad.svg",
 		nativeTokenAddress: "0xc555D625828c4527d477e595fF1Dd5801B4a600e",
+		chain: monadTestnet,
 	},
 	// {
 	// 	logo: "/icons/chains/ethereum.svg",
@@ -92,7 +96,9 @@ export const Chains: Array<Chain> = [
 	// },
 ];
 
-export const ARBITRUM_CHAIN_ID = 421614 as const;
+export const ARBITRUM_SEPOLIA_CHAIN_ID = 421614 as const;
+export const ARBITRUM_CHAIN_ID = 42161 as const;
+
 export const ARBITRUM_RPC = "https://arb1.arbitrum.io/rpc";
 
 export const UNI_FEES = [100, 500, 3000, 10000];

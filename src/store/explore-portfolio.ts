@@ -10,10 +10,11 @@ import { makeAutoObservable } from "mobx";
 import type { Address } from "viem";
 
 export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
-	price: {
-		price: string;
-		timestamp: number;
+	price?: {
+		price?: string;
+		timestamp?: number;
 	};
+	walletBalance?: bigint;
 }
 export class ExplorePortfolioStore {
 	isOpenAssetModal: boolean;
@@ -33,10 +34,11 @@ export class ExplorePortfolioStore {
 		...this?.portfolioAssets?.[0],
 		address: this?.portfolioAssets?.[0].address as Address,
 		share: this?.portfolioAssets?.[0].share.toString(),
-		price: this?.portfolioAssets?.[0].price.price,
+		price: this?.portfolioAssets?.[0]?.price?.price,
 	};
 
 	slippage: string;
+	mintBurnAmount?: string;
 
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
@@ -53,9 +55,9 @@ export class ExplorePortfolioStore {
 		this.portfolioAssets = [];
 	}
 
-	setMultipoolAssets = (assets: MultipoolAssetFormated[]) => {
+	setPortfolioAssets = (assets: MultipoolAssetFormated[]) => {
 		this.portfolioAssets = assets.map((item) => {
-			const value = new BigNumber(item.price.price, 16).dividedBy(
+			const value = new BigNumber(item?.price?.price || 0).dividedBy(
 				new BigNumber(2).pow(96),
 			);
 
@@ -91,7 +93,7 @@ export class ExplorePortfolioStore {
 		this.isOpenAssetModal = value;
 	};
 
-	changeSelectedAsset = (asset: Token) => {
+	setSelectedAsset = (asset: Token) => {
 		this.selectedAsset = asset;
 	};
 
@@ -101,6 +103,10 @@ export class ExplorePortfolioStore {
 
 	setSlippage = (value: string) => {
 		this.slippage = value;
+	};
+
+	setMintBurnAmount = (value: string) => {
+		this.mintBurnAmount = value;
 	};
 
 	setIsOpenTransferModal = (value: boolean) => {

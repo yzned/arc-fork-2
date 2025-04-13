@@ -1,7 +1,7 @@
 import { createConfig } from "@privy-io/wagmi";
 import { createPublicClient, createWalletClient } from "viem";
 import { http } from "wagmi";
-import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";
+import { arbitrum, arbitrumSepolia, mainnet, monadTestnet } from "wagmi/chains";
 import {
 	coinbaseWallet,
 	metaMask,
@@ -14,6 +14,11 @@ export const arbitrumPublicClient = createPublicClient({
 	transport: http(),
 });
 
+export const arbitrumSepoliaPublicClient = createPublicClient({
+	chain: arbitrumSepolia,
+	transport: http(),
+});
+
 export const walletClient = createWalletClient({
 	chain: arbitrum,
 	transport: http(),
@@ -21,7 +26,7 @@ export const walletClient = createWalletClient({
 
 export const config = createConfig({
 	multiInjectedProviderDiscovery: true,
-	chains: [mainnet, arbitrum, arbitrumSepolia],
+	chains: [mainnet, arbitrum, arbitrumSepolia, monadTestnet],
 	connectors: [
 		coinbaseWallet(),
 		metaMask(),
@@ -32,6 +37,7 @@ export const config = createConfig({
 		[mainnet.id]: http(),
 		[arbitrum.id]: http(),
 		[arbitrumSepolia.id]: http(),
+		[monadTestnet.id]: http(),
 	},
 });
 

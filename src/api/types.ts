@@ -52,33 +52,52 @@ export interface ShortMultipoolData {
 
 export interface Price {
 	timestamp: number;
-	value: string;
+	value: string | null;
 }
 
 export interface MultipoolAsset {
 	symbol?: string;
 	address: string;
 	collected_cashbacks: string;
-	price: Price;
+	price?: Price;
 	price_data: string;
 	quantity: string;
 	share: number;
 }
 
 export interface MultipoolInfo {
-	assets: MultipoolAsset[];
-	base_fee: number;
-	cashback_fee: number;
-	chain_id: number;
-	contract_address: string;
-	deviation_increase_fee: number;
-	deviation_limit: number;
-	initial_share_price: string;
-	management_fee: number;
-	management_fee_receiver: string;
-	oracle_address: string;
-	owner: string;
-	strategy_manager: string;
-	total_supply: string;
-	total_target_shares: number;
+	cache: {
+		assets: MultipoolAsset[];
+		base_fee: number;
+		cashback_fee: number;
+		chain_id: number;
+		contract_address: string;
+		deviation_increase_fee: number;
+		deviation_limit: number;
+		initial_share_price: string;
+		management_fee: number;
+		management_fee_receiver: string;
+		oracle_address: string;
+		owner: string;
+		strategy_manager: string;
+		total_supply: string;
+		total_target_shares: number;
+	};
+}
+
+export interface OnchainMultipoolAssetInfo {
+	result?: {
+		quantity: bigint;
+		targetShare: bigint;
+		collectedCashbacks: bigint;
+		isUsed: boolean;
+	};
+	status: "success" | "failure" | "pending";
+	error?: Error;
+}
+
+export interface OnchainMultipoolAssetPriceInfo {
+	result?: bigint;
+	status: "success" | "failure" | "pending";
+	error?: Error;
 }

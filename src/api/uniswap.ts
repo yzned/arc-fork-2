@@ -17,7 +17,7 @@ import {
 import ERC20 from "@/lib/abi/ERC20";
 import { arbitrumPublicClient } from "@/lib/config";
 import {
-	ARBITRUM_CHAIN_ID,
+	ARBITRUM_SEPOLIA_CHAIN_ID,
 	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
 	UNISWAP_QUOTER_CONTRACT_ADDRESS,
 	UNI_FEES,
@@ -44,8 +44,16 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 
 	const decimals = await getDecimals({ addresses: [addressA, addressB] });
 
-	const tokenA = new Token(ARBITRUM_CHAIN_ID, addressA, Number(decimals[0]));
-	const tokenB = new Token(ARBITRUM_CHAIN_ID, addressB, Number(decimals[1]));
+	const tokenA = new Token(
+		ARBITRUM_SEPOLIA_CHAIN_ID,
+		addressA,
+		Number(decimals[0]),
+	);
+	const tokenB = new Token(
+		ARBITRUM_SEPOLIA_CHAIN_ID,
+		addressB,
+		Number(decimals[1]),
+	);
 
 	UNI_FEES.map((fee) => {
 		const currentPoolAddress = computePoolAddress({
@@ -124,12 +132,12 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 			});
 
 			const token0Asset: Token = new Token(
-				ARBITRUM_CHAIN_ID,
+				ARBITRUM_SEPOLIA_CHAIN_ID,
 				poolData.token0.toString(),
 				Number(decimals[0]),
 			);
 			const token1Asset: Token = new Token(
-				ARBITRUM_CHAIN_ID,
+				ARBITRUM_SEPOLIA_CHAIN_ID,
 				poolData.token1.toString(),
 				Number(decimals[1]),
 			);
@@ -287,12 +295,12 @@ export const getPoolInfo = async (poolAddress: Address) => {
 	});
 
 	const token0Asset: Token = new Token(
-		ARBITRUM_CHAIN_ID,
+		ARBITRUM_SEPOLIA_CHAIN_ID,
 		token0.toString(),
 		Number(decimals[0]),
 	);
 	const token1Asset: Token = new Token(
-		ARBITRUM_CHAIN_ID,
+		ARBITRUM_SEPOLIA_CHAIN_ID,
 		token1.toString(),
 		Number(decimals[1]),
 	);
@@ -315,9 +323,13 @@ export const createPoolsRoute = async (
 ) => {
 	const decimals = await getDecimals({ addresses: [addressIn, addressOut] });
 
-	const tokenIn = new Token(ARBITRUM_CHAIN_ID, addressIn, Number(decimals[0]));
+	const tokenIn = new Token(
+		ARBITRUM_SEPOLIA_CHAIN_ID,
+		addressIn,
+		Number(decimals[0]),
+	);
 	const tokenOut = new Token(
-		ARBITRUM_CHAIN_ID,
+		ARBITRUM_SEPOLIA_CHAIN_ID,
 		addressOut,
 		Number(decimals[1]),
 	);
@@ -343,7 +355,7 @@ export const createPoolsRoute = async (
 	}
 
 	if (!directPoolAddress) {
-		const WETH = new Token(ARBITRUM_CHAIN_ID, wETH_ADDRESS, 18);
+		const WETH = new Token(ARBITRUM_SEPOLIA_CHAIN_ID, wETH_ADDRESS, 18);
 
 		let bestPool1: Pool | undefined;
 

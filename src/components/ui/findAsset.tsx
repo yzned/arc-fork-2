@@ -1,31 +1,55 @@
 import { Input } from "@/components/ui/Input";
 import { cn, formatNumber } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import {
+	type Dispatch,
+	type SetStateAction,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import FilterIcon from "/src/icons/filter.svg?react";
 import SearchIcon from "/src/icons/search.svg?react";
 import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
-import type { Token } from "@/lib/types";
+import type { ShortPoolData, Token } from "@/lib/types";
+import { useTranslation } from "react-i18next";
+import BigNumber from "bignumber.js";
+import CheckIcon from "@/icons/checkMark.svg?react";
+import { Loader2 } from "lucide-react";
 
-interface FindAssetProps<T> {
-	assets: T[];
+interface FindAssetProps<T, S> {
+	data: T[];
 	filters?: string[];
 	onSelectAsset?: (asset: T) => void;
 	className?: string;
-	defaultAsset: T;
+	defaultActiveItem: T;
 	listClassName?: string;
+	additionalActiveItemInfo?: S[];
+	variant?: "basic" | "with-additional-data";
 }
 
-export function FindAsset<T extends Token>({
-	assets,
+interface FindAssetItemProps<T extends Token, S extends ShortPoolData> {
+	item: T;
+	currentAsset: T;
+	setCurrentAsset: Dispatch<SetStateAction<T>>;
+	onSelectAsset?: (asset: T) => void;
+	variant?: "basic" | "with-additional-data";
+	additionalActiveItemInfo?: S[];
+}
+
+export function FindAsset<T extends Token, S extends ShortPoolData>({
+	data,
 	filters,
 	onSelectAsset,
 	className,
+	additionalActiveItemInfo,
 	listClassName,
-	defaultAsset,
-}: FindAssetProps<T>) {
-	const [asset, setAsset] = useState<T>(defaultAsset);
+	defaultActiveItem,
+	variant = "basic",
+}: FindAssetProps<T, S>) {
+	const [asset, setAsset] = useState<T>(defaultActiveItem);
+
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
@@ -152,45 +176,143 @@ export function FindAsset<T extends Token>({
 					listClassName,
 				)}
 			>
-				{assets.map((item) => (
-					<button
-						type="button"
-						onClick={() => {
-							setAsset(item);
-							if (onSelectAsset) onSelectAsset(item);
-						}}
+				{data.map((item) => (
+					<FindAssetItem
+						item={item}
+						variant={variant}
+						currentAsset={asset}
+						setCurrentAsset={setAsset}
+						onSelectAsset={onSelectAsset}
 						key={item.address}
-						className={cn(
-							"flex h-[56px] w-full cursor-pointer justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
-							item?.address === asset?.address
-								? "bg-text-brand-primary"
-								: "hover:bg-bg-floor-2 ",
-						)}
-					>
-						<div className="flex gap-4">
-							<img
-								src={item.logo || "/icons/empty-token.svg"}
-								className="h-10 w-10 "
-								alt="no-item"
-							/>
-							<div className="flex flex-col items-start justify-center">
-								<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
-									{item?.symbol || "-"}
-								</span>
-								<span className="font-[600] font-namu text-[14px] text-text-tertiary">
-									{item.name}
-								</span>
-							</div>
-						</div>
-						<div className="flex flex-col justify-center text-[14px]">
-							<span className=" text-text-primary">
-								{formatNumber(Number(item.price))} $
-							</span>
-							{/* <PriceChange growing value="23.23" /> */}
-						</div>
-					</button>
+						additionalActiveItemInfo={additionalActiveItemInfo}
+					/>
 				))}
 			</div>
+		</div>
+	);
+}
+
+export function FindAssetItem<T extends Token, S extends ShortPoolData>({
+	item,
+	currentAsset,
+	setCurrentAsset,
+	onSelectAsset,
+	variant = "basic",
+	additionalActiveItemInfo,
+}: FindAssetItemProps<T, S>) {
+	const { t } = useTranslation(["main"]);
+	const [selectedOracle, setSelectedOracle] = useState(
+		additionalActiveItemInfo?.[0]?.poolAddress || "",
+	);
+
+	const isActive = item?.address === currentAsset?.address;
+
+	const handleAssetSelect = () => {
+		setCurrentAsset(item);
+		onSelectAsset?.(item);
+	};
+
+	const renderBasicContent = () => (
+		<div className="flex w-full justify-between">
+			<div className="flex gap-4">
+				<img
+					src={item.logo || "/icons/empty-token.svg"}
+					className="h-10 w-10"
+					alt={item.symbol || "token"}
+				/>
+				<div className="flex flex-col items-start justify-center">
+					<span className="font-namu text-[14px] font-[600] uppercase text-text-primary">
+						{item?.symbol || "-"}
+					</span>
+					<span className="font-namu text-[14px] font-[600] text-text-tertiary">
+						{item.name}
+					</span>
+				</div>
+			</div>
+			<div className="flex flex-col justify-center text-[14px]">
+				<span className="text-text-primary">
+					{formatNumber(Number(item.price))} $
+				</span>
+			</div>
+		</div>
+	);
+
+	const renderOracleInfo = () => {
+		if (!isActive || variant !== "with-additional-data") return null;
+
+		return (
+			<div className="mt-6 flex flex-col gap-4">
+				<span className="text-start">{t("selectOracle")}</span>
+				<div className="flex flex-col gap-2">
+					{additionalActiveItemInfo?.length === 0 && (
+						<Loader2 className="animate-spin scale-75" />
+					)}
+					{additionalActiveItemInfo?.map((item) => (
+						<button
+							type="button"
+							className={cn(
+								"flex w-full cursor-pointer flex-col gap-4 rounded-[8px] border-[1px] border-fill-secondary p-4",
+								selectedOracle === item?.poolAddress &&
+									"border-fill-secondary bg-fill-secondary",
+							)}
+							onClick={() => setSelectedOracle(item?.poolAddress)}
+							key={item?.priceFeedType}
+						>
+							<div className="flex items-center justify-between text-text-primary">
+								<div className="flex items-center gap-4">
+									<span>{item?.priceFeedType}</span>
+									<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
+										{item?.fee / 1000} %
+									</span>
+								</div>
+								{selectedOracle === item?.poolAddress && (
+									<CheckIcon className="scale-190 text-fill-brand-primary-700" />
+								)}
+							</div>
+							<div className="flex flex-col gap-1">
+								<div className="flex items-center justify-between text-[12px]">
+									<span className="text-text-secondary">{t("liquidity")}</span>
+									<span className="text-text-primary">
+										{new BigNumber(item?.liquidity || 0).toFixed(6).toString()}{" "}
+										ETH
+									</span>
+								</div>
+							</div>
+						</button>
+					))}
+				</div>
+			</div>
+		);
+	};
+
+	return variant === "basic" ? (
+		<button
+			type="button"
+			onClick={handleAssetSelect}
+			key={item.address}
+			className={cn(
+				"flex h-[56px] w-full cursor-pointer justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
+				isActive ? "bg-text-brand-primary" : "hover:bg-bg-floor-2",
+			)}
+		>
+			{renderBasicContent()}
+		</button>
+	) : (
+		<div
+			className={cn(
+				"flex w-full flex-col justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
+				isActive ? "bg-fill-primary-800" : "hover:bg-fill-primary-800",
+			)}
+		>
+			<button
+				type="button"
+				onClick={handleAssetSelect}
+				key={item.address}
+				className="flex w-full cursor-pointer justify-between"
+			>
+				{renderBasicContent()}
+			</button>
+			{renderOracleInfo()}
 		</div>
 	);
 }

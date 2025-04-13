@@ -8,6 +8,7 @@ import { Chains } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useAccountStore } from "@/contexts/AccountContext";
+import { useNavigate } from "@tanstack/react-router";
 
 const Select = observer(
 	({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) => {
@@ -128,15 +129,20 @@ const ChainsColors = Chains.reduce((acc: { [key: string]: string }, chain) => {
 }, {});
 
 export const ChainSelector = observer(() => {
-	const { setCurrentChain, currentChain } = useAccountStore();
+	const { setCurrentChain, currentChain, setNewClient } = useAccountStore();
+	const navigate = useNavigate();
 
 	return (
 		<Select
 			value={currentChain.name}
 			onValueChange={(value) => {
-				setCurrentChain(
-					Chains.find((chain) => chain.name === value) || Chains[0],
-				);
+				const newChain =
+					Chains.find((chain) => chain.name === value) || Chains[0];
+
+				setCurrentChain(newChain);
+				setNewClient(newChain.chain);
+
+				navigate({ to: "/" });
 			}}
 		>
 			<SelectTrigger
