@@ -2,23 +2,17 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon } from "lucide-react";
 import ChevronIcon from "../../icons/chevron.svg?react";
 
-import type * as React from "react";
-
-import { Chains } from "@/lib/constants";
-import { cn } from "@/lib/utils";
-import { observer } from "mobx-react-lite";
 import { useAccountStore } from "@/contexts/AccountContext";
+import { arcanumChains } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
+import { observer } from "mobx-react-lite";
+import type * as React from "react";
+import { useChainId, useSwitchChain } from "wagmi";
 
 const Select = observer(
 	({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) => {
-		return (
-			<SelectPrimitive.Root
-				defaultValue="Ethereum"
-				data-slot="select"
-				{...props}
-			/>
-		);
+		return <SelectPrimitive.Root data-slot="select" {...props} />;
 	},
 );
 
@@ -38,8 +32,12 @@ function SelectTrigger({
 			data-slot="select-trigger"
 			className={cn(
 				"group flex h-full w-full items-center justify-between gap-2 whitespace-nowrap bg-transparent px-6 py-2 text-sm text-text-primary outline-none transition-colors ",
-				"data-[chain=arbitrum]:bg-[color-mix(in_srgb,var(--bg-arbitrum),black_20%)] data-[chain=arbitrum]:hover:bg-[var(--bg-arbitrum)]",
-				"data-[chain=monad]:bg-[color-mix(in_srgb,var(--bg-monad),black_20%)] data-[chain=monad]:hover:bg-[var(--bg-monad)]",
+				//arb
+				"data-[chain=42161]:bg-[color-mix(in_srgb,var(--bg-42161),black_20%)] data-[chain=42161]:hover:bg-[var(--bg-42161)]",
+				//arb sep
+				"data-[chain=421614]:bg-[color-mix(in_srgb,var(--bg-421614),black_20%)] data-[chain=421614]:hover:bg-[var(--bg-42161)]",
+				//monad
+				"data-[chain=10143]:bg-[color-mix(in_srgb,var(--bg-10143),black_20%)] data-[chain=10143]:hover:bg-[var(--bg-10143)]",
 
 				// "data-[chain=aurora]:bg-[color-mix(in_srgb,var(--bg-aurora),black_20%)] data-[chain=aurora]:hover:bg-[var(--bg-aurora)]",
 				// "data-[chain=avalanche]:bg-[color-mix(in_srgb,var(--bg-avalanche),black_20%)] data-[chain=avalanche]:hover:bg-[var(--bg-avalanche)]",
@@ -76,7 +74,7 @@ function SelectContent({
 			<SelectPrimitive.Content
 				data-slot="select-content"
 				className={cn(
-					"data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-96 min-w-[8rem] overflow-hidden border border-fill-secondary bg-bg-floor-0 data-[state=closed]:animate-out data-[state=open]:animate-in",
+					" data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-96 overflow-hidden border border-fill-secondary bg-bg-floor-0 data-[state=closed]:animate-out data-[state=open]:animate-in",
 					position === "popper" &&
 						"data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1",
 					className,
@@ -123,38 +121,47 @@ function SelectItem({
 	);
 }
 
-const ChainsColors = Chains.reduce((acc: { [key: string]: string }, chain) => {
-	acc[`--bg-${chain.name.toLowerCase()}`] = chain.color;
-	return acc;
-}, {});
+export const ChainsColors = arcanumChains.reduce(
+	(acc: Record<string, string>, chain) => {
+		if (chain.color) {
+			acc[`--bg-${chain.id}`] = chain.color;
+		}
+		return acc;
+	},
+	{} as Record<string, string>,
+);
 
 export const ChainSelector = observer(() => {
-	const { setCurrentChain, currentChain, setNewClient } = useAccountStore();
 	const navigate = useNavigate();
+
+	const { chains, switchChain } = useSwitchChain();
+	const chainId = useChainId();
+
+	const { setCurrentChain } = useAccountStore();
 
 	return (
 		<Select
-			value={currentChain.name}
+			value={chainId.toString()}
 			onValueChange={(value) => {
 				const newChain =
-					Chains.find((chain) => chain.name === value) || Chains[0];
+					chains.find((chain) => chain.id.toString() === value) || chains[0];
 
+				switchChain({ chainId: newChain.id });
 				setCurrentChain(newChain);
-				setNewClient(newChain.chain);
 
 				navigate({ to: "/" });
 			}}
 		>
 			<SelectTrigger
-				className="w-[202px] cursor-pointer border-fill-secondary border-l "
-				data-chain={currentChain.name.toLowerCase()}
+				className="w-fit min-w-[220px] cursor-pointer border-fill-secondary border-l"
+				data-chain={chainId}
 				style={ChainsColors}
 			>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>
-				{Chains.map((chain) => (
-					<SelectItem value={chain.name} key={chain.id}>
+				{arcanumChains.map((chain) => (
+					<SelectItem value={chain.id.toString()} key={chain.id}>
 						<div className="flex flex-row items-center gap-2">
 							<img src={chain.logo} alt={`${chain.name} logo`} />
 							<span className="font-droid font-normal text-sm tracking-[0.01em]">

@@ -1,3 +1,18 @@
+import ERC20 from "@/lib/abi/ERC20";
+import { config } from "@/lib/config";
+import {
+	ARBITRUM_SEPOLIA_CHAIN_ID,
+	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
+	UNISWAP_QUOTER_CONTRACT_ADDRESS,
+	UNI_FEES,
+	wETH_ADDRESS,
+} from "@/lib/constants";
+import {
+	CurrencyAmount,
+	type Ether,
+	Token,
+	TradeType,
+} from "@uniswap/sdk-core";
 import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 import {
 	FeeAmount,
@@ -7,23 +22,9 @@ import {
 	Trade,
 	computePoolAddress,
 } from "@uniswap/v3-sdk";
-import { type Abi, type Address, decodeAbiParameters, parseUnits } from "viem";
-import {
-	CurrencyAmount,
-	type Ether,
-	Token,
-	TradeType,
-} from "@uniswap/sdk-core";
-import ERC20 from "@/lib/abi/ERC20";
-import { arbitrumPublicClient } from "@/lib/config";
-import {
-	ARBITRUM_SEPOLIA_CHAIN_ID,
-	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
-	UNISWAP_QUOTER_CONTRACT_ADDRESS,
-	UNI_FEES,
-	wETH_ADDRESS,
-} from "@/lib/constants";
 import BigNumber from "bignumber.js";
+import { type Abi, type Address, decodeAbiParameters, parseUnits } from "viem";
+import { getPublicClient } from "wagmi/actions";
 
 export interface Calls {
 	data: string;
@@ -39,6 +40,8 @@ export const Same = (a: Address | string, b: Address | string): boolean => {
 };
 
 export const getPoolsData = async (addressA: Address, addressB: Address) => {
+	const client = getPublicClient(config);
+
 	let poolAddresses: string[] = [];
 	const resultPools: Array<Pool> = [];
 
@@ -49,6 +52,7 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 		addressA,
 		Number(decimals[0]),
 	);
+
 	const tokenB = new Token(
 		ARBITRUM_SEPOLIA_CHAIN_ID,
 		addressB,
@@ -96,7 +100,7 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 		]),
 	];
 
-	const rawResult = await arbitrumPublicClient.multicall({
+	const rawResult = await client.multicall({
 		contracts: contracts.flat(),
 	});
 
@@ -159,8 +163,10 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 };
 
 export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
+	const client = getPublicClient(config, { chainId: 42161 });
+
 	try {
-		const decimals = await arbitrumPublicClient.multicall({
+		const decimals = await client.multicall({
 			contracts:
 				addresses?.map((address) => ({
 					address: address as Address,
@@ -199,8 +205,10 @@ export const priceInNativeToken = (
 };
 
 export const getSwapCount = async (poolAddress: string): Promise<number> => {
-	const latestBlock = await arbitrumPublicClient.getBlockNumber();
-	const latestBlockData = await arbitrumPublicClient.getBlock({
+	const client = getPublicClient(config);
+
+	const latestBlock = await client.getBlockNumber();
+	const latestBlockData = await client.getBlock({
 		blockNumber: latestBlock,
 	});
 
@@ -212,7 +220,7 @@ export const getSwapCount = async (poolAddress: string): Promise<number> => {
 
 	while (low <= high) {
 		const mid = low + (high - low) / BigInt(2);
-		const midBlock = await arbitrumPublicClient.getBlock({ blockNumber: mid });
+		const midBlock = await client.getBlock({ blockNumber: mid });
 
 		if (midBlock.timestamp < oneDayAgoTimestamp) {
 			low = mid + BigInt(1);
@@ -222,7 +230,7 @@ export const getSwapCount = async (poolAddress: string): Promise<number> => {
 		}
 	}
 
-	const swapEvents = await arbitrumPublicClient.getContractEvents({
+	const swapEvents = await client.getContractEvents({
 		address: poolAddress as Address,
 		abi: IUniswapV3PoolABI.abi,
 		eventName: "Swap",
@@ -234,7 +242,9 @@ export const getSwapCount = async (poolAddress: string): Promise<number> => {
 };
 
 export const isGoodPool = async (poolAddress: string): Promise<boolean> => {
-	const code = await arbitrumPublicClient.getCode({
+	const client = getPublicClient(config);
+
+	const code = await client.getCode({
 		address: poolAddress as Address,
 	});
 
@@ -244,6 +254,8 @@ export const isGoodPool = async (poolAddress: string): Promise<boolean> => {
 };
 
 export const getPoolInfo = async (poolAddress: Address) => {
+	const client = getPublicClient(config);
+
 	const contracts = [
 		{
 			address: poolAddress,
@@ -272,7 +284,7 @@ export const getPoolInfo = async (poolAddress: Address) => {
 		},
 	];
 
-	const rawResult = await arbitrumPublicClient.multicall({ contracts });
+	const rawResult = await client.multicall({ contracts });
 
 	if (rawResult.some((res) => res.status !== "success")) {
 		throw new Error("Ошибка получения данных пула");
@@ -405,6 +417,8 @@ export const getOutputQuote = async (
 	route: Route<Token | Ether, Token>,
 	amountIn: BigNumber,
 ) => {
+	const client = getPublicClient(config);
+
 	const { calldata, value } = await SwapQuoter.quoteCallParameters(
 		route,
 		CurrencyAmount.fromRawAmount(
@@ -420,7 +434,7 @@ export const getOutputQuote = async (
 		},
 	);
 
-	const { data } = await arbitrumPublicClient.call({
+	const { data } = await client.call({
 		to: UNISWAP_QUOTER_CONTRACT_ADDRESS,
 		data: calldata as Address,
 	});

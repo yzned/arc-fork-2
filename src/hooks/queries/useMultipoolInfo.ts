@@ -4,87 +4,79 @@ import {
 	type OnchainMultipoolAssetPriceInfo,
 	queryKeys,
 } from "@/api/types";
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ERC20 from "@/lib/abi/ERC20";
 import Multipool from "@/lib/abi/Multipool";
 import { useWallets } from "@privy-io/react-auth";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import BigNumber from "bignumber.js";
 import type { Address } from "viem";
+import { useChainId, usePublicClient } from "wagmi";
 
 export const useMultipoolInfo = (multipool_address: Address) => {
-	const { setPortfolioAssets, setSelectedAsset } = useExplorePortfolio();
+	const { setPortfolioAssets, setSelectedAsset, setShortPortfolioData } =
+		useExplorePortfolio();
 	const { wallets } = useWallets();
+	const chainId = useChainId();
 
-	const { nativeToken, currentClient, currentChain } = useAccountStore();
-
-	// const { data: quantities } = useReadContracts({
-	// 	contracts: portfolioAssets?.map((asset) => ({
-	// 		abi: ERC20,
-	// 		address: asset.address as Address,
-	// 		functionName: "balanceOf",
-	// 		args: [wallets[0]?.address],
-	// 		chainId: currentChain.id as 1 | 42161 | 421614,
-	// 	})),
-	// });
-
-	const { mutateAsync } = useMutation({
-		mutationKey: [queryKeys.multipoolsList, multipool_address, currentClient],
-		mutationFn: async () => {
-			const data = await GetMultipoolInfo({
-				multipool_address,
-				chain_id: currentChain.id,
-			});
-
-			return { data };
-		},
-		onError: (error) => {
-			console.log(error);
-		},
-		onSuccess: async (data) => {
+	const client = usePublicClient();
+	return useQuery({
+		queryKey: [
+			queryKeys.multipoolsList,
+			multipool_address,
+			client,
+			wallets[0]?.address,
+		],
+		enabled: !!multipool_address && !!client,
+		queryFn: async () => {
 			try {
-				const baseAssets = data.data.cache.assets.slice(0, -1).map((item) => ({
+				const data = await GetMultipoolInfo({
+					multipool_address,
+					chain_id: chainId || 42161,
+				});
+
+				const baseAssets = data.cache.assets.slice(0, -1).map((item) => ({
 					...item,
 				}));
 
 				setPortfolioAssets(baseAssets);
+				setShortPortfolioData(data);
 
-				if (baseAssets.length > 0) {
-					const assetInfo = await currentClient?.multicall({
+				if (baseAssets.length > 0 && client && wallets[0]?.address) {
+					const assetInfo = await client?.multicall({
 						contracts: baseAssets.map((item) => ({
 							abi: Multipool,
 							address: multipool_address,
 							functionName: "getAsset",
 							args: [item.address],
-							chainId: nativeToken.chainId,
+							chainId,
 						})),
 					});
 
-					const prices = await currentClient?.multicall({
+					const prices = await client?.multicall({
 						contracts: baseAssets.map((item) => ({
 							abi: Multipool,
 							address: multipool_address,
 							functionName: "getPrice",
 							args: [item.address],
-							chainId: nativeToken.chainId,
+							chainId,
 						})),
 					});
 
-					const walletBalaces = await currentClient?.multicall({
+					const walletBalances = await client?.multicall({
 						contracts: baseAssets.map((asset) => ({
 							abi: ERC20,
 							address: asset.address as Address,
 							functionName: "balanceOf",
 							args: [wallets[0]?.address],
-							chainId: currentChain.id as 1 | 42161 | 421614,
+							chainId: chainId,
 						})),
 					});
 
 					const updatedAssets = baseAssets.map((item, index) => {
 						const assetData = assetInfo[index] as OnchainMultipoolAssetInfo;
 						const priceData = prices[index] as OnchainMultipoolAssetPriceInfo;
-						const walletBalacesData = walletBalaces[
+						const walletBalancesData = walletBalances[
 							index
 						] as OnchainMultipoolAssetPriceInfo;
 
@@ -92,17 +84,15 @@ export const useMultipoolInfo = (multipool_address: Address) => {
 							...item,
 							price: {
 								price:
-									new BigNumber(Number(priceData?.result) || 0)
-										.multipliedBy(
-											new BigNumber(10).pow(-(nativeToken?.decimals || 0)),
-										)
+									new BigNumber(BigInt(priceData?.result || 0).toString())
+										.dividedBy(new BigNumber(2).pow(96))
 										.toString() || "",
 								timestamp: 0,
 							},
 							quantity: assetData?.result?.quantity?.toString() || "0",
 							targetShare: assetData?.result?.targetShare || 0n,
 							collectedCashbacks: assetData?.result?.collectedCashbacks || 0n,
-							walletBalance: walletBalacesData.result || 0n,
+							walletBalance: walletBalancesData.result || 0n,
 						};
 					});
 
@@ -112,16 +102,15 @@ export const useMultipoolInfo = (multipool_address: Address) => {
 						address: updatedAssets[0].address as Address,
 					});
 				}
+
+				return data;
 			} catch (error) {
-				console.error("Multicall error:", error);
+				console.error("useMultipoolInfo error:", error);
+				throw error;
 			}
 		},
-	});
-
-	return useQuery({
-		queryKey: [queryKeys.multipoolsList],
-		queryFn: async () => {
-			return await mutateAsync();
-		},
+		staleTime: Number.POSITIVE_INFINITY,
+		refetchOnMount: false,
+		refetchOnWindowFocus: false,
 	});
 };

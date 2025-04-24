@@ -65,7 +65,8 @@ export interface MultipoolAsset {
 	share: number;
 }
 
-export interface MultipoolInfo {
+//
+export interface MultipoolInfo extends ShortMultipoolData {
 	cache: {
 		assets: MultipoolAsset[];
 		base_fee: number;

@@ -1,25 +1,9 @@
-import type { TokenPriceData } from "@/lib/types";
+import type { SetupToken, TokenPriceData } from "@/lib/types";
 import BigNumber from "bignumber.js";
 import { makeAutoObservable } from "mobx";
 import { v4 as uuidv4 } from "uuid";
 import type { Address } from "viem";
 
-export interface SetupToken {
-	id: string;
-	name: string;
-	symbol: string;
-	address?: Address;
-	logo?: string;
-	priceFeedType?:
-		| "UniswapV3"
-		| "UniswapV2"
-		| "Chainlink"
-		| "FixedPrice"
-		| "RedStone";
-
-	creationState?: "new" | "edited" | "readed";
-	share?: string;
-}
 export class CreatePortfolioStore {
 	///main info
 	name?: string;
@@ -43,6 +27,8 @@ export class CreatePortfolioStore {
 	deviationFee?: string;
 	cashbackFeeShare?: string;
 
+	networkFee?: string;
+
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
 		this.prices = [];
@@ -55,6 +41,24 @@ export class CreatePortfolioStore {
 		);
 
 		return totalShare;
+	}
+
+	get isDisabled(): boolean {
+		return (
+			!this.name ||
+			!this.symbol ||
+			!this.description ||
+			!this.logo ||
+			!this.initialSharePrice ||
+			!this.managementFee ||
+			!this.managementFeeRecepient ||
+			!this.baseFee ||
+			!this.deviationLimit ||
+			!this.deviationFee ||
+			!this.cashbackFeeShare ||
+			this.tokens.length === 0 ||
+			this.tokens.some((token) => !token.address || !token.share)
+		);
 	}
 
 	get dollarPrice() {
@@ -77,6 +81,10 @@ export class CreatePortfolioStore {
 		}
 
 		return 0;
+	}
+
+	setNetworkFee(fee: string) {
+		this.networkFee = fee;
 	}
 
 	setInitialPrice(value: string) {
@@ -161,6 +169,7 @@ export class CreatePortfolioStore {
 		logo,
 		creationState,
 		priceFeedType,
+		poolAddress,
 	}: SetupToken) {
 		this.tokens = this.tokens.map((token) =>
 			token.id === id
@@ -172,6 +181,7 @@ export class CreatePortfolioStore {
 						logo,
 						name,
 						symbol,
+						poolAddress,
 						priceFeedType,
 					}
 				: token,

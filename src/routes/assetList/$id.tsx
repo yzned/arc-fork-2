@@ -5,7 +5,7 @@ import ChevronIcon from "@/icons/chevron.svg?react";
 import { createFileRoute, useParams, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
-export const Route = createFileRoute("/portfolio/$id")({
+export const Route = createFileRoute("/assetList/$id")({
 	component: RouteComponent,
 });
 
@@ -14,7 +14,7 @@ function RouteComponent() {
 	const { t } = useTranslation(["main"]);
 
 	const { allPortfolios } = useExplorePortfolio();
-	const { id } = useParams({ from: "/portfolio/$id" });
+	const { id } = useParams({ from: "/assetList/$id" });
 
 	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 

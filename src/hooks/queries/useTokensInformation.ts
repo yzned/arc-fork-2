@@ -2,16 +2,17 @@ import { useAccountStore } from "@/contexts/AccountContext";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import ERC20 from "@/lib/abi/ERC20";
 import { ARBITRUM_TOKENS } from "@/lib/constants";
-import type { UniswapPriceData } from "@/lib/types";
+import type { ChainId, UniswapPriceData } from "@/lib/types";
 import { useWallets } from "@privy-io/react-auth";
 import BigNumber from "bignumber.js";
 import { runInAction } from "mobx";
 import { useEffect } from "react";
-import { useReadContracts } from "wagmi";
+import { useChainId, useReadContracts } from "wagmi";
 
 export const useTokensInformation = () => {
-	const { tokensInformation, nativeToken } = useAccountStore();
+	const { tokensInformation } = useAccountStore();
 	const { wallets } = useWallets();
+	const chainId = useChainId();
 
 	const { data: quantities } = useReadContracts({
 		contracts: tokensInformation.map((token) => ({
@@ -22,14 +23,14 @@ export const useTokensInformation = () => {
 		})),
 	});
 
-	const priceFeeds = [nativeToken, ...ARBITRUM_TOKENS];
+	const priceFeeds = [...ARBITRUM_TOKENS];
 
 	const { data: prices } = useReadContracts({
 		contracts: priceFeeds.map((item) => ({
 			abi: ChainLinkPriceFeed,
 			address: item.priceFeedAddress,
 			functionName: "latestRoundData",
-			chainId: item?.chainId,
+			chainId: chainId as ChainId,
 		})),
 	});
 
@@ -45,12 +46,13 @@ export const useTokensInformation = () => {
 					: new BigNumber(0);
 			});
 
-			const nativePrice = prices[0]?.result as UniswapPriceData;
-			nativeToken.price = nativePrice?.[1]
-				? new BigNumber(nativePrice[1].toString())
-						.multipliedBy(10 ** -6)
-						.toString()
-				: new BigNumber(0).toString();
+			// const nativePrice = prices[0]?.result as UniswapPriceData;
+
+			// nativeToken.price = nativePrice?.[1]
+			// 	? new BigNumber(nativePrice[1].toString())
+			// 			.multipliedBy(10 ** -6)
+			// 			.toString()
+			// 	: new BigNumber(0).toString();
 
 			ARBITRUM_TOKENS.forEach((arbToken, index) => {
 				const tokenInfo = tokensInformation.find(

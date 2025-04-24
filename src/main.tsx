@@ -34,8 +34,8 @@ if (rootElement) {
 	const root = ReactDOM.createRoot(rootElement);
 
 	root.render(
-		<ExplorePortfolioProvider>
-			<AccountStoreProvider>
+		<AccountStoreProvider>
+			<ExplorePortfolioProvider>
 				<PrivyProvider appId="cm8q7k9oy0013v3x1kqstk46c" config={privyConfig}>
 					<TooltipProvider delayDuration={50}>
 						<QueryClientProvider client={queryClient}>
@@ -45,7 +45,7 @@ if (rootElement) {
 						</QueryClientProvider>
 					</TooltipProvider>
 				</PrivyProvider>
-			</AccountStoreProvider>
-		</ExplorePortfolioProvider>,
+			</ExplorePortfolioProvider>
+		</AccountStoreProvider>,
 	);
 }

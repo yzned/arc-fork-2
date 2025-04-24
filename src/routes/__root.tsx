@@ -4,8 +4,8 @@ import { AppHeader, AppHeaderMobile } from "@/components/header/AppHeader";
 import { useMultipoolsList } from "@/hooks/queries/useMultipoolsList";
 import { useTokensInformation } from "@/hooks/queries/useTokensInformation";
 import { Outlet, createRootRoute, useRouter } from "@tanstack/react-router";
-import React, { Suspense, useEffect } from "react";
 import { observer } from "mobx-react-lite";
+import React, { Suspense, useEffect } from "react";
 
 const TanStackRouterDevtools =
 	process.env.NODE_ENV === "production"

@@ -1,13 +1,15 @@
 import { observer } from "mobx-react-lite";
 
-import BigNumber from "bignumber.js";
-import { InfoTooltip } from "../../ui/tooltips/InformationTooltip";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { formatNumber } from "@/lib/utils";
+import { shorten } from "@/lib/formatNumber";
 import type { MultipoolAssetFormated } from "@/store/explore-portfolio";
+import BigNumber from "bignumber.js";
+import { useTranslation } from "react-i18next";
+import { InfoTooltip } from "../../ui/tooltips/InformationTooltip";
 
 export const PortfolioTable = observer(() => {
 	const { portfolioAssets } = useExplorePortfolio();
+	const { t } = useTranslation(["main"]);
 
 	return (
 		<div className="max-h-[590px] w-full overflow-auto">
@@ -20,25 +22,25 @@ export const PortfolioTable = observer(() => {
 					}}
 				>
 					<tr className="contents text-[14px] text-text-secondary">
-						<th className="px-4 py-3 text-left">Asset</th>
-						<th className="px-4 py-3 text-left">Quantity</th>
-						<th className="py-3 pr-2 text-right">Price, $</th>
+						<th className="px-4 py-3 text-left">{t("token")}</th>
+						<th className="px-4 py-3 text-left">{t("quantity")}</th>
+						<th className="py-3 pr-2 text-right">{t("price")}, $</th>
 						<th className="py-3 pr-2 text-right ">
 							<div className="flex items-center justify-end gap-3">
-								Target share, % <InfoTooltip />
+								{t("targetShare")}, % <InfoTooltip />
 							</div>
 						</th>
 						<th className="py-3 pr-2 pl-5 ">
 							<div className="flex items-center justify-end gap-3">
-								Current share, % <InfoTooltip />
+								{t("currentShare")}, % <InfoTooltip />
 							</div>
 						</th>
 						<th className="py-3 pr-4 text-right ">
 							<div className="flex items-center justify-end gap-3">
-								Price feed type <InfoTooltip />
+								{t("priceFeedType")} <InfoTooltip />
 							</div>
 						</th>
-						<th className="py-3 pr-6 text-left">Address</th>
+						<th className="py-3 pr-6 text-left">{t("address")}</th>
 					</tr>
 				</thead>
 
@@ -79,14 +81,11 @@ const PortfolioTableRow = observer(
 				</td>
 
 				<td className="px-4 py-3">
-					{formatNumber(
-						new BigNumber(row.quantity).multipliedBy(10 ** -18).toNumber(),
-						8,
-					)}
+					{shorten(new BigNumber(row.quantity).multipliedBy(10 ** -6))}
 				</td>
 
-				<td className="px-3 py-4 text-right">
-					{formatNumber(new BigNumber(row?.price?.price || 0).toNumber())}
+				<td className="py-4 pr-2 text-right">
+					{shorten(new BigNumber(row?.price?.price || 0))}
 				</td>
 
 				<td className="px-3 py-4 text-right">{row.share}</td>

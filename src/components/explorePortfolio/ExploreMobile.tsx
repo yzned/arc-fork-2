@@ -3,7 +3,7 @@ import FallIcon from "@/icons/fall.svg?react";
 import RiseIcon from "@/icons/rise.svg?react";
 import { useEffect, useRef, useState } from "react";
 
-import { cn, formatNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { FindAsset } from "../ui/findAsset";
@@ -13,10 +13,12 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import CandlesIcon from "@/icons/candles.svg?react";
 import LinearIcon from "@/icons/linear.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
+import { shorten } from "@/lib/formatNumber";
 import { Link, useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
 import { BottomSheet } from "react-spring-bottom-sheet";
+import type { Address } from "viem";
 import { CandleChart } from "../ui/Charts/CandleChart";
 import { LinearChart } from "../ui/Charts/LinearChart";
 import { Toggle } from "../ui/toggle";
@@ -24,14 +26,12 @@ import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
-import type { Address } from "viem";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
-
 	const [isOpenSettingsSheet, setIsOpenSettingsSheet] = useState(false);
-
 	const [isOpenTokenSelector, setIsOpenTokenSelector] = useState(false);
+
 	const [currentGraph, setCurrentGraph] = useState<
 		"candles" | "linear" | "portfolio"
 	>("candles");
@@ -146,7 +146,7 @@ export const ExploreMobile = observer(() => {
 				</div>
 				<div className="my-20 flex flex-col justify-center">
 					<span className="text-center text-[32px] text-text-primary">
-						${formatNumber(Number(currentPortfolio?.current_price))}
+						${shorten(new BigNumber(currentPortfolio?.current_price || 0))}
 					</span>
 					<span className="text-center text-[14px] text-text-secondary">
 						{t("tvl")}{" "}
@@ -168,7 +168,7 @@ export const ExploreMobile = observer(() => {
 								<RiseIcon />
 							</div>
 							<span className="text-text-primary">
-								${formatNumber(Number(currentPortfolio?.high_24h))}
+								${shorten(new BigNumber(currentPortfolio?.high_24h || 0))}
 							</span>
 						</div>
 						<div className="flex h-[63px] w-full flex-col justify-center rounded-[2px] bg-bg-floor-2 px-4">
@@ -177,7 +177,7 @@ export const ExploreMobile = observer(() => {
 								<FallIcon />
 							</div>
 							<span className="text-text-primary">
-								${formatNumber(Number(currentPortfolio?.low_24h))}
+								${shorten(new BigNumber(currentPortfolio?.low_24h || 0))}
 							</span>
 						</div>
 					</div>
@@ -309,7 +309,7 @@ export const ExploreMobile = observer(() => {
 					</p>
 					{portfolioAssets?.length && portfolioAssets?.length > 10 && (
 						<Link
-							to="/portfolio/$id"
+							to="/assetList/$id"
 							params={{ id: currentPortfolio?.multipool || "" }}
 						>
 							<Button variant={"tertiary"}>{t("viewAll")}</Button>

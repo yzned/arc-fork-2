@@ -1,5 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	useNavigate,
+	useParams,
+} from "@tanstack/react-router";
 
 import { LinearChart } from "@/components/ui/Charts/LinearChart";
 import { Input } from "@/components/ui/Input";
@@ -31,14 +35,16 @@ import { FindAsset } from "@/components/ui/findAsset";
 import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useMintBurn } from "@/hooks/mutations/useMintBurn";
 import { useChart } from "@/hooks/queries/useChart";
+import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
 import { ARBITRUM_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
-import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
-import { useMintBurn } from "@/hooks/mutations/useMintBurn";
+import { type Address, parseUnits } from "viem";
+
 import { useAccountStore } from "@/contexts/AccountContext";
+import { shorten } from "@/lib/formatNumber";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -52,7 +58,7 @@ function RouteComponent() {
 
 	return (
 		<>
-			<div className=" hidden grid-cols-[1fr_329px] grid-rows-1 gap-0 md:grid">
+			<div className="hidden grid-cols-[1fr_329px] grid-rows-1 gap-0 md:grid">
 				<MainSection />
 				<RightSection />
 			</div>
@@ -73,7 +79,11 @@ export const MainSection = observer(() => {
 		"balances" | "positions" | "history"
 	>("balances");
 
+	const [isOpenAssetSelector, setIsOpenAssetSelector] = useState(false);
+
 	const { t } = useTranslation(["main"]);
+
+	const assetSelectorRef = useRef<HTMLDivElement>(null);
 
 	const {
 		isOpenAssetModal,
@@ -82,18 +92,16 @@ export const MainSection = observer(() => {
 		setIsOpenPnlSettingsModal,
 		chartResolution,
 		setChartResolution,
+		portfolioCandlesData,
+		portfolioLinearData,
 	} = useExplorePortfolio();
 
-	const [isOpenAssetSelector, setIsOpenAssetSelector] = useState(false);
-
-	const assetSelectorRef = useRef<HTMLDivElement>(null);
+	const { currentChain } = useAccountStore();
 
 	const { allPortfolios } = useExplorePortfolio();
 	const { id } = useParams({ from: "/explore/$id" });
 
 	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
-
-	const { portfolioCandlesData, portfolioLinearData } = useExplorePortfolio();
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -110,6 +118,8 @@ export const MainSection = observer(() => {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, []);
+
+	const navigate = useNavigate();
 
 	return (
 		<div className="overflow-hidden bg-bg-floor-1">
@@ -276,6 +286,9 @@ export const MainSection = observer(() => {
 					</div>
 					<Button
 						variant={"tertiary"}
+						onClick={() => {
+							navigate({ to: "/manage/$id", params: { id: id } });
+						}}
 						className="h-[40px] w-[193px] text-[14px]"
 					>
 						<span> {t("managePortfolio")}</span>
@@ -456,7 +469,9 @@ export const MainSection = observer(() => {
 							<div className="flex items-center gap-4">
 								<PriceChange growing value="23.23" />
 								<div className="flex items-center gap-1 text-[14px]">
-									<span className="text-text-primary">0.54 ETH</span>
+									<span className="text-text-primary">
+										0.54 {currentChain?.nativeCurrency.symbol}{" "}
+									</span>
 									<span className="text-text-secondary">($37,623)</span>
 								</div>
 							</div>
@@ -507,7 +522,7 @@ export const RightSection = observer(() => {
 	const [percentOffset, setPercentOffset] = useState(0);
 
 	const { t } = useTranslation(["main"]);
-	const { nativeToken } = useAccountStore();
+
 	const {
 		setIsOpenAssetModal,
 		selectedAsset,
@@ -519,8 +534,10 @@ export const RightSection = observer(() => {
 		portfolioAssets,
 		mintBurnAmount,
 		setMintBurnAmount,
+		swapNetworkFee,
 	} = useExplorePortfolio();
 
+	const { currentChain } = useAccountStore();
 	const selectedAssetData = portfolioAssets?.find(
 		(item) => item.address === selectedAsset.address,
 	);
@@ -576,7 +593,8 @@ export const RightSection = observer(() => {
 		}
 	}, [slippage]);
 
-	const { handleSimulate } = useMintBurn();
+	const { handleMintBurn } = useMintBurn();
+
 	return (
 		<div className="h-full bg-black ">
 			<div className="sticky top-[72px] h-[calc(100svh-72px)] w-[329px] overflow-scroll border-fill-secondary border-l-[1px] bg-bg-floor-2 text-text-primary">
@@ -724,12 +742,13 @@ export const RightSection = observer(() => {
 						<div className=" flex flex-col gap-4 px-2">
 							<div className="flex w-full items-center justify-between">
 								<span className="font-droid text-[12px] text-text-secondary leading-[12px]">
-									{rightSectionState === "mint" ? t("mint") : t("burn")} from
+									{rightSectionState === "mint" ? t("mint") : t("burn")}{" "}
+									{t("from")}
 								</span>
 
 								<Button
 									variant={"tertiary"}
-									className="min-w-[90px] p-0 px-1 font-droid flex items-center justify-between "
+									className="flex min-w-[90px] items-center justify-between p-0 px-1 font-droid "
 									onClick={() => setIsOpenAssetModal(true)}
 								>
 									<div className="flex items-center gap-2">
@@ -753,7 +772,8 @@ export const RightSection = observer(() => {
 									className="h-[40px] font-[600] font-namu text-[24px] text-white placeholder:font-droid placeholder:text-[14px]"
 								/>
 								<div className="flex w-full justify-between text-text-secondary">
-									<span className="font-droid text-[12px]">
+									{/* Balance 999999989999899.8750 */}
+									{/* <span className="font-droid text-[12px]">
 										~${" "}
 										{new BigNumber(
 											selectedAssetData?.walletBalance?.toString() || "0",
@@ -766,42 +786,57 @@ export const RightSection = observer(() => {
 													),
 											)
 											.toString()}
-									</span>
+									</span> */}
 									<span className="font-droid text-[12px]">
 										{t("balance")}{" "}
-										{new BigNumber(
-											selectedAssetData?.walletBalance?.toString() || "0",
-										)
-											.multipliedBy(new BigNumber(10).pow(-18))
-											.toString()}
+										{shorten(
+											new BigNumber(
+												selectedAssetData?.walletBalance?.toString() || "0",
+											).multipliedBy(new BigNumber(10).pow(-6)),
+										)}
 									</span>
 								</div>
 							</div>
 						</div>
 						<div>
 							<div className="flex flex-col gap-2 text-[12px]">
-								<div className="flex w-full items-center justify-between">
+								<div className="flex w-full items-center justify-between leading-[14px]">
 									<span className="font-droid text-text-secondary">
 										{t("tokensReceive")}
 									</span>
-									<span className="">0 ETH (0$)</span>
+									<span className="">
+										0 {currentChain?.nativeCurrency.symbol}{" "}
+									</span>
 								</div>
-								<div className="flex w-full items-center justify-between">
+								<div className="flex w-full items-center justify-between leading-[14px]">
 									<span className="font-droid text-text-secondary">
 										{t("transactionFee")}
 									</span>
-									<span className="">0 ETH (0$)</span>
+									<span className="">
+										{shorten(new BigNumber(swapNetworkFee || 0))}{" "}
+										{currentChain?.nativeCurrency.symbol}{" "}
+									</span>
 								</div>
-								<div className="flex w-full items-center justify-between">
+								<div className="flex w-full items-center justify-between leading-[14px]">
 									<span className="font-droid text-text-secondary">
 										{t("minimumReceive")}
 									</span>
-									<span className="">0 ETH (0$)</span>
+									<span className="">
+										0 {currentChain?.nativeCurrency.symbol}{" "}
+									</span>
 								</div>
 							</div>
 							<Button
 								className="mt-4 h-10 w-full"
-								onClick={() => handleSimulate()}
+								disabled={
+									parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
+									parseUnits(mintBurnAmount?.toString() || "0", 6) >
+										parseUnits(
+											selectedAssetData?.walletBalance?.toString() || "0",
+											-6,
+										)
+								}
+								onClick={handleMintBurn}
 							>
 								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>
 							</Button>
@@ -826,8 +861,12 @@ export const RightSection = observer(() => {
 });
 
 export const AssetsModalContent = observer(() => {
-	const { setIsOpenAssetModal, setSelectedAsset, portfolioAssets } =
-		useExplorePortfolio();
+	const {
+		setIsOpenAssetModal,
+		setSelectedAsset,
+		portfolioAssets,
+		selectedAsset,
+	} = useExplorePortfolio();
 	const { t } = useTranslation(["main"]);
 
 	return (
@@ -858,13 +897,15 @@ export const AssetsModalContent = observer(() => {
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
 				defaultActiveItem={{
-					address: portfolioAssets?.[0].address as Address,
+					address:
+						selectedAsset?.address ||
+						(portfolioAssets?.[0]?.address as Address),
 					chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
-					logo: "/icons/empty-token.svg",
-					name: portfolioAssets?.[0].symbol,
-					symbol: portfolioAssets?.[0].symbol,
+					logo: selectedAsset?.logo || "/icons/empty-token.svg",
+					name: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
+					symbol: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
 					price: new BigNumber(
-						portfolioAssets?.[0]?.price?.price || 0,
+						selectedAsset?.price || portfolioAssets?.[0]?.price?.price || 0,
 					).toString(),
 				}}
 				data={

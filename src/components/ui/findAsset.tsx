@@ -1,5 +1,12 @@
 import { Input } from "@/components/ui/Input";
-import { cn, formatNumber } from "@/lib/utils";
+import { useAccountStore } from "@/contexts/AccountContext";
+import CheckIcon from "@/icons/checkMark.svg?react";
+import { shorten } from "@/lib/formatNumber";
+import type { ShortPoolData, Token } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import BigNumber from "bignumber.js";
+import { Loader2 } from "lucide-react";
+import { observer } from "mobx-react-lite";
 import {
 	type Dispatch,
 	type SetStateAction,
@@ -7,16 +14,12 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import FilterIcon from "/src/icons/filter.svg?react";
 import SearchIcon from "/src/icons/search.svg?react";
 import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
-import type { ShortPoolData, Token } from "@/lib/types";
-import { useTranslation } from "react-i18next";
-import BigNumber from "bignumber.js";
-import CheckIcon from "@/icons/checkMark.svg?react";
-import { Loader2 } from "lucide-react";
 
 interface FindAssetProps<T, S> {
 	data: T[];
@@ -201,6 +204,7 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 	additionalActiveItemInfo,
 }: FindAssetItemProps<T, S>) {
 	const { t } = useTranslation(["main"]);
+
 	const [selectedOracle, setSelectedOracle] = useState(
 		additionalActiveItemInfo?.[0]?.poolAddress || "",
 	);
@@ -209,63 +213,75 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 
 	const handleAssetSelect = () => {
 		setCurrentAsset(item);
-		onSelectAsset?.(item);
+		if (!isActive) {
+			onSelectAsset?.(item);
+		}
 	};
 
-	const renderBasicContent = () => (
-		<div className="flex w-full justify-between">
-			<div className="flex gap-4">
-				<img
-					src={item.logo || "/icons/empty-token.svg"}
-					className="h-10 w-10"
-					alt={item.symbol || "token"}
-				/>
-				<div className="flex flex-col items-start justify-center">
-					<span className="font-namu text-[14px] font-[600] uppercase text-text-primary">
-						{item?.symbol || "-"}
-					</span>
-					<span className="font-namu text-[14px] font-[600] text-text-tertiary">
-						{item.name}
+	const BasicContent = () => {
+		return (
+			<div className="flex w-full justify-between">
+				<div className="flex gap-4">
+					<img
+						src={item.logo || "/icons/empty-token.svg"}
+						className="h-10 w-10"
+						alt={item.symbol || "token"}
+					/>
+					<div className="flex flex-col items-start justify-center">
+						<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
+							{item?.symbol || "-"}
+						</span>
+						<span className="font-[600] font-namu text-[14px] text-text-tertiary">
+							{item.name}
+						</span>
+					</div>
+				</div>
+				<div className="flex flex-col justify-center text-[14px]">
+					<span className="text-text-primary">
+						{shorten(new BigNumber(item.price || 0))} $
 					</span>
 				</div>
 			</div>
-			<div className="flex flex-col justify-center text-[14px]">
-				<span className="text-text-primary">
-					{formatNumber(Number(item.price))} $
-				</span>
-			</div>
-		</div>
-	);
+		);
+	};
 
-	const renderOracleInfo = () => {
+	const OracleInfo = observer(() => {
 		if (!isActive || variant !== "with-additional-data") return null;
+
+		const { currentChain } = useAccountStore();
 
 		return (
 			<div className="mt-6 flex flex-col gap-4">
 				<span className="text-start">{t("selectOracle")}</span>
 				<div className="flex flex-col gap-2">
 					{additionalActiveItemInfo?.length === 0 && (
-						<Loader2 className="animate-spin scale-75" />
+						<Loader2 className="scale-75 animate-spin" />
 					)}
-					{additionalActiveItemInfo?.map((item) => (
+					{additionalActiveItemInfo?.map((oracle) => (
 						<button
 							type="button"
 							className={cn(
 								"flex w-full cursor-pointer flex-col gap-4 rounded-[8px] border-[1px] border-fill-secondary p-4",
-								selectedOracle === item?.poolAddress &&
+								selectedOracle === oracle?.poolAddress &&
 									"border-fill-secondary bg-fill-secondary",
 							)}
-							onClick={() => setSelectedOracle(item?.poolAddress)}
-							key={item?.priceFeedType}
+							onClick={() => {
+								setSelectedOracle(oracle?.poolAddress);
+								onSelectAsset?.({
+									...item,
+									poolAddress: oracle.poolAddress,
+								});
+							}}
+							key={oracle?.priceFeedType}
 						>
 							<div className="flex items-center justify-between text-text-primary">
 								<div className="flex items-center gap-4">
-									<span>{item?.priceFeedType}</span>
+									<span>{oracle?.priceFeedType}</span>
 									<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
-										{item?.fee / 1000} %
+										{oracle?.fee / 1000} %
 									</span>
 								</div>
-								{selectedOracle === item?.poolAddress && (
+								{selectedOracle === oracle?.poolAddress && (
 									<CheckIcon className="scale-190 text-fill-brand-primary-700" />
 								)}
 							</div>
@@ -273,8 +289,10 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 								<div className="flex items-center justify-between text-[12px]">
 									<span className="text-text-secondary">{t("liquidity")}</span>
 									<span className="text-text-primary">
-										{new BigNumber(item?.liquidity || 0).toFixed(6).toString()}{" "}
-										ETH
+										{new BigNumber(oracle?.liquidity || 0)
+											.toFixed(6)
+											.toString()}{" "}
+										{currentChain?.nativeCurrency.symbol}
 									</span>
 								</div>
 							</div>
@@ -283,7 +301,7 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 				</div>
 			</div>
 		);
-	};
+	});
 
 	return variant === "basic" ? (
 		<button
@@ -295,7 +313,7 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 				isActive ? "bg-text-brand-primary" : "hover:bg-bg-floor-2",
 			)}
 		>
-			{renderBasicContent()}
+			<BasicContent />
 		</button>
 	) : (
 		<div
@@ -310,9 +328,9 @@ export function FindAssetItem<T extends Token, S extends ShortPoolData>({
 				key={item.address}
 				className="flex w-full cursor-pointer justify-between"
 			>
-				{renderBasicContent()}
+				<BasicContent />
 			</button>
-			{renderOracleInfo()}
+			<OracleInfo />
 		</div>
 	);
 }

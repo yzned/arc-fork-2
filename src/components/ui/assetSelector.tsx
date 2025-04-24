@@ -1,25 +1,28 @@
-import { observer } from "mobx-react-lite";
-import { ModalBase } from "./modalBase";
 import { useAccountStore } from "@/contexts/AccountContext";
-import SearchAssetIcon from "../../icons/searchAsset.svg?react";
-import { useTranslation } from "react-i18next";
-import type { ShortPoolData, Token } from "@/lib/types";
-import { FindAsset } from "./findAsset";
-import { ARBITRUM_TOKENS, wETH_ADDRESS } from "@/lib/constants";
-import { useEffect, useState } from "react";
 import { usePools } from "@/hooks/queries/usePools";
 import LinkIcon from "@/icons/link.svg?react";
-import { Button } from "./button";
 import SmallXIcon from "@/icons/smallX.svg?react";
+import { ARBITRUM_TOKENS } from "@/lib/constants";
+import type { ShortPoolData, Token } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import { observer } from "mobx-react-lite";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import SearchAssetIcon from "../../icons/searchAsset.svg?react";
+import { Button } from "./button";
+import { FindAsset } from "./findAsset";
+import { ModalBase } from "./modalBase";
 
 export const AssetSelector = observer(
 	({
 		logo,
 		symbol,
 		onSelectAsset,
+		className,
 	}: {
 		logo?: string;
 		symbol?: string;
+		className?: string;
 		onSelectAsset: (item: Token) => void;
 	}) => {
 		const { isOpenAssetSelector, setIsOpenAssetSelector } = useAccountStore();
@@ -40,11 +43,18 @@ export const AssetSelector = observer(
 					onClick={() => {
 						setIsOpenAssetSelector(true);
 					}}
-					className="mt-[1px] flex w-[248px] justify-between border-fill-secondary border-b py-2"
+					className={cn(
+						"mt-[1px] flex w-[248px] justify-between border-fill-secondary border-b py-2",
+						className,
+					)}
 				>
 					{logo && symbol ? (
 						<div className="flex h-[21px] items-center gap-2">
-							<img src={logo} className="h-4 w-4" alt="no-logo" />
+							<img
+								src={logo || "/icons/empty-token.svg"}
+								className="h-4 w-4"
+								alt="no-logo"
+							/>
 							<span className="text-[16px]">{symbol}</span>
 						</div>
 					) : (
@@ -60,6 +70,20 @@ export const AssetSelector = observer(
 export const AssetSelectorModalContent = observer(
 	({ onSelectAsset }: { onSelectAsset?: (item: Token) => void }) => {
 		const { t } = useTranslation(["main"]);
+		const { tokensInformation, currentChain } = useAccountStore();
+
+		const tokens = ARBITRUM_TOKENS.map((item) => {
+			const tokenInfo = tokensInformation?.find(
+				(info) => info.address === item.address,
+			);
+			return {
+				...item,
+				price: tokenInfo?.price?.toFixed(2)?.toString() || "",
+			};
+		});
+
+		const [pools, setPools] = useState<ShortPoolData[]>();
+		const [selectedAsset, setSelectedAsset] = useState<Token>(tokens[0]);
 
 		const { setIsOpenAssetSelector } = useAccountStore();
 
@@ -69,29 +93,15 @@ export const AssetSelectorModalContent = observer(
 				.catch((err) => console.error("Failed to copy : ", err));
 		};
 
-		const { tokensInformation } = useAccountStore();
-
-		const [pools, setPools] = useState<ShortPoolData[]>();
-
-		const tokens = ARBITRUM_TOKENS.map((item) => {
-			const tokenInfo = tokensInformation.find(
-				(info) => info.address === item.address,
-			);
-
-			return {
-				...item,
-				price: tokenInfo?.price?.toFixed(2)?.toString() || "",
-			};
-		});
-
-		const [selectedAsset, setSelectedAsset] = useState<Token>(tokens[0]);
-
 		useEffect(() => {
 			async function fetchPools() {
 				try {
 					setPools([]);
 
-					const poolsData = await usePools(wETH_ADDRESS, selectedAsset.address);
+					const poolsData = await usePools(
+						currentChain?.nativeTokenAddress || "0x",
+						selectedAsset.address,
+					);
 
 					const filteredPools = poolsData?.filter(
 						(pool) => pool?.liquidity !== undefined && pool.fee !== undefined,
@@ -104,7 +114,7 @@ export const AssetSelectorModalContent = observer(
 			}
 
 			fetchPools();
-		}, [selectedAsset]);
+		}, [selectedAsset.address, currentChain?.nativeTokenAddress]);
 
 		return (
 			<div>
@@ -114,7 +124,7 @@ export const AssetSelectorModalContent = observer(
 						defaultActiveItem={tokens[0]}
 						data={tokens}
 						additionalActiveItemInfo={pools}
-						className="px-4 py-6 w-[400px] h-[570px]"
+						className="h-[570px] w-[400px] px-4 py-6"
 						onSelectAsset={(item) => {
 							setSelectedAsset(item);
 						}}
@@ -174,7 +184,7 @@ export const AssetSelectorModalContent = observer(
 									<span className="text-text-primary ">
 										{selectedAsset?.symbol}
 									</span>
-									<div className="flex items-center text-text-secondary gap-1">
+									<div className="flex items-center gap-1 text-text-secondary">
 										<span className="font-droid text-[12px]">{`${selectedAsset?.address.slice(0, 4)}...${selectedAsset?.address.slice(-4)}`}</span>
 										<LinkIcon className="mb-[2px] scale-85" />
 									</div>

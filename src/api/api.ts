@@ -12,19 +12,18 @@ export class ApiError extends Error {
 async function request(
 	entrypoint: string,
 	method: "POST" | "GET" = "GET",
-	body?: object,
+	body?: FormData | object,
 ) {
-	//
 	const address =
 		apiRoot + (entrypoint[0] === "/" ? entrypoint : `/${entrypoint}`);
-	// const token = localStorage.getItem(LS_TOKEN) || null;
+
+	const isFormData = body instanceof FormData;
 
 	const res = await fetch(address, {
 		method,
-		body: JSON.stringify(body),
+		body: isFormData ? body : JSON.stringify(body),
 		headers: {
-			...(body && { "Content-Type": "application/json" }),
-			// ...(token && { Authorization: `Bearer ${token}` }),
+			...(!isFormData && body && { "Content-Type": "application/json" }),
 		},
 	});
 
@@ -54,8 +53,13 @@ const api = {
 		}
 		return request(entrypoint + queryStr);
 	},
+
 	post(entrypoint: string, body?: object) {
 		return request(entrypoint, "POST", body);
+	},
+
+	postFormData(entrypoint: string, formData: FormData) {
+		return request(entrypoint, "POST", formData);
 	},
 };
 

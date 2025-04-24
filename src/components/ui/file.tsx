@@ -1,7 +1,10 @@
 import JpgIcon from "@/icons/jpg.svg?react";
 import PngIcon from "@/icons/png.svg?react";
+import TrashIcon from "@/icons/trash.svg?react";
+
 import clsx from "clsx";
 import { useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const getSize = (size: number): `${string}${"b" | "kb" | "mb"}` => {
 	if (size < 1000) return `${size}b`;
@@ -20,6 +23,7 @@ function FileInput({
 	required: boolean;
 	onSelect?: (file?: File) => void;
 }) {
+	const { t } = useTranslation(["main"]);
 	const [fileSelected, setFileSelected] = useState<FileList | null>(null);
 	const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -53,16 +57,16 @@ function FileInput({
 				"group flex flex-row overflow-hidden text-text-secondary hover:text-fill-brand-secondary-500",
 			)}
 		>
-			<label className="flex w-full cursor-pointer flex-col gap-3 overflow-hidden font-droid text-base text-current">
+			<label className="flex w-full cursor-pointer flex-col overflow-hidden font-droid text-base text-current">
 				<span
 					data-required={required}
-					className="font-droid text-text-primary text-xs after:ml-0.5 after:text-negative-primary data-[required=true]:after:content-['*']"
+					className="mb-3 font-droid text-text-primary text-xs after:ml-0.5 after:text-negative-primary data-[required=true]:after:content-['*']"
 				>
 					{label}
 				</span>
 				<span
 					data-visible={fileSelected !== null}
-					className="flex flex-row items-end gap-2 text-nowrap px-2 data-[visible=false]:justify-between"
+					className="mb-2 flex flex-row items-end gap-2 text-nowrap px-2 data-[visible=false]:justify-between "
 				>
 					{uploadData.format === "jpg" && (
 						<JpgIcon className="min-w-4 fill-text-primary group-data-[invalid=true]:fill-text-quartinary" />
@@ -72,9 +76,13 @@ function FileInput({
 					)}
 					<span
 						data-visible={fileSelected !== null}
-						className="max-w-full truncate text-text-secondary leading-[14px] transition-colors group-data-[invalid=true]:text-text-quartinary"
+						className="max-w-full truncate text-text-primary leading-[14px] transition-colors group-data-[invalid=true]:text-text-quartinary"
 					>
-						{fileSelected ? fileSelected[0].name : "Select file"}
+						{fileSelected ? (
+							fileSelected[0].name
+						) : (
+							<span className="text-text-secondary">{t("selectFile")}</span>
+						)}
 					</span>
 					<span
 						data-visible={fileSelected !== null}
@@ -107,17 +115,20 @@ function FileInput({
 				</span>
 			</label>
 
-			<button
-				type="button"
-				data-visible={fileSelected !== null}
-				className="-mr-6 mt-px aspect-square size-6 cursor-pointer bg-[url(/icons/delete.svg)] bg-cover bg-no-repeat transition-all data-[visible=true]:mr-0 data-[visible=true]:ml-2"
-				onClick={() => {
-					if (!inputRef.current) return;
-					inputRef.current.value = "";
-					setFileSelected(null);
-					onSelect?.(undefined);
-				}}
-			/>
+			{fileSelected && (
+				<button
+					type="button"
+					className="mt-auto mb-1 ml-2 flex size-6 cursor-pointer items-center justify-center rounded-[2px] bg-fill-brand-primary-700 transition-all"
+					onClick={() => {
+						if (!inputRef.current) return;
+						inputRef.current.value = "";
+						setFileSelected(null);
+						onSelect?.(undefined);
+					}}
+				>
+					<TrashIcon className="text-text-primary" width={11} height={11} />
+				</button>
+			)}
 		</div>
 	);
 }

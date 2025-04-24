@@ -6,8 +6,8 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SmallXIcon from "@/icons/smallX.svg?react";
 import { useTranslation } from "react-i18next";
-import { Button } from "../../ui/button";
 import { Input } from "../../ui/Input";
+import { Button } from "../../ui/button";
 import { ModalBase } from "../../ui/modalBase";
 
 export const BalancesTable = observer(() => {

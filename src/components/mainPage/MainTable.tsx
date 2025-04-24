@@ -5,12 +5,12 @@ import SortAsc from "../../icons/sortAsc.svg?react";
 
 import type { ShortMultipoolData } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { shorten } from "@/lib/formatNumber";
 import { Link } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 import { PriceChange } from "../ui/priceChange";
 import { InfoTooltip } from "../ui/tooltips/InformationTooltip";
-import { formatNumber } from "@/lib/utils";
 
 export const MainTable = observer(() => {
 	const { allPortfolios } = useExplorePortfolio();
@@ -70,23 +70,21 @@ const MainTableRow = observer(({ row }: { row: ShortMultipoolData }) => {
 					<span>{row.symbol}</span>
 				</td>
 
-				<td className="px-3 py-4">{row.name}</td>
+				<td className="py-4 pl-4">{row.name}</td>
 
 				<td className="px-3 py-4 text-left">
-					{formatNumber(Number(row.current_price))}
+					{shorten(new BigNumber(row.current_price))}
 				</td>
 				<td className="py-4 pl-4 ">
-					{formatNumber(
+					{shorten(
 						new BigNumber(
 							Number(row?.total_supply) * Number(row?.current_price),
-						)
-							.multipliedBy(10 ** -8)
-							.toNumber(),
+						).multipliedBy(10 ** -8),
 					)}
 				</td>
 
 				<td className="flex gap-2 py-4 pl-4">
-					{formatNumber(Number(row.current_price))}{" "}
+					{shorten(new BigNumber(row.current_price))}{" "}
 					<PriceChange
 						value={row?.change_24h || "0"}
 						growing={Number(row?.change_24h) > 0}

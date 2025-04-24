@@ -15,8 +15,9 @@ import { Route as TradeImport } from './routes/trade'
 import { Route as DocsImport } from './routes/docs'
 import { Route as CreateImport } from './routes/create'
 import { Route as IndexImport } from './routes/index'
-import { Route as PortfolioIdImport } from './routes/portfolio/$id'
+import { Route as ManageIdImport } from "./routes/manage/$id"
 import { Route as ExploreIdImport } from './routes/explore/$id'
+import { Route as AssetListIdImport } from './routes/assetList/$id'
 
 // Create/Update Routes
 
@@ -44,15 +45,21 @@ const IndexRoute = IndexImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const PortfolioIdRoute = PortfolioIdImport.update({
-  id: '/portfolio/$id',
-  path: '/portfolio/$id',
+const ManageIdRoute = ManageIdImport.update({
+  id: '/manage/$id',
+  path: '/manage/$id',
   getParentRoute: () => rootRoute,
 } as any)
 
 const ExploreIdRoute = ExploreIdImport.update({
   id: '/explore/$id',
   path: '/explore/$id',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AssetListIdRoute = AssetListIdImport.update({
+  id: '/assetList/$id',
+  path: '/assetList/$id',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -88,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TradeImport
       parentRoute: typeof rootRoute
     }
+    '/assetList/$id': {
+      id: '/assetList/$id'
+      path: '/assetList/$id'
+      fullPath: '/assetList/$id'
+      preLoaderRoute: typeof AssetListIdImport
+      parentRoute: typeof rootRoute
+    }
     '/explore/$id': {
       id: '/explore/$id'
       path: '/explore/$id'
@@ -95,11 +109,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreIdImport
       parentRoute: typeof rootRoute
     }
-    '/portfolio/$id': {
-      id: '/portfolio/$id'
-      path: '/portfolio/$id'
-      fullPath: '/portfolio/$id'
-      preLoaderRoute: typeof PortfolioIdImport
+    '/manage/$id': {
+      id: '/manage/$id'
+      path: '/manage/$id'
+      fullPath: '/manage/$id'
+      preLoaderRoute: typeof ManageIdImport
       parentRoute: typeof rootRoute
     }
   }
@@ -112,8 +126,9 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
+  '/assetList/$id': typeof AssetListIdRoute
   '/explore/$id': typeof ExploreIdRoute
-  '/portfolio/$id': typeof PortfolioIdRoute
+  '/manage/$id': typeof ManageIdRoute
 }
 
 export interface FileRoutesByTo {
@@ -121,8 +136,9 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
+  '/assetList/$id': typeof AssetListIdRoute
   '/explore/$id': typeof ExploreIdRoute
-  '/portfolio/$id': typeof PortfolioIdRoute
+  '/manage/$id': typeof ManageIdRoute
 }
 
 export interface FileRoutesById {
@@ -131,8 +147,9 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/docs': typeof DocsRoute
   '/trade': typeof TradeRoute
+  '/assetList/$id': typeof AssetListIdRoute
   '/explore/$id': typeof ExploreIdRoute
-  '/portfolio/$id': typeof PortfolioIdRoute
+  '/manage/$id': typeof ManageIdRoute
 }
 
 export interface FileRouteTypes {
@@ -142,18 +159,27 @@ export interface FileRouteTypes {
     | '/create'
     | '/docs'
     | '/trade'
+    | '/assetList/$id'
     | '/explore/$id'
-    | '/portfolio/$id'
+    | '/manage/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/create' | '/docs' | '/trade' | '/explore/$id' | '/portfolio/$id'
+  to:
+    | '/'
+    | '/create'
+    | '/docs'
+    | '/trade'
+    | '/assetList/$id'
+    | '/explore/$id'
+    | '/manage/$id'
   id:
     | '__root__'
     | '/'
     | '/create'
     | '/docs'
     | '/trade'
+    | '/assetList/$id'
     | '/explore/$id'
-    | '/portfolio/$id'
+    | '/manage/$id'
   fileRoutesById: FileRoutesById
 }
 
@@ -162,8 +188,9 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   DocsRoute: typeof DocsRoute
   TradeRoute: typeof TradeRoute
+  AssetListIdRoute: typeof AssetListIdRoute
   ExploreIdRoute: typeof ExploreIdRoute
-  PortfolioIdRoute: typeof PortfolioIdRoute
+  ManageIdRoute: typeof ManageIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -171,8 +198,9 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   DocsRoute: DocsRoute,
   TradeRoute: TradeRoute,
+  AssetListIdRoute: AssetListIdRoute,
   ExploreIdRoute: ExploreIdRoute,
-  PortfolioIdRoute: PortfolioIdRoute,
+  ManageIdRoute: ManageIdRoute,
 }
 
 export const routeTree = rootRoute
@@ -189,8 +217,9 @@ export const routeTree = rootRoute
         "/create",
         "/docs",
         "/trade",
+        "/assetList/$id",
         "/explore/$id",
-        "/portfolio/$id"
+        "/manage/$id"
       ]
     },
     "/": {
@@ -205,11 +234,14 @@ export const routeTree = rootRoute
     "/trade": {
       "filePath": "trade.tsx"
     },
+    "/assetList/$id": {
+      "filePath": "assetList/$id.tsx"
+    },
     "/explore/$id": {
       "filePath": "explore/$id.tsx"
     },
-    "/portfolio/$id": {
-      "filePath": "portfolio/$id.tsx"
+    "/manage/$id": {
+      "filePath": "manage/$id.tsx"
     }
   }
 }

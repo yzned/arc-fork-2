@@ -1,36 +1,46 @@
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
-import { ChainSelector } from "@/components/ui/chain-select";
+import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
 import MenuIcon from "@/icons/menu.svg?react";
 import SettingsIcon from "@/icons/settingsGear.svg?react";
-import { type ArcChain, Chains } from "@/lib/constants";
+import { arcanumChains } from "@/lib/constants";
 import { APP_LANGUAGES, changeLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
+import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BottomSheet } from "react-spring-bottom-sheet";
+import { useAccount, useSwitchChain } from "wagmi";
 import ShortLogo from "/public/icons/logos/short.svg?react";
 import DiscordIcon from "/public/icons/socials/discord.svg?react";
 import GitIcon from "/public/icons/socials/github.svg?react";
 import TelegramIcon from "/public/icons/socials/telegram.svg?react";
 import TwitterIcon from "/public/icons/socials/twitter.svg?react";
+import { ChainSelector, ChainsColors } from "../ui/chain-select";
+import { ConnectivityIndicator } from "../ui/connectivityIndicator";
+import { RadioButton } from "../ui/radiobutton";
 import { ConnectWallet } from "./ConnectWallet";
-import { Input } from "@/components/ui/Input";
+
+const MOCK_RPC_DATA = [
+	{ rpcName: "RPC_1", connectValue: 50 },
+	{ rpcName: "RPC_2", connectValue: 150 },
+	{ rpcName: "RPC_3", connectValue: 300 },
+];
 
 export const AppHeader = () => {
-	const location = useLocation();
-	const currentPath = location.pathname;
-
-	const { i18n, t } = useTranslation(["main"]);
-
 	const [isOpenSettingsSelector, setIsOpenSettingsSelector] = useState(false);
+	const { allPortfolios } = useExplorePortfolio();
+	const location = useLocation();
 
 	const settingsRef = useRef<HTMLDivElement>(null);
 
-	const { allPortfolios } = useExplorePortfolio();
+	const { i18n, t } = useTranslation(["main"]);
+
+	const currentPath = location.pathname;
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -151,7 +161,7 @@ export const AppHeader = () => {
 						<div
 							className={cn(
 								"overflow-scroll transition-all duration-300 ",
-								isOpenSettingsSelector ? "max-h-[300px] " : "max-h-0 ",
+								isOpenSettingsSelector ? "max-h-[330px] " : "max-h-0 ",
 							)}
 						>
 							<div className="flex flex-col gap-8 p-4">
@@ -159,13 +169,18 @@ export const AppHeader = () => {
 									<span className="text-[12px] text-text-secondary">
 										RPC endpoint
 									</span>
-									<div className="flex gap-1">
-										<Button className="w-full" variant="selector">
-											Label
-										</Button>
-										<Button className="w-full" variant="selector">
-											Custom
-										</Button>
+									<div className="flex flex-col gap-1">
+										{MOCK_RPC_DATA.map((rpc) => (
+											<div key={rpc.rpcName} className="flex justify-between">
+												<RadioButton
+													label={rpc.rpcName}
+													value={rpc.rpcName}
+													name={rpc.rpcName}
+												/>
+
+												<ConnectivityIndicator value={rpc.connectValue} />
+											</div>
+										))}
 									</div>
 									<Input className="text-text-primary" />
 								</div>
@@ -391,17 +406,22 @@ export const AppHeaderMobile = () => {
 			>
 				<div className="flex flex-col gap-6 px-4 pb-[56px]">
 					<span className="text-[14px] text-text-secondary ">Settings</span>
-					<div className="flex flex-col gap-4 ">
+					<div className="flex flex-col gap-4">
 						<span className="text-[12px] text-text-secondary">
 							RPC endpoint
 						</span>
-						<div className="flex gap-1">
-							<Button className="w-full bg-fill-secondary" variant="selector">
-								Label
-							</Button>
-							<Button className="w-full bg-fill-secondary" variant="selector">
-								Custom
-							</Button>
+						<div className="flex flex-col gap-1">
+							{MOCK_RPC_DATA.map((rpc) => (
+								<div key={rpc.rpcName} className="flex justify-between">
+									<RadioButton
+										label={rpc.rpcName}
+										value={rpc.rpcName}
+										name={rpc.rpcName}
+									/>
+
+									<ConnectivityIndicator value={rpc.connectValue} />
+								</div>
+							))}
 						</div>
 						<Input className="text-text-primary" />
 					</div>
@@ -411,45 +431,54 @@ export const AppHeaderMobile = () => {
 	);
 };
 
-const SelectChain = () => {
+const SelectChain = observer(() => {
 	const [isOpenChainSelect, setIsOpenChainSelect] = useState(false);
-	const [selectedChain, setSelectedChain] = useState<ArcChain>(Chains[0]);
 
-	const ChainsColors = Chains.reduce(
-		(acc: { [key: string]: string }, chain) => {
-			acc[`--bg-${chain.name.toLowerCase()}`] = chain.color;
-			return acc;
-		},
-		{},
-	);
+	const { chains, switchChain } = useSwitchChain();
+	const { chain: currentWagmiChain } = useAccount();
+
+	const { setCurrentChain, currentChain } = useAccountStore();
+
+	useEffect(() => {
+		const newChain =
+			arcanumChains.find((_chain) => _chain.id === currentWagmiChain?.id) ||
+			arcanumChains[0];
+		setCurrentChain(newChain);
+	}, [currentWagmiChain]);
 
 	return (
 		<div className="flex grow">
 			<button
 				type="button"
-				data-chain={selectedChain.name.toLowerCase()}
+				data-chain={currentWagmiChain?.id}
 				onClick={() => setIsOpenChainSelect(true)}
 				className={cn(
 					"group flex h-[60px] w-full items-center justify-between gap-2 whitespace-nowrap rounded-[4px] bg-transparent pr-6 pl-8 text-text-primary outline-none transition-colors ",
-					"data-[chain=arbitrum]:bg-[color-mix(in_srgb,var(--bg-arbitrum),black_20%)]",
-					"data-[chain=aurora]:bg-[color-mix(in_srgb,var(--bg-aurora),black_20%)]",
-					"data-[chain=avalanche]:bg-[color-mix(in_srgb,var(--bg-avalanche),black_20%)]",
-					"data-[chain=base]:bg-[color-mix(in_srgb,var(--bg-base),black_20%)] ",
-					"data-[chain=bsc]:bg-[color-mix(in_srgb,var(--bg-bsc),black_20%)] ",
-					"data-[chain=ethereum]:bg-[color-mix(in_srgb,var(--bg-ethereum),black_20%)] ",
-					"data-[chain=gnosis]:bg-[color-mix(in_srgb,var(--bg-gnosis),black_20%)] ",
-					"data-[chain=kaia]:bg-[color-mix(in_srgb,var(--bg-kaia),black_20%)] ",
-					"data-[chain=optimism]:bg-[color-mix(in_srgb,var(--bg-optimism),black_20%)] ",
-					"data-[chain=polygon]:bg-[color-mix(in_srgb,var(--bg-polygon),black_20%)] ",
-					"data-[chain=fantom]:bg-[color-mix(in_srgb,var(--bg-fantom),black_20%)] ",
-					"data-[chain=zksync]:bg-[color-mix(in_srgb,var(--bg-zksync),black_20%)] ",
+					//arb
+					"data-[chain=42161]:bg-[color-mix(in_srgb,var(--bg-42161),black_20%)] data-[chain=42161]:hover:bg-[var(--bg-42161)]",
+					//arb sep
+					"data-[chain=421614]:bg-[color-mix(in_srgb,var(--bg-421614),black_20%)] data-[chain=421614]:hover:bg-[var(--bg-42161)]",
+					//monad
+					"data-[chain=10143]:bg-[color-mix(in_srgb,var(--bg-10143),black_20%)] data-[chain=10143]:hover:bg-[var(--bg-10143)]",
+					// "data-[chain=arbitrum]:bg-[color-mix(in_srgb,var(--bg-arbitrum),black_20%)]",
+					// "data-[chain=aurora]:bg-[color-mix(in_srgb,var(--bg-aurora),black_20%)]",
+					// "data-[chain=avalanche]:bg-[color-mix(in_srgb,var(--bg-avalanche),black_20%)]",
+					// "data-[chain=base]:bg-[color-mix(in_srgb,var(--bg-base),black_20%)] ",
+					// "data-[chain=bsc]:bg-[color-mix(in_srgb,var(--bg-bsc),black_20%)] ",
+					// "data-[chain=ethereum]:bg-[color-mix(in_srgb,var(--bg-ethereum),black_20%)] ",
+					// "data-[chain=gnosis]:bg-[color-mix(in_srgb,var(--bg-gnosis),black_20%)] ",
+					// "data-[chain=kaia]:bg-[color-mix(in_srgb,var(--bg-kaia),black_20%)] ",
+					// "data-[chain=optimism]:bg-[color-mix(in_srgb,var(--bg-optimism),black_20%)] ",
+					// "data-[chain=polygon]:bg-[color-mix(in_srgb,var(--bg-polygon),black_20%)] ",
+					// "data-[chain=fantom]:bg-[color-mix(in_srgb,var(--bg-fantom),black_20%)] ",
+					// "data-[chain=zksync]:bg-[color-mix(in_srgb,var(--bg-zksync),black_20%)] ",
 				)}
 				style={ChainsColors}
 			>
 				<div className="flex flex-row items-center gap-2">
-					<img src={selectedChain.logo} alt={`${selectedChain.name} logo`} />
+					<img src={currentChain?.logo} alt={`${currentChain?.name} logo`} />
 					<span className="font-droid font-normal text-sm tracking-[0.01em]">
-						{selectedChain.name}
+						{currentChain?.name}
 					</span>
 				</div>
 				<ChevronIcon className="rotate-90" />
@@ -461,16 +490,22 @@ const SelectChain = () => {
 				<div className="flex flex-col gap-6 px-4 pb-6">
 					<span className="text-[14px] text-text-secondary">Network</span>
 					<div className="grid grid-cols-2 gap-2">
-						{Chains.map((chain) => (
+						{arcanumChains.map((chain) => (
 							<button
 								type="button"
 								onClick={() => {
-									setSelectedChain(chain);
+									const newChain =
+										chains.find((_chain) => _chain.id === chain.id) ||
+										chains[0];
+									if (currentWagmiChain?.id !== chain.id) {
+										switchChain({ chainId: newChain.id });
+										setCurrentChain(newChain);
+									}
 								}}
 								key={chain.id}
 								className="flex flex-row items-center gap-2 bg-bg-floor-2 px-3 py-2 text-text-primary"
 							>
-								<img src={chain.logo} alt={`${chain.name} logo`} />
+								<img src={chain.logo} alt="logo" />
 								<span className="font-droid font-normal text-sm tracking-[0.01em]">
 									{chain.name}
 								</span>
@@ -481,4 +516,4 @@ const SelectChain = () => {
 			</BottomSheet>
 		</div>
 	);
-};
+});

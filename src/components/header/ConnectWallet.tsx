@@ -16,7 +16,6 @@ export const ConnectWallet = () => {
 	const handleCopy = (value: string) => {
 		navigator.clipboard
 			.writeText(value)
-
 			.catch((err) => console.error("Failed to copy : ", err));
 	};
 

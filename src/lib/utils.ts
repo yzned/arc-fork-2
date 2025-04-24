@@ -1,53 +1,29 @@
+import { ARCANUM_MULTIPOOL_FACTORY_ADDRESS } from "@/lib/constants";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import MultipoolFactory from "@/lib/abi/MultipoolFactory";
 import {
-	ARBITRUM_SEPOLIA_CHAIN_ID,
-	ARCANUM_POOL_FACTORY_ADDRESS,
-} from "@/lib/constants";
-import { encodePacked, getContractAddress, keccak256, toBytes } from "viem";
+	type Address,
+	concat,
+	encodeDeployData,
+	encodePacked,
+	keccak256,
+	pad,
+	toBytes,
+	toHex,
+} from "viem";
+import ERC1967 from "./abi/ERC1967";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-export function formatNumber(num: number, significantDigits = 2): string {
-	if (num === 0) return "0";
-
-	if (Math.abs(num) < 1e-10) {
-		return num.toExponential(significantDigits);
-	}
-
-	if (num < 1 && num > 0) {
-		const decimalStr =
-			num.toLocaleString("fullwide", { useGrouping: false }).split(".")[1] ||
-			"";
-		let leadingZeros = 0;
-
-		for (const char of decimalStr) {
-			if (char === "0") {
-				leadingZeros++;
-			} else {
-				break;
-			}
-		}
-
-		return num.toFixed(leadingZeros + significantDigits);
-	}
-
-	// Для обычных чисел
-	return num.toFixed(significantDigits);
-}
-
 export const formatAddress = (address?: string) => {
 	if (!address) return "-";
 
-	// Сокращаем только если длина безопасна
 	if (address.length > 10) {
 		const start = address.slice(0, 6);
 		const end = address.slice(-4);
 
-		// Дополнительно убеждаемся, что эти части не пересекаются
 		if (address.length > 10 && address.length > 6 + 4) {
 			return `${start}...${end}`;
 		}
@@ -62,23 +38,63 @@ const generateNonce = () => {
 	return (BigInt(array[0]) << 32n) | BigInt(array[1]);
 };
 
-export const getMultipoolContractAddress = () => {
+const IMPL_ADDRESS = "0x14090b42338e02C786cDd6F29Bb83553FDe8f084";
+
+export const getMultipoolContractAddress = ({
+	chainId,
+}: { chainId: number }) => {
 	const nonce = generateNonce();
 
-	const bytecodeHash = keccak256(toBytes(MultipoolFactory.bytecode.object));
-
-	const contractAddress = getContractAddress({
-		from: ARCANUM_POOL_FACTORY_ADDRESS,
-		opcode: "CREATE2",
-		salt: keccak256(
-			encodePacked(
-				["uint256", "uint256"],
-				[BigInt(ARBITRUM_SEPOLIA_CHAIN_ID), BigInt(nonce)],
-			),
-		),
-		bytecode: MultipoolFactory.bytecode.object,
-		bytecodeHash,
+	const initCode = encodeDeployData({
+		abi: ERC1967.abi,
+		bytecode: ERC1967.bytecode.object as Address,
+		args: [IMPL_ADDRESS as Address, "0x" as Address],
 	});
 
-	return contractAddress;
+	const initCodeHash = keccak256(toBytes(initCode));
+
+	const salt = keccak256(
+		encodePacked(["uint256", "uint256"], [BigInt(chainId), BigInt(nonce)]),
+	);
+
+	const create2Address = computeCreate2Address(
+		ARCANUM_MULTIPOOL_FACTORY_ADDRESS,
+		salt,
+		initCodeHash,
+	);
+
+	return { contractAddress: create2Address, nonce };
+};
+
+function computeCreate2Address(
+	factoryAddress: Address,
+	salt: `0x${string}`,
+	initCodeHash: `0x${string}`,
+): Address {
+	const packed = encodePacked(
+		["bytes1", "address", "bytes32", "bytes32"],
+		["0xff", factoryAddress, salt, initCodeHash],
+	);
+
+	const hash = keccak256(toBytes(packed));
+
+	return `0x${hash.slice(-40)}` as Address;
+}
+
+export const encodeUniV3PriceData = (
+	oracleAddress: Address,
+	reversed: boolean,
+	twapInterval: bigint,
+): `0x${string}` => {
+	return concat([
+		pad(toHex(0), { size: 1 }),
+
+		oracleAddress,
+
+		pad(toHex(reversed ? 1 : 0), { size: 1 }),
+
+		pad(toHex(twapInterval), { size: 8 }),
+
+		pad("0x00", { size: 2 }),
+	]);
 };

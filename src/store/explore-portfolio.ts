@@ -2,11 +2,12 @@ import type {
 	CandleDataFormated,
 	LinearDataFormated,
 	MultipoolAsset,
+	MultipoolInfo,
 	ShortMultipoolData,
 } from "@/api/types";
-import type { Token } from "@/lib/types";
-import BigNumber from "bignumber.js";
+import type { SetupToken, Token } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
+import { v4 as uuidv4 } from "uuid";
 import type { Address } from "viem";
 
 export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
@@ -16,7 +17,12 @@ export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
 	};
 	walletBalance?: bigint;
 }
+
 export class ExplorePortfolioStore {
+	///for manage
+	manageState: "main-info" | "asset-setup" | "fees";
+	managingAsssets?: SetupToken[];
+
 	isOpenAssetModal: boolean;
 	isOpenTransferModal: boolean;
 	isOpenPnlSettingsModal: boolean;
@@ -26,9 +32,10 @@ export class ExplorePortfolioStore {
 	portfolioCandlesData: CandleDataFormated[];
 	portfolioLinearData: LinearDataFormated[];
 	chartResolution: "1" | "15" | "30" | "60" | "720" | "1D";
+	portfolioAssets?: MultipoolAssetFormated[];
+	shortPortfolioData?: MultipoolInfo;
 
 	rightSectionState: "mint" | "burn" | "settings";
-	portfolioAssets?: MultipoolAssetFormated[];
 
 	selectedAsset: Token = {
 		...this?.portfolioAssets?.[0],
@@ -39,6 +46,8 @@ export class ExplorePortfolioStore {
 
 	slippage: string;
 	mintBurnAmount?: string;
+
+	swapNetworkFee?: string;
 
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
@@ -53,20 +62,91 @@ export class ExplorePortfolioStore {
 		this.portfolioLinearData = [];
 		this.chartResolution = "1";
 		this.portfolioAssets = [];
+		this.manageState = "main-info";
 	}
+
+	updateManagingAssets() {
+		this.managingAsssets = this.portfolioAssets?.map((asset) => ({
+			id: asset.address,
+			name: asset.symbol || "Unknown",
+			symbol: asset.symbol || "",
+			address: asset.address as Address,
+			priceFeedType: "UniswapV3",
+			creationState: "readed",
+			share: asset.share?.toString() || "0",
+		}));
+	}
+
+	changeTokenState(
+		id: string,
+		state?: "readed" | "new" | "edited" | "deleted",
+	) {
+		this.managingAsssets = this.managingAsssets?.map((token) =>
+			token.id === id ? { ...token, creationState: state } : token,
+		);
+	}
+
+	editToken({
+		id,
+		share,
+		address,
+		name,
+		symbol,
+		logo,
+		creationState,
+		priceFeedType,
+		shareGrowing,
+	}: SetupToken) {
+		this.managingAsssets = this.managingAsssets?.map((token) =>
+			token.id === id
+				? {
+						...token,
+						creationState,
+						share,
+						address,
+						logo,
+						name,
+						symbol,
+						priceFeedType,
+						shareGrowing,
+					}
+				: token,
+		);
+	}
+
+	cancelEditToken(id: string) {
+		const token = this.managingAsssets?.find((t) => t.id === id);
+		if (token?.creationState === "new") {
+			this.changeTokenState(id, "deleted");
+		} else {
+			this.managingAsssets = this.managingAsssets?.map((token) =>
+				token.id === id ? { ...token, creationState: "readed" } : token,
+			);
+		}
+	}
+
+	addNewToken() {
+		this.managingAsssets?.push({
+			id: uuidv4(),
+			name: "",
+			creationState: "new",
+			symbol: "",
+		});
+	}
+
+	setSwapNetworkFee(fee: string) {
+		this.swapNetworkFee = fee;
+	}
+
+	setManageState = (state: "main-info" | "asset-setup" | "fees") => {
+		this.manageState = state;
+	};
 
 	setPortfolioAssets = (assets: MultipoolAssetFormated[]) => {
 		this.portfolioAssets = assets.map((item) => {
-			const value = new BigNumber(item?.price?.price || 0).dividedBy(
-				new BigNumber(2).pow(96),
-			);
-
 			return {
 				...item,
-				price: {
-					...item.price,
-					price: value.toString(),
-				},
+				price: item.price,
 			};
 		});
 	};
@@ -75,6 +155,10 @@ export class ExplorePortfolioStore {
 		resolution: "1" | "15" | "30" | "60" | "720" | "1D",
 	) => {
 		this.chartResolution = resolution;
+	};
+
+	setShortPortfolioData = (shortData: MultipoolInfo) => {
+		this.shortPortfolioData = shortData;
 	};
 
 	setAllPortfolios = (portfolios: ShortMultipoolData[]) => {

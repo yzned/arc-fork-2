@@ -1,6 +1,7 @@
 import type BigNumber from "bignumber.js";
-import type { Address } from "viem";
+import type { Address, Chain } from "viem";
 
+export type ChainId = 42161 | 421614 | 10143;
 //after backend will be created change types to correct
 export type Token = {
 	name?: string;
@@ -27,7 +28,23 @@ export type Token = {
 	price?: string;
 	txnLink?: string;
 	priceFeedAddress?: Address;
+	poolAddress?: string;
 };
+
+export type ChainMetadata = {
+	logo: string;
+	id: number;
+	color: string;
+	nativeTokenAddress: string;
+	traderAddress?: string;
+	mpImplAddress?: string;
+	oracleAddress?: string;
+	factoryAddress?: string;
+	factoryImplAddress?: string;
+	routerAddress?: string;
+};
+
+export type ExtendedChain = Chain & Partial<ChainMetadata>;
 
 export type ShortPoolData = {
 	priceFeedType?: string;
@@ -56,4 +73,23 @@ export interface UniswapPriceData {
 export interface TokenPriceData {
 	address: Address;
 	price: bigint;
+}
+
+export interface SetupToken {
+	id: string;
+	name: string;
+	symbol: string;
+	address?: Address;
+	logo?: string;
+	priceFeedType?:
+		| "UniswapV3"
+		| "UniswapV2"
+		| "Chainlink"
+		| "FixedPrice"
+		| "RedStone";
+
+	creationState?: "new" | "edited" | "readed" | "deleted";
+	share?: string;
+	shareGrowing?: number;
+	poolAddress?: string;
 }

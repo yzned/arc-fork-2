@@ -1,104 +1,139 @@
-import { arbitrumSepolia, monadTestnet, type Chain } from "viem/chains";
-import type { Token } from "./types";
+import { config } from "./config";
+import type { ChainMetadata, ExtendedChain, Token } from "./types";
 
-export type ArcChain = {
-	logo: string;
-	name: string;
-	id: number;
-	color: string;
-	nativeTokenAddress: string;
-	chain?: Chain;
-};
-
-export const Chains: Array<ArcChain> = [
+const chainsMetadata: ChainMetadata[] = [
 	{
-		logo: "/icons/chains/arbitrum.svg",
-		name: "Arbitrum",
 		id: 421614,
 		color: "#2D374B",
+		logo: "/icons/chains/arbitrum.svg",
 		nativeTokenAddress: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
-		chain: arbitrumSepolia,
+
+		traderAddress: "0xF69ae94063f4671Ea4e4b9f8c97eb1aAC1731cb8",
+		mpImplAddress: "0x14090b42338e02C786cDd6F29Bb83553FDe8f084",
+		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
+		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
+		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
+		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
 	},
 	{
-		name: "Monad",
 		id: 10143,
 		color: "#836EF9",
 		logo: "/icons/chains/monad.svg",
 		nativeTokenAddress: "0xc555D625828c4527d477e595fF1Dd5801B4a600e",
-		chain: monadTestnet,
+
+		traderAddress: "0xF69ae94063f4671Ea4e4b9f8c97eb1aAC1731cb8",
+		mpImplAddress: "0x14090b42338e02C786cDd6F29Bb83553FDe8f084",
+		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
+		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
+		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
+		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
 	},
-	// {
-	// 	logo: "/icons/chains/ethereum.svg",
-	// 	name: "Ethereum",
-	// 	id: 1,
-	// 	color: "#627EEA",
-	// },
-	// {
-	// 	logo: "/icons/chains/optimism.svg",
-	// 	name: "Optimism",
-	// 	id: 10,
-	// 	color: "#FF0420",
-	// },
-	// {
-	// 	logo: "/icons/chains/zkSync.svg",
-	// 	name: "zkSync",
-	// 	id: 324,
-	// 	color: "#1E68FF",
-	// },
-	// {
-	// 	logo: "/icons/chains/base.svg",
-	// 	name: "Base",
-	// 	id: 8453,
-	// 	color: "#0052FF",
-	// },
-	// {
-	// 	logo: "/icons/chains/bsc.svg",
-	// 	name: "BSC",
-	// 	id: 56,
-	// 	color: "#F0B90B",
-	// },
-	// {
-	// 	logo: "/icons/chains/polygon.svg",
-	// 	name: "Polygon",
-	// 	id: 137,
-	// 	color:
-	// 		"linear-gradient(99.46deg, #9731CE 1.22%, #7B3FE3 99.46%), linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2))",
-	// },
-	// {
-	// 	logo: "/icons/chains/gnosis.svg",
-	// 	name: "Gnosis",
-	// 	id: 100,
-	// 	color: "#047A5B",
-	// },
-	// {
-	// 	logo: "/icons/chains/avalanche.svg",
-	// 	name: "Avalanche",
-	// 	id: 43114,
-	// 	color: "#E84142",
-	// },
-	// {
-	// 	logo: "/icons/chains/fantom.svg",
-	// 	name: "Fantom",
-	// 	id: 146,
-	// 	color: "#1969FF",
-	// },
-	// {
-	// 	logo: "/icons/chains/kaia.svg",
-	// 	name: "Kaia",
-	// 	id: 8217,
-	// 	color: "#BFF007",
-	// },
-	// {
-	// 	logo: "/icons/chains/aurora.svg",
-	// 	name: "Aurora",
-	// 	id: 1313161554,
-	// 	color: "#1A373D",
-	// },
+	{
+		id: 42161,
+		color: "#2D374B",
+		logo: "/icons/chains/arbitrum.svg",
+		nativeTokenAddress: "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+
+		traderAddress: "0xF69ae94063f4671Ea4e4b9f8c97eb1aAC1731cb8",
+		mpImplAddress: "0x14090b42338e02C786cDd6F29Bb83553FDe8f084",
+		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
+		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
+		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
+		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
+	},
 ];
+
+export const arcanumChains: ExtendedChain[] = config.chains.map((chain) => {
+	const metadata = chainsMetadata.find((meta) => meta.id === chain.id);
+
+	if (metadata) {
+		return {
+			...chain,
+			...metadata,
+		};
+	}
+
+	return chain;
+});
+// {
+// 	logo: "/icons/chains/ethereum.svg",
+// 	name: "Ethereum",
+// 	id: 1,
+// 	color: "#627EEA",
+// },
+// {
+// 	logo: "/icons/chains/optimism.svg",
+// 	name: "Optimism",
+// 	id: 10,
+// 	color: "#FF0420",
+// },
+// {
+// 	logo: "/icons/chains/zkSync.svg",
+// 	name: "zkSync",
+// 	id: 324,
+// 	color: "#1E68FF",
+// },
+// {
+// 	logo: "/icons/chains/base.svg",
+// 	name: "Base",
+// 	id: 8453,
+// 	color: "#0052FF",
+// },
+// {
+// 	logo: "/icons/chains/bsc.svg",
+// 	name: "BSC",
+// 	id: 56,
+// 	color: "#F0B90B",
+// },
+// {
+// 	logo: "/icons/chains/polygon.svg",
+// 	name: "Polygon",
+// 	id: 137,
+// 	color:
+// 		"linear-gradient(99.46deg, #9731CE 1.22%, #7B3FE3 99.46%), linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2))",
+// },
+// {
+// 	logo: "/icons/chains/gnosis.svg",
+// 	name: "Gnosis",
+// 	id: 100,
+// 	color: "#047A5B",
+// },
+// {
+// 	logo: "/icons/chains/avalanche.svg",
+// 	name: "Avalanche",
+// 	id: 43114,
+// 	color: "#E84142",
+// },
+// {
+// 	logo: "/icons/chains/fantom.svg",
+// 	name: "Fantom",
+// 	id: 146,
+// 	color: "#1969FF",
+// },
+// {
+// 	logo: "/icons/chains/kaia.svg",
+// 	name: "Kaia",
+// 	id: 8217,
+// 	color: "#BFF007",
+// },
+// {
+// 	logo: "/icons/chains/aurora.svg",
+// 	name: "Aurora",
+// 	id: 1313161554,
+// 	color: "#1A373D",
+// },
+
+export const MULTIPOOL_ROUTER_ADDRESS =
+	"0xf48bcefbb755f658e7766aff961885b0b9052628";
+
+export const MONAD_MP_ROUTER_ADDRESS =
+	"0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda";
+
+export const ARCANUM_MULTIPOOL_FACTORY_ADDRESS =
+	"0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f";
 
 export const ARBITRUM_SEPOLIA_CHAIN_ID = 421614 as const;
 export const ARBITRUM_CHAIN_ID = 42161 as const;
-
 export const ARBITRUM_RPC = "https://arb1.arbitrum.io/rpc";
 
 export const UNI_FEES = [100, 500, 3000, 10000];
@@ -111,9 +146,6 @@ export const UNISWAP_QUOTER_CONTRACT_ADDRESS =
 
 export const UNISWAP_SWAP_ROUTER_ADDRESS =
 	"0xE592427A0AEce92De3Edee1F18E0157C05861564";
-
-export const ARCANUM_POOL_FACTORY_ADDRESS =
-	"0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f";
 
 export const MAX_FEE_PER_GAS = 100000000000;
 export const MAX_PRIORITY_FEE_PER_GAS = 100000000000;
@@ -129,7 +161,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 			"Tether USDt (USDT) is a cryptocurrency and operates on the Ethereum platform. Tether USDt has a current supply of 141,576,929,750.81678524 with 138,937,765,636.77655689 in circulation. The last known price of Tether USDt is 1.0000492 USD and is up 0.06 over the last 24 hours. It is currently trading on 114550 active market(s) with $159,794,126,209.99 traded over the last 24 hours. More information can be found at https://tether.to.",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png",
 		tags: ["stablecoin", "asset-backed-stablecoin", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7",
 		chainId: ARBITRUM_CHAIN_ID,
 	},
@@ -139,7 +171,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png",
 		tags: ["stablecoin", "asset-backed-stablecoin", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3",
 
 		description:
@@ -165,7 +197,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png",
 		tags: ["decentralized-exchange-dex-token", "defi", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0x9C917083fDb403ab5ADbEC26Ee294f6EcAda2720",
 
 		description:
@@ -178,7 +210,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/29470.png",
 		tags: ["stablecoin", "asset-backed-stablecoin", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0x88AC7Bca36567525A866138F03a6F6844868E0Bc",
 
 		description:
@@ -191,7 +223,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png",
 		tags: ["stablecoin", "defi", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0xc5C8E77B397E531B8EC06BFb0048328B30E9eCfB",
 
 		description:
@@ -204,7 +236,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/11841.png",
 		tags: ["layer-2", "ethereum-ecosystem", "scaling"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6",
 
 		description:
@@ -217,7 +249,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x09199d9a5f4448d0848e4395d065e1ad9c4a1f74",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/23095.png",
 		tags: ["memes", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6",
 
 		description:
@@ -230,7 +262,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x13Ad51ed4F1B7e9Dc168d8a00cB3f4dDD85EfA60",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/8000.png",
 		tags: ["defi", "dao", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0xA43A34030088E6510FecCFb77E88ee5e7ed0fE64",
 
 		description:
@@ -243,7 +275,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x9623063377AD1B27544C965cCd7342f7EA7e88C7",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/6719.png",
 		tags: ["indexing", "ethereum-ecosystem", "web3"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		priceFeedAddress: "0x0F38D86FceF4955B705F35c9e41d1A16e0637c73",
 
 		description:
@@ -257,7 +289,7 @@ export const ARBITRUM_TOKENS: Token[] = [
 		address: "0x11cDb42B0EB46D95f990BeDD4695A6e3fA034978",
 		logo: "https://s2.coinmarketcap.com/static/img/coins/64x64/6538.png",
 		tags: ["defi", "dao", "ethereum-ecosystem"],
-		priceFeedType: "Chainlink",
+		priceFeedType: "UniswapV3",
 		description:
 			"Curve DAO Token (CRV) is a cryptocurrency and operates on the Ethereum platform. Curve DAO Token has a current supply of 2,218,387,353.03091831 with 1,273,339,453 in circulation. The last known price of Curve DAO Token is 0.80452328 USD and is up 5.47 over the last 24 hours. It is currently trading on 806 active market(s) with $218,988,363.74 traded over the last 24 hours. More information can be found at https://www.curve.fi/.",
 		chainId: ARBITRUM_CHAIN_ID,

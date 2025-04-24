@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import { chLocale } from "./locales/ch";
 import { enLocale } from "./locales/en";
 import { ruLocale } from "./locales/ru";
 
@@ -8,7 +9,7 @@ export const defaultNS = "common";
 export const localeResources = {
 	ru: ruLocale,
 	en: enLocale,
-	сh: enLocale, ///change to correct
+	ch: chLocale,
 };
 
 export const APP_LANGUAGES = {

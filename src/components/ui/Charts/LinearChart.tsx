@@ -2,8 +2,8 @@ import type { LinearDataFormated } from "@/api/types";
 import {
 	AreaSeries,
 	ColorType,
-	createChart,
 	type Time,
+	createChart,
 } from "lightweight-charts";
 import { useEffect, useRef } from "react";
 
