@@ -79,7 +79,7 @@ export const useCreatePortfolio = () => {
 	});
 
 	const { data: approveGasEstimate } = useEstimateGas({
-		to: tokens[0]?.address,
+		to: tokens[0]?.address || zeroAddress,
 
 		data: encodeFunctionData({
 			abi: ERC20,
