@@ -37,11 +37,8 @@ import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useMintBurn } from "@/hooks/mutations/useMintBurn";
 import { useChart } from "@/hooks/queries/useChart";
-import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
-import { ARBITRUM_SEPOLIA_CHAIN_ID } from "@/lib/constants";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
-import { type Address, parseUnits } from "viem";
 
 import { useAccountStore } from "@/contexts/AccountContext";
 import { shorten } from "@/lib/formatNumber";
@@ -51,11 +48,6 @@ export const Route = createFileRoute("/explore/$id")({
 });
 
 function RouteComponent() {
-	const { id } = useParams({ from: "/explore/$id" });
-
-	useChart();
-	useMultipoolInfo(id as Address);
-
 	return (
 		<>
 			<div className="hidden grid-cols-[1fr_329px] grid-rows-1 gap-0 md:grid">
@@ -71,6 +63,8 @@ function RouteComponent() {
 }
 
 export const MainSection = observer(() => {
+	useChart();
+
 	const [currentGraph, setCurrentGraph] = useState<
 		"candles" | "linear" | "portfolio"
 	>("candles");
@@ -98,10 +92,9 @@ export const MainSection = observer(() => {
 
 	const { currentChain } = useAccountStore();
 
-	const { allPortfolios } = useExplorePortfolio();
 	const { id } = useParams({ from: "/explore/$id" });
 
-	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
+	// const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -151,16 +144,16 @@ export const MainSection = observer(() => {
 						<div className="flex items-center gap-4">
 							<img
 								// src="https://s2.coinmarketcap.com/static/img/coins/64x64/825.png"
-								src={currentPortfolio?.logo || "/icons/empty-token.svg"}
+								// src={currentPortfolio?.logo || "/icons/empty-token.svg"}
 								className="h-8 w-8"
 								alt="no-logo"
 							/>
 							<div className="flex max-w-[150px] flex-col gap-2">
 								<span className="font-namu text-[24px] text-text-primary leading-[24px]">
-									{currentPortfolio?.symbol}
+									{/* {currentPortfolio?.symbol} */}
 								</span>
 								<span className="truncate font-droid text-[12px] text-text-secondary leading-[12px]">
-									{currentPortfolio?.name}
+									{/* {currentPortfolio?.name} */}
 								</span>
 							</div>
 						</div>
@@ -180,32 +173,35 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
-								defaultActiveItem={
-									currentPortfolio
-										? {
-												address: currentPortfolio?.multipool as Address,
-												price: currentPortfolio?.current_price,
-												symbol: currentPortfolio?.symbol,
-												name: currentPortfolio?.name,
-												logo: currentPortfolio?.logo,
-											}
-										: {
-												address: allPortfolios[0]?.multipool as Address,
-												price: allPortfolios[0]?.current_price,
-												symbol: allPortfolios[0]?.symbol,
-												name: allPortfolios[0]?.name,
-												logo: allPortfolios[0]?.logo,
-											}
+								// defaultActiveItem={
+								// 	currentPortfolio
+								// 		? {
+								// 				address: currentPortfolio?.multipool as Address,
+								// 				price: currentPortfolio?.current_price,
+								// 				symbol: currentPortfolio?.symbol,
+								// 				name: currentPortfolio?.name,
+								// 				logo: currentPortfolio?.logo,
+								// 			}
+								// 		: {
+								// 				address: allPortfolios[0]?.multipool as Address,
+								// 				price: allPortfolios[0]?.current_price,
+								// 				symbol: allPortfolios[0]?.symbol,
+								// 				name: allPortfolios[0]?.name,
+								// 				logo: allPortfolios[0]?.logo,
+								// 			}
+								// }
+								data={
+									[]
+									// 	allPortfolios.map((item) => {
+									// 	return {
+									// 		address: item.multipool as Address,
+									// 		price: item.current_price,
+									// 		symbol: item.symbol,
+									// 		name: item.name,
+									// 		logo: item.logo,
+									// 	};
+									// })
 								}
-								data={allPortfolios.map((item) => {
-									return {
-										address: item.multipool as Address,
-										price: item.current_price,
-										symbol: item.symbol,
-										name: item.name,
-										logo: item.logo,
-									};
-								})}
 								className="h-[540px] w-full border-fill-secondary border-t px-4 pt-6"
 							/>
 						</div>
@@ -220,9 +216,9 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
-									{new BigNumber(currentPortfolio?.current_price || 0)
+									{/* {new BigNumber(currentPortfolio?.stats.currentPrice || 0)
 										.toFixed(4)
-										.toString()}
+										.toString()} */}
 								</span>
 							</div>
 						</div>
@@ -233,13 +229,13 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
-									{new BigNumber(
+									{/* {new BigNumber(
 										Number(currentPortfolio?.total_supply) *
 											Number(currentPortfolio?.current_price),
 									)
 										.multipliedBy(10 ** -8)
 										.toFixed(4)
-										.toString()}
+										.toString()} */}
 								</span>
 							</div>
 						</div>
@@ -249,11 +245,11 @@ export const MainSection = observer(() => {
 									{t("24HChange")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									<PriceChange
+									{/* <PriceChange
 										value={currentPortfolio?.change_24h || "0"}
 										growing={Number(currentPortfolio?.change_24h) > 0}
 										unit="dollars"
-									/>
+									/> */}
 								</span>
 							</div>
 						</div>
@@ -264,9 +260,9 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
-									{new BigNumber(currentPortfolio?.high_24h || 0)
+									{/* {new BigNumber(currentPortfolio?.high_24h || 0)
 										.toFixed(4)
-										.toString()}
+										.toString()} */}
 								</span>
 							</div>
 						</div>
@@ -277,9 +273,9 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
-									{new BigNumber(currentPortfolio?.low_24h || 0)
+									{/* {new BigNumber(currentPortfolio?.low_24h || 0)
 										.toFixed(4)
-										.toString()}
+										.toString()} */}
 								</span>
 							</div>
 						</div>
@@ -337,64 +333,44 @@ export const MainSection = observer(() => {
 							<Button
 								className="w-fit bg-transparent"
 								size="M"
-								data-active={chartResolution === "1"}
+								data-active={chartResolution === "60"}
 								onClick={() => {
-									setChartResolution("1");
+									setChartResolution("60");
 								}}
 								variant="selector"
 							>
 								{t("1m")}
 							</Button>
 							<Button
-								data-active={chartResolution === "15"}
+								data-active={chartResolution === "900"}
 								className="w-fit bg-transparent"
 								size="M"
 								onClick={() => {
-									setChartResolution("15");
+									setChartResolution("900");
 								}}
 								variant="selector"
 							>
 								{t("15m")}
 							</Button>
+
 							<Button
 								className="w-fit bg-transparent"
-								data-active={chartResolution === "30"}
+								data-active={chartResolution === "3600"}
 								size="M"
 								onClick={() => {
-									setChartResolution("30");
-								}}
-								variant="selector"
-							>
-								{t("30m")}
-							</Button>
-							<Button
-								className="w-fit bg-transparent"
-								data-active={chartResolution === "60"}
-								size="M"
-								onClick={() => {
-									setChartResolution("60");
+									setChartResolution("3600");
 								}}
 								variant="selector"
 							>
 								{t("1h")}
 							</Button>
+
 							<Button
-								className="w-fit bg-transparent"
-								data-active={chartResolution === "720"}
-								size="M"
-								onClick={() => {
-									setChartResolution("720");
-								}}
-								variant="selector"
-							>
-								{t("12h")}
-							</Button>
-							<Button
-								data-active={chartResolution === "1D"}
+								data-active={chartResolution === "86400"}
 								className="w-fit bg-transparent"
 								size="M"
 								onClick={() => {
-									setChartResolution("1D");
+									setChartResolution("86400");
 								}}
 								variant="selector"
 							>
@@ -525,22 +501,22 @@ export const RightSection = observer(() => {
 
 	const {
 		setIsOpenAssetModal,
-		selectedAsset,
+		// selectedAsset,
 		rightSectionState,
 		changeRightPanelState,
 		setSlippage,
 		slippage,
-		allPortfolios,
-		portfolioAssets,
+		// allPortfolios,
+		// portfolioAssets,
 		mintBurnAmount,
 		setMintBurnAmount,
 		swapNetworkFee,
 	} = useExplorePortfolio();
 
 	const { currentChain } = useAccountStore();
-	const selectedAssetData = portfolioAssets?.find(
-		(item) => item.address === selectedAsset.address,
-	);
+	// const selectedAssetData = portfolioAssets?.find(
+	// 	(item) => item.address === selectedAsset.address,
+	// );
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -573,8 +549,8 @@ export const RightSection = observer(() => {
 		}
 	};
 
-	const { id } = useParams({ from: "/explore/$id" });
-	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
+	// const { id } = useParams({ from: "/explore/$id" });
+	// const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 
 	useEffect(() => {
 		if (inputRef.current) {
@@ -752,12 +728,12 @@ export const RightSection = observer(() => {
 									onClick={() => setIsOpenAssetModal(true)}
 								>
 									<div className="flex items-center gap-2">
-										<img
+										{/* <img
 											src={selectedAsset.logo || "/icons/empty-token.svg"}
 											alt="no icon"
 											className="h-6 w-6"
 										/>
-										<span>{selectedAsset?.symbol || "-"}</span>
+										<span>{selectedAsset?.symbol || "-"}</span> */}
 									</div>
 									<ChevronIcon className="h-4 w-4 rotate-90 scale-90" />
 								</Button>
@@ -789,11 +765,11 @@ export const RightSection = observer(() => {
 									</span> */}
 									<span className="font-droid text-[12px]">
 										{t("balance")}{" "}
-										{shorten(
+										{/* {shorten(
 											new BigNumber(
 												selectedAssetData?.walletBalance?.toString() || "0",
 											).multipliedBy(new BigNumber(10).pow(-6)),
-										)}
+										)} */}
 									</span>
 								</div>
 							</div>
@@ -828,14 +804,14 @@ export const RightSection = observer(() => {
 							</div>
 							<Button
 								className="mt-4 h-10 w-full"
-								disabled={
-									parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
-									parseUnits(mintBurnAmount?.toString() || "0", 6) >
-										parseUnits(
-											selectedAssetData?.walletBalance?.toString() || "0",
-											-6,
-										)
-								}
+								// disabled={
+								// 	parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
+								// 	parseUnits(mintBurnAmount?.toString() || "0", 6) >
+								// 		parseUnits(
+								// 			selectedAssetData?.walletBalance?.toString() || "0",
+								// 			-6,
+								// 		)
+								// }
 								onClick={handleMintBurn}
 							>
 								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>
@@ -851,7 +827,7 @@ export const RightSection = observer(() => {
 
 					<div className="flex flex-col gap-4 px-2">
 						<span className="leading-[18px] tracking-[1.05px]">
-							{currentPortfolio?.description}
+							{/* {currentPortfolio?.description} */}
 						</span>
 					</div>
 				</div>
@@ -863,9 +839,9 @@ export const RightSection = observer(() => {
 export const AssetsModalContent = observer(() => {
 	const {
 		setIsOpenAssetModal,
-		setSelectedAsset,
-		portfolioAssets,
-		selectedAsset,
+		// setSelectedAsset,
+		// portfolioAssets,
+		// selectedAsset,
 	} = useExplorePortfolio();
 	const { t } = useTranslation(["main"]);
 
@@ -896,31 +872,34 @@ export const AssetsModalContent = observer(() => {
 			</span>
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
-				defaultActiveItem={{
-					address:
-						selectedAsset?.address ||
-						(portfolioAssets?.[0]?.address as Address),
-					chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
-					logo: selectedAsset?.logo || "/icons/empty-token.svg",
-					name: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
-					symbol: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
-					price: new BigNumber(
-						selectedAsset?.price || portfolioAssets?.[0]?.price?.price || 0,
-					).toString(),
-				}}
-				data={
-					portfolioAssets?.map((item) => {
-						return {
-							address: item.address as Address,
-							chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
-							logo: "/icons/empty-token.svg",
-							name: item.symbol,
-							symbol: item.symbol,
-							price: new BigNumber(item?.price?.price || 0).toString(),
-						};
-					}) ?? []
+				defaultActiveItem={
+					{
+						// address:
+						// 	selectedAsset?.address ||
+						// 	(portfolioAssets?.[0]?.address as Address),
+						// chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+						// logo: selectedAsset?.logo || "/icons/empty-token.svg",
+						// name: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
+						// symbol: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
+						// price: new BigNumber(
+						// 	selectedAsset?.price || portfolioAssets?.[0]?.price?.price || 0,
+						// ).toString(),
+					}
 				}
-				onSelectAsset={setSelectedAsset}
+				data={
+					[]
+					// portfolioAssets?.map((item) => {
+					// 	return {
+					// 		address: item.address as Address,
+					// 		chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+					// 		logo: "/icons/empty-token.svg",
+					// 		name: item.symbol,
+					// 		symbol: item.symbol,
+					// 		price: new BigNumber(item?.price?.price || 0).toString(),
+					// 	};
+					// }) ?? []
+				}
+				// onSelectAsset={setSelectedAsset}
 				filters={["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6", "Tag7"]}
 			/>
 		</div>

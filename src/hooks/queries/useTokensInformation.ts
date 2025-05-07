@@ -7,20 +7,24 @@ import { useWallets } from "@privy-io/react-auth";
 import BigNumber from "bignumber.js";
 import { runInAction } from "mobx";
 import { useEffect } from "react";
+import type { Address } from "viem";
 import { useChainId, useReadContracts } from "wagmi";
 
 export const useTokensInformation = () => {
-	const { tokensInformation } = useAccountStore();
+	const { currentChain } = useAccountStore();
 	const { wallets } = useWallets();
 	const chainId = useChainId();
 
 	const { data: quantities } = useReadContracts({
-		contracts: tokensInformation.map((token) => ({
+		contracts: currentChain?.availableTokens?.map((token) => ({
 			abi: ERC20,
-			address: token.address,
+			address: token.address as Address,
 			functionName: "balanceOf",
 			args: [wallets[0]?.address],
 		})),
+		query: {
+			enabled: !!currentChain?.availableTokens,
+		},
 	});
 
 	const priceFeeds = [...ARBITRUM_TOKENS];
@@ -38,7 +42,7 @@ export const useTokensInformation = () => {
 		if (!quantities || !prices) return;
 
 		runInAction(() => {
-			tokensInformation.forEach((token, index) => {
+			currentChain?.availableTokens?.forEach((token, index) => {
 				const resultQuantities = quantities[index]?.result;
 
 				token.quantityOnWallet = resultQuantities
@@ -54,8 +58,8 @@ export const useTokensInformation = () => {
 			// 			.toString()
 			// 	: new BigNumber(0).toString();
 
-			ARBITRUM_TOKENS.forEach((arbToken, index) => {
-				const tokenInfo = tokensInformation.find(
+			currentChain?.availableTokens?.forEach((arbToken, index) => {
+				const tokenInfo = currentChain?.availableTokens?.find(
 					(t) => t.address === arbToken.address,
 				);
 				const priceData = prices[index + 1]?.result as UniswapPriceData;
@@ -67,7 +71,7 @@ export const useTokensInformation = () => {
 				}
 			});
 		});
-	}, [quantities, prices, tokensInformation]);
+	}, [quantities, prices, currentChain?.availableTokens]);
 
 	return {};
 };

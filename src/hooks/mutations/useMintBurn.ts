@@ -4,7 +4,6 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ERC20 from "@/lib/abi/ERC20";
 import MultipoolRouter from "@/lib/abi/MultipoolRouter";
 import { config } from "@/lib/config";
-import { MULTIPOOL_ROUTER_ADDRESS } from "@/lib/constants";
 import type { ChainId } from "@/lib/types";
 import { useWallets } from "@privy-io/react-auth";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,6 +30,7 @@ import { waitForTransactionReceipt } from "wagmi/actions";
 export const useMintBurn = () => {
 	const { wallets } = useWallets();
 	const {
+		//@ts-ignore
 		selectedAsset,
 		rightSectionState,
 		mintBurnAmount,
@@ -61,7 +61,10 @@ export const useMintBurn = () => {
 		abi: ERC20,
 		address: assetIn,
 		functionName: "allowance",
-		args: [(wallets[0]?.address as Address) || "0x", MULTIPOOL_ROUTER_ADDRESS],
+		args: [
+			(wallets[0]?.address as Address) || "0x",
+			currentChain?.routerAddress as Address,
+		],
 		chainId: chainId as ChainId,
 		query: {
 			enabled: !!wallets[0]?.address,
@@ -130,7 +133,7 @@ export const useMintBurn = () => {
 			try {
 				const swapEstimateGas = await client.estimateContractGas({
 					value: BigInt(1e6),
-					address: MULTIPOOL_ROUTER_ADDRESS as Address,
+					address: currentChain?.routerAddress as Address as Address,
 					abi: MultipoolRouter,
 					functionName: "swap",
 					args: [
@@ -166,7 +169,7 @@ export const useMintBurn = () => {
 		try {
 			const data = await writeContract({
 				value: BigInt(1e6),
-				address: MULTIPOOL_ROUTER_ADDRESS as Address,
+				address: currentChain?.routerAddress as Address,
 				abi: MultipoolRouter,
 				functionName: "swap",
 				args: [
@@ -202,7 +205,7 @@ export const useMintBurn = () => {
 						? (selectedAsset.address as Address)
 						: (mpAddress as Address),
 					functionName: "approve",
-					args: [MULTIPOOL_ROUTER_ADDRESS as Address, maxUint256],
+					args: [currentChain?.routerAddress as Address as Address, maxUint256],
 					account: wallets[0]?.address as Address,
 					chainId: chainId as ChainId,
 				});

@@ -1,29 +1,11 @@
 import ERC20 from "@/lib/abi/ERC20";
 import { config } from "@/lib/config";
-import {
-	ARBITRUM_SEPOLIA_CHAIN_ID,
-	UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
-	UNISWAP_QUOTER_CONTRACT_ADDRESS,
-	UNI_FEES,
-	wETH_ADDRESS,
-} from "@/lib/constants";
-import {
-	CurrencyAmount,
-	type Ether,
-	Token,
-	TradeType,
-} from "@uniswap/sdk-core";
+import { UNI_FEES } from "@/lib/constants";
+import { Token } from "@uniswap/sdk-core";
 import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
-import {
-	FeeAmount,
-	Pool,
-	Route,
-	SwapQuoter,
-	Trade,
-	computePoolAddress,
-} from "@uniswap/v3-sdk";
+import { FeeAmount, Pool, computePoolAddress } from "@uniswap/v3-sdk";
 import BigNumber from "bignumber.js";
-import { type Abi, type Address, decodeAbiParameters, parseUnits } from "viem";
+import type { Abi, Address } from "viem";
 import { getPublicClient } from "wagmi/actions";
 
 export interface Calls {
@@ -39,7 +21,11 @@ export const Same = (a: Address | string, b: Address | string): boolean => {
 	return a.toLocaleLowerCase() === b.toLocaleLowerCase();
 };
 
-export const getPoolsData = async (addressA: Address, addressB: Address) => {
+export const getPoolsData = async (
+	addressA: Address,
+	addressB: Address,
+	factoryAddress: Address,
+) => {
 	const client = getPublicClient(config);
 
 	let poolAddresses: string[] = [];
@@ -47,21 +33,13 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 
 	const decimals = await getDecimals({ addresses: [addressA, addressB] });
 
-	const tokenA = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		addressA,
-		Number(decimals[0]),
-	);
+	const tokenA = new Token(client.chain.id, addressA, Number(decimals[0]));
 
-	const tokenB = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		addressB,
-		Number(decimals[1]),
-	);
+	const tokenB = new Token(client.chain.id, addressB, Number(decimals[1]));
 
 	UNI_FEES.map((fee) => {
 		const currentPoolAddress = computePoolAddress({
-			factoryAddress: UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS,
+			factoryAddress,
 			tokenA,
 			tokenB,
 			fee,
@@ -136,12 +114,12 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 			});
 
 			const token0Asset: Token = new Token(
-				ARBITRUM_SEPOLIA_CHAIN_ID,
+				client.chain.id,
 				poolData.token0.toString(),
 				Number(decimals[0]),
 			);
 			const token1Asset: Token = new Token(
-				ARBITRUM_SEPOLIA_CHAIN_ID,
+				client.chain.id,
 				poolData.token1.toString(),
 				Number(decimals[1]),
 			);
@@ -163,7 +141,7 @@ export const getPoolsData = async (addressA: Address, addressB: Address) => {
 };
 
 export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
-	const client = getPublicClient(config, { chainId: 42161 });
+	const client = getPublicClient(config);
 
 	try {
 		const decimals = await client.multicall({
@@ -252,220 +230,220 @@ export const isGoodPool = async (poolAddress: string): Promise<boolean> => {
 
 	return code !== "0x" && swapsCount > 1;
 };
+export const getPoolData = async () => {};
+// export const getPoolInfo = async (poolAddress: Address) => {
+// 	const client = getPublicClient(config);
 
-export const getPoolInfo = async (poolAddress: Address) => {
-	const client = getPublicClient(config);
+// 	const contracts = [
+// 		{
+// 			address: poolAddress,
+// 			abi: IUniswapV3PoolABI.abi as Abi,
+// 			functionName: "token0",
+// 		},
+// 		{
+// 			address: poolAddress,
+// 			abi: IUniswapV3PoolABI.abi as Abi,
+// 			functionName: "token1",
+// 		},
+// 		{
+// 			address: poolAddress,
+// 			abi: IUniswapV3PoolABI.abi as Abi,
+// 			functionName: "fee",
+// 		},
+// 		{
+// 			address: poolAddress,
+// 			abi: IUniswapV3PoolABI.abi as Abi,
+// 			functionName: "liquidity",
+// 		},
+// 		{
+// 			address: poolAddress,
+// 			abi: IUniswapV3PoolABI.abi as Abi,
+// 			functionName: "slot0",
+// 		},
+// 	];
 
-	const contracts = [
-		{
-			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi as Abi,
-			functionName: "token0",
-		},
-		{
-			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi as Abi,
-			functionName: "token1",
-		},
-		{
-			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi as Abi,
-			functionName: "fee",
-		},
-		{
-			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi as Abi,
-			functionName: "liquidity",
-		},
-		{
-			address: poolAddress,
-			abi: IUniswapV3PoolABI.abi as Abi,
-			functionName: "slot0",
-		},
-	];
+// 	const rawResult = await client.multicall({ contracts });
 
-	const rawResult = await client.multicall({ contracts });
+// 	if (rawResult.some((res) => res.status !== "success")) {
+// 		throw new Error("Ошибка получения данных пула");
+// 	}
 
-	if (rawResult.some((res) => res.status !== "success")) {
-		throw new Error("Ошибка получения данных пула");
-	}
+// 	const [token0, token1, fee, liquidity, slot0] = rawResult.map(
+// 		(res) => res.result,
+// 	);
+// 	const slot0Number = slot0 as number[];
 
-	const [token0, token1, fee, liquidity, slot0] = rawResult.map(
-		(res) => res.result,
-	);
-	const slot0Number = slot0 as number[];
+// 	if (!token0 || !token1 || !slot0) {
+// 		throw new Error("Uncorrect pool data");
+// 	}
 
-	if (!token0 || !token1 || !slot0) {
-		throw new Error("Uncorrect pool data");
-	}
+// 	const tick = slot0Number[1];
+// 	const sqrtPriceX96 = slot0Number[0].toString();
 
-	const tick = slot0Number[1];
-	const sqrtPriceX96 = slot0Number[0].toString();
+// 	const decimals = await getDecimals({
+// 		addresses: [token0 as Address, token1 as Address],
+// 	});
 
-	const decimals = await getDecimals({
-		addresses: [token0 as Address, token1 as Address],
-	});
+// 	const token0Asset: Token = new Token(
+// 		ARBITRUM_SEPOLIA_CHAIN_ID,
+// 		token0.toString(),
+// 		Number(decimals[0]),
+// 	);
+// 	const token1Asset: Token = new Token(
+// 		ARBITRUM_SEPOLIA_CHAIN_ID,
+// 		token1.toString(),
+// 		Number(decimals[1]),
+// 	);
 
-	const token0Asset: Token = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		token0.toString(),
-		Number(decimals[0]),
-	);
-	const token1Asset: Token = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		token1.toString(),
-		Number(decimals[1]),
-	);
+// 	const pool = new Pool(
+// 		token0Asset,
+// 		token1Asset,
+// 		Number(fee) ?? FeeAmount.LOW,
+// 		sqrtPriceX96,
+// 		liquidity?.toString() || "0",
+// 		tick,
+// 	);
 
-	const pool = new Pool(
-		token0Asset,
-		token1Asset,
-		Number(fee) ?? FeeAmount.LOW,
-		sqrtPriceX96,
-		liquidity?.toString() || "0",
-		tick,
-	);
+// 	return pool;
+// };
 
-	return pool;
-};
+// export const createPoolsRoute = async (
+// 	addressIn: Address,
+// 	addressOut: Address,
+// ) => {
+// 	const decimals = await getDecimals({ addresses: [addressIn, addressOut] });
 
-export const createPoolsRoute = async (
-	addressIn: Address,
-	addressOut: Address,
-) => {
-	const decimals = await getDecimals({ addresses: [addressIn, addressOut] });
+// 	const tokenIn = new Token(
+// 		ARBITRUM_SEPOLIA_CHAIN_ID,
+// 		addressIn,
+// 		Number(decimals[0]),
+// 	);
+// 	const tokenOut = new Token(
+// 		ARBITRUM_SEPOLIA_CHAIN_ID,
+// 		addressOut,
+// 		Number(decimals[1]),
+// 	);
 
-	const tokenIn = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		addressIn,
-		Number(decimals[0]),
-	);
-	const tokenOut = new Token(
-		ARBITRUM_SEPOLIA_CHAIN_ID,
-		addressOut,
-		Number(decimals[1]),
-	);
+// 	let directPoolAddress: string | undefined;
 
-	let directPoolAddress: string | undefined;
+// 	for (const fee of UNI_FEES) {
+// 		try {
+// 			const poolAddress = Pool.getAddress(tokenIn, tokenOut, fee);
+// 			const _isGoodPool = await isGoodPool(poolAddress);
 
-	for (const fee of UNI_FEES) {
-		try {
-			const poolAddress = Pool.getAddress(tokenIn, tokenOut, fee);
-			const _isGoodPool = await isGoodPool(poolAddress);
+// 			if (_isGoodPool) {
+// 				directPoolAddress = poolAddress;
+// 				const pool = await getPoolInfo(poolAddress as Address);
 
-			if (_isGoodPool) {
-				directPoolAddress = poolAddress;
-				const pool = await getPoolInfo(poolAddress as Address);
+// 				const swapRoute = new Route([pool], tokenIn, tokenOut);
 
-				const swapRoute = new Route([pool], tokenIn, tokenOut);
+// 				return swapRoute;
+// 			}
+// 		} catch (e) {
+// 			console.error(`Error checking pool for fee ${fee}:`, e);
+// 		}
+// 	}
 
-				return swapRoute;
-			}
-		} catch (e) {
-			console.error(`Error checking pool for fee ${fee}:`, e);
-		}
-	}
+// 	if (!directPoolAddress) {
+// 		const WETH = new Token(ARBITRUM_SEPOLIA_CHAIN_ID, wETH_ADDRESS, 18);
 
-	if (!directPoolAddress) {
-		const WETH = new Token(ARBITRUM_SEPOLIA_CHAIN_ID, wETH_ADDRESS, 18);
+// 		let bestPool1: Pool | undefined;
 
-		let bestPool1: Pool | undefined;
+// 		for (const fee of UNI_FEES) {
+// 			try {
+// 				const poolAddress = Pool.getAddress(tokenIn, WETH, fee);
 
-		for (const fee of UNI_FEES) {
-			try {
-				const poolAddress = Pool.getAddress(tokenIn, WETH, fee);
+// 				if (await isGoodPool(poolAddress)) {
+// 					const pool1 = await getPoolInfo(poolAddress as Address);
+// 					bestPool1 = pool1;
 
-				if (await isGoodPool(poolAddress)) {
-					const pool1 = await getPoolInfo(poolAddress as Address);
-					bestPool1 = pool1;
+// 					break;
+// 				}
+// 			} catch (e) {
+// 				console.error(`Error checking pool1 (/ARC) for fee ${fee}:`, e);
+// 			}
+// 		}
 
-					break;
-				}
-			} catch (e) {
-				console.error(`Error checking pool1 (/ARC) for fee ${fee}:`, e);
-			}
-		}
+// 		let bestPool2: Pool | undefined;
 
-		let bestPool2: Pool | undefined;
+// 		for (const fee of UNI_FEES) {
+// 			try {
+// 				const poolAddress = Pool.getAddress(WETH, tokenOut, fee);
 
-		for (const fee of UNI_FEES) {
-			try {
-				const poolAddress = Pool.getAddress(WETH, tokenOut, fee);
+// 				if (await isGoodPool(poolAddress)) {
+// 					const pool2 = await getPoolInfo(poolAddress as Address);
 
-				if (await isGoodPool(poolAddress)) {
-					const pool2 = await getPoolInfo(poolAddress as Address);
+// 					bestPool2 = pool2;
+// 					break;
+// 				}
+// 			} catch (e) {
+// 				console.error(`Error checking pool2 (LUAUSD) for fee ${fee}:`, e);
+// 			}
+// 		}
 
-					bestPool2 = pool2;
-					break;
-				}
-			} catch (e) {
-				console.error(`Error checking pool2 (LUAUSD) for fee ${fee}:`, e);
-			}
-		}
+// 		if (bestPool1 && bestPool2) {
+// 			const swapRoute = new Route([bestPool1, bestPool2], tokenIn, tokenOut);
 
-		if (bestPool1 && bestPool2) {
-			const swapRoute = new Route([bestPool1, bestPool2], tokenIn, tokenOut);
+// 			return swapRoute;
+// 		}
 
-			return swapRoute;
-		}
+// 		throw new Error("No valid pools found for any fee tier");
+// 	}
+// };
 
-		throw new Error("No valid pools found for any fee tier");
-	}
-};
+// export const getOutputQuote = async (
+// 	route: Route<Token | Ether, Token>,
+// 	amountIn: BigNumber,
+// ) => {
+// 	const client = getPublicClient(config);
 
-export const getOutputQuote = async (
-	route: Route<Token | Ether, Token>,
-	amountIn: BigNumber,
-) => {
-	const client = getPublicClient(config);
+// 	const { calldata, value } = await SwapQuoter.quoteCallParameters(
+// 		route,
+// 		CurrencyAmount.fromRawAmount(
+// 			route.input,
+// 			parseUnits(
+// 				amountIn.toFixed(0).toString(),
+// 				route.input.decimals,
+// 			).toString(),
+// 		),
+// 		TradeType.EXACT_INPUT,
+// 		{
+// 			useQuoterV2: true,
+// 		},
+// 	);
 
-	const { calldata, value } = await SwapQuoter.quoteCallParameters(
-		route,
-		CurrencyAmount.fromRawAmount(
-			route.input,
-			parseUnits(
-				amountIn.toFixed(0).toString(),
-				route.input.decimals,
-			).toString(),
-		),
-		TradeType.EXACT_INPUT,
-		{
-			useQuoterV2: true,
-		},
-	);
+// 	const { data } = await client.call({
+// 		to: UNISWAP_QUOTER_CONTRACT_ADDRESS,
+// 		data: calldata as Address,
+// 	});
 
-	const { data } = await client.call({
-		to: UNISWAP_QUOTER_CONTRACT_ADDRESS,
-		data: calldata as Address,
-	});
+// 	if (data) {
+// 		const [outValue] = decodeAbiParameters(
+// 			[{ name: "amountOut", type: "uint256" }],
+// 			data,
+// 		);
 
-	if (data) {
-		const [outValue] = decodeAbiParameters(
-			[{ name: "amountOut", type: "uint256" }],
-			data,
-		);
+// 		return {
+// 			amountOut: new BigNumber(outValue.toString()),
+// 			ethValue: new BigNumber(value),
+// 		};
+// 	}
+// };
 
-		return {
-			amountOut: new BigNumber(outValue.toString()),
-			ethValue: new BigNumber(value),
-		};
-	}
-};
+// export const createUnckeckedTrade = (
+// 	route: Route<Token | Ether, Token>,
+// 	amountIn: BigNumber,
+// 	amountOut: BigNumber,
+// ) => {
+// 	const uncheckedTrade = Trade.createUncheckedTrade({
+// 		route: route,
+// 		inputAmount: CurrencyAmount.fromRawAmount(route.input, amountIn.toFixed(0)),
+// 		outputAmount: CurrencyAmount.fromRawAmount(
+// 			route.output,
+// 			amountOut.toFixed(0),
+// 		),
+// 		tradeType: TradeType.EXACT_OUTPUT,
+// 	});
 
-export const createUnckeckedTrade = (
-	route: Route<Token | Ether, Token>,
-	amountIn: BigNumber,
-	amountOut: BigNumber,
-) => {
-	const uncheckedTrade = Trade.createUncheckedTrade({
-		route: route,
-		inputAmount: CurrencyAmount.fromRawAmount(route.input, amountIn.toFixed(0)),
-		outputAmount: CurrencyAmount.fromRawAmount(
-			route.output,
-			amountOut.toFixed(0),
-		),
-		tradeType: TradeType.EXACT_OUTPUT,
-	});
-
-	return uncheckedTrade;
-};
+// 	return uncheckedTrade;
+// };

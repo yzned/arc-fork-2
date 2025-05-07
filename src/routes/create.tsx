@@ -17,6 +17,7 @@ import {
 import { Fees } from "@/components/createPortfolio/fees";
 import { Overview } from "@/components/createPortfolio/overview";
 import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
+import { useTokensList } from "@/hooks/queries/useTokensList";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import { ARBITRUM_SEPOLIA_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
 import type { TokenPriceData, UniswapPriceData } from "@/lib/types";
@@ -29,6 +30,8 @@ export const Route = createFileRoute("/create")({
 });
 
 function RouteComponent() {
+	useTokensList();
+
 	const { data: prices } = useReadContracts({
 		contracts: ARBITRUM_TOKENS.map((item) => ({
 			abi: ChainLinkPriceFeed,
@@ -140,6 +143,7 @@ const MainInfo = observer(({ className }: { className?: string }) => {
 		description,
 		setDescription,
 		setLogo,
+		logo,
 	} = useCreatePortfolio();
 
 	return (
@@ -157,6 +161,7 @@ const MainInfo = observer(({ className }: { className?: string }) => {
 					label={t("name")}
 					placeholder="Arcoin"
 					value={name}
+					maxLength={25}
 				/>
 				<Input
 					required={true}
@@ -167,12 +172,19 @@ const MainInfo = observer(({ className }: { className?: string }) => {
 					label={t("symbol")}
 					placeholder="ARC"
 					value={symbol}
+					maxLength={10}
 				/>
 				<FileInput
 					required={true}
 					label="Logo"
-					onSelect={(item) => {
-						setLogo(item);
+					onSelect={async (item) => {
+						if (item) {
+							setLogo(item);
+						}
+					}}
+					defaultItem={logo}
+					onDelete={() => {
+						setLogo();
 					}}
 				/>
 			</div>

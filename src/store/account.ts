@@ -1,10 +1,10 @@
-import { ARBITRUM_TOKENS, arcanumChains } from "@/lib/constants";
+import { arcanumChains } from "@/lib/constants";
 import type { BalancesToken, ExtendedChain } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 
 export class AccountStore {
 	name: string | undefined;
-	tokensInformation: BalancesToken[];
+	tokensInformation?: BalancesToken[];
 	//for assetSelector page
 	currentChain?: ExtendedChain;
 	isOpenAssetSelector: boolean;
@@ -12,16 +12,16 @@ export class AccountStore {
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
 
-		this.tokensInformation = ARBITRUM_TOKENS.map(
-			({ logo, symbol, address, priceFeedAddress }) => ({
-				logo,
-				symbol,
-				address,
-				priceFeedAddress,
-				quantityOnWallet: undefined,
-				price: undefined,
-			}),
-		);
+		// this.tokensInformation = ARBITRUM_TOKENS.map(
+		// 	({ logo, symbol, address, priceFeedAddress }) => ({
+		// 		logo,
+		// 		symbol,
+		// 		address,
+		// 		priceFeedAddress,
+		// 		quantityOnWallet: undefined,
+		// 		price: undefined,
+		// 	}),
+		// );
 
 		this.isOpenAssetSelector = false;
 

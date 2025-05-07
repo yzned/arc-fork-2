@@ -126,5 +126,21 @@
 	"perWeek": "Per week",
 	"perMonth": "Per month",
 	"save": "Save",
-	"from": "from"
+	"from": "from",
+
+	"useAsset": "Use asset",
+	"signTransactions": "sign transactions",
+	"sign": "Sign",
+	"signingInWallet": "Signing in wallet...",
+	"toSign": "To sign",
+	"approveSpending": "Approve spending",
+	"depositInitialLiquidity": "Deposit initial liquidity",
+	"inProcess": "In process",
+	"done": "Done",
+	"goToPortfolio": "Go to portfolio",
+	"successfullySigned": "Successfully signed",
+	"errorSigning": "Error while signing. Try again",
+	"retrySigning": "Retry signing",
+	"error": "Error",
+	"retry": "Retry"
 }

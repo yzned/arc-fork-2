@@ -13,7 +13,7 @@ export class CreatePortfolioStore {
 
 	///tokensSetup
 	prices: TokenPriceData[];
-	initialLiquidityToken?: Address;
+	initialLiquidityToken?: { address: Address; symbol: string };
 	initialLiquidityAmount?: string;
 	tokens: SetupToken[] = [];
 
@@ -29,9 +29,19 @@ export class CreatePortfolioStore {
 
 	networkFee?: string;
 
+	isOpenCreateModal: boolean;
+	currentCreateModalState: "create" | "approve" | "mint" | "final";
+	createTxHash?: string;
+	mintTxHash?: string;
+	errorStepInCreation: number;
+	futureMultipoolAddress?: string;
+
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
 		this.prices = [];
+		this.isOpenCreateModal = false;
+		this.currentCreateModalState = "create";
+		this.errorStepInCreation = 0;
 	}
 
 	get sharePercentsSum() {
@@ -67,7 +77,9 @@ export class CreatePortfolioStore {
 
 			if (!cleanAmount) return 0;
 
-			const tokenPriceRaw = this.getTokenPrice(this.initialLiquidityToken);
+			const tokenPriceRaw = this.getTokenPrice(
+				this.initialLiquidityToken.address,
+			);
 			const tokenPrice = new BigNumber(
 				tokenPriceRaw?.toString() || "0",
 			).multipliedBy(10 ** -8);
@@ -81,6 +93,29 @@ export class CreatePortfolioStore {
 		}
 
 		return 0;
+	}
+	setFutureMpAddress(address: string) {
+		this.futureMultipoolAddress = address;
+	}
+
+	setErrorStepInCreation(step: number) {
+		this.errorStepInCreation = step;
+	}
+
+	setMintTxHash(txid: string) {
+		this.mintTxHash = txid;
+	}
+
+	setCreateTxHash(txid: string) {
+		this.createTxHash = txid;
+	}
+
+	setCurrentCreateModalState(value: "create" | "approve" | "mint" | "final") {
+		this.currentCreateModalState = value;
+	}
+
+	setIsOpenCreateModal(value: boolean) {
+		this.isOpenCreateModal = value;
 	}
 
 	setNetworkFee(fee: string) {
@@ -138,8 +173,8 @@ export class CreatePortfolioStore {
 		this.logo = logo;
 	}
 
-	setInitialLiquidityToken(address: Address) {
-		this.initialLiquidityToken = address;
+	setInitialLiquidityToken(value: { address: Address; symbol: string }) {
+		this.initialLiquidityToken = value;
 	}
 
 	getTokenPrice(address: Address) {

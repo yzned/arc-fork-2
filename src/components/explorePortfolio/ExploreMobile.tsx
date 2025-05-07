@@ -14,11 +14,10 @@ import CandlesIcon from "@/icons/candles.svg?react";
 import LinearIcon from "@/icons/linear.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
 import { shorten } from "@/lib/formatNumber";
-import { Link, useParams } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
 import { BottomSheet } from "react-spring-bottom-sheet";
-import type { Address } from "viem";
 import { CandleChart } from "../ui/Charts/CandleChart";
 import { LinearChart } from "../ui/Charts/LinearChart";
 import { Toggle } from "../ui/toggle";
@@ -42,7 +41,7 @@ export const ExploreMobile = observer(() => {
 
 	const {
 		portfolioCandlesData,
-		portfolioAssets,
+		// portfolioAssets,
 		portfolioLinearData,
 		chartResolution,
 		setChartResolution,
@@ -53,7 +52,7 @@ export const ExploreMobile = observer(() => {
 
 	const { id } = useParams({ from: "/explore/$id" });
 
-	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
+	const currentPortfolio = allPortfolios.find((item) => item.address === id);
 
 	useEffect(() => {
 		const handleClickOutside = (event: MouseEvent) => {
@@ -90,10 +89,10 @@ export const ExploreMobile = observer(() => {
 							/>
 							<div className="flex max-w-[150px] flex-col gap-2">
 								<span className="font-namu text-[24px] text-text-primary leading-[24px]">
-									{currentPortfolio?.symbol}
+									{/* {currentPortfolio?.symbol} */}
 								</span>
 								<span className="truncate font-droid text-[12px] text-text-secondary leading-[12px]">
-									{currentPortfolio?.name}
+									{/* {currentPortfolio?.name} */}
 								</span>
 							</div>
 						</div>
@@ -113,32 +112,35 @@ export const ExploreMobile = observer(() => {
 							)}
 						>
 							<FindAsset
-								defaultActiveItem={
-									currentPortfolio
-										? {
-												address: currentPortfolio?.multipool as Address,
-												price: currentPortfolio?.current_price,
-												symbol: currentPortfolio?.symbol,
-												name: currentPortfolio?.name,
-												logo: currentPortfolio?.logo,
-											}
-										: {
-												address: allPortfolios[0]?.multipool as Address,
-												price: allPortfolios[0]?.current_price,
-												symbol: allPortfolios[0]?.symbol,
-												name: allPortfolios[0]?.name,
-												logo: allPortfolios[0]?.logo,
-											}
+								// defaultActiveItem={
+								// 	currentPortfolio
+								// 		? {
+								// 				address: currentPortfolio?.multipool as Address,
+								// 				price: currentPortfolio?.current_price,
+								// 				symbol: currentPortfolio?.symbol,
+								// 				name: currentPortfolio?.name,
+								// 				logo: currentPortfolio?.logo,
+								// 			}
+								// 		: {
+								// 				address: allPortfolios[0]?.multipool as Address,
+								// 				price: allPortfolios[0]?.current_price,
+								// 				symbol: allPortfolios[0]?.symbol,
+								// 				name: allPortfolios[0]?.name,
+								// 				logo: allPortfolios[0]?.logo,
+								// 			}
+								// }
+								data={
+									[]
+									// 	allPortfolios.map((item) => {
+									// 	return {
+									// 		address: item.multipool as Address,
+									// 		price: item.current_price,
+									// 		symbol: item.symbol,
+									// 		name: item.name,
+									// 		logo: item.logo,
+									// 	};
+									// })
 								}
-								data={allPortfolios.map((item) => {
-									return {
-										address: item.multipool as Address,
-										price: item.current_price,
-										symbol: item.symbol,
-										name: item.name,
-										logo: item.logo,
-									};
-								})}
 								className="h-[60svh] w-full bg-floor-2 px-4 pt-6"
 							/>
 						</div>
@@ -146,16 +148,10 @@ export const ExploreMobile = observer(() => {
 				</div>
 				<div className="my-20 flex flex-col justify-center">
 					<span className="text-center text-[32px] text-text-primary">
-						${shorten(new BigNumber(currentPortfolio?.current_price || 0))}
+						${shorten(new BigNumber(currentPortfolio?.stats.currentPrice || 0))}
 					</span>
 					<span className="text-center text-[14px] text-text-secondary">
-						{t("tvl")}{" "}
-						{new BigNumber(
-							Number(currentPortfolio?.total_supply) *
-								Number(currentPortfolio?.current_price),
-						)
-							.multipliedBy(10 ** -8)
-							.toString()}
+						{t("tvl")} {currentPortfolio?.tvl}
 					</span>
 				</div>
 				<div className="flex flex-col gap-1">
@@ -168,7 +164,7 @@ export const ExploreMobile = observer(() => {
 								<RiseIcon />
 							</div>
 							<span className="text-text-primary">
-								${shorten(new BigNumber(currentPortfolio?.high_24h || 0))}
+								{/* ${shorten(new BigNumber(currentPortfolio?.high_24h || 0))} */}
 							</span>
 						</div>
 						<div className="flex h-[63px] w-full flex-col justify-center rounded-[2px] bg-bg-floor-2 px-4">
@@ -177,7 +173,7 @@ export const ExploreMobile = observer(() => {
 								<FallIcon />
 							</div>
 							<span className="text-text-primary">
-								${shorten(new BigNumber(currentPortfolio?.low_24h || 0))}
+								{/* ${shorten(new BigNumber(currentPortfolio?.low_24h || 0))} */}
 							</span>
 						</div>
 					</div>
@@ -185,8 +181,14 @@ export const ExploreMobile = observer(() => {
 						<span className="text-text-secondary ">{t("24HChange")}</span>
 						<div className="flex items-center gap-2">
 							<PriceChange
-								growing={Number(currentPortfolio?.change_24h) > 0}
-								value={currentPortfolio?.change_24h || "0"}
+								growing={
+									// Number(currentPortfolio?.change_24h) > 0
+									false
+								}
+								value={
+									// currentPortfolio?.change_24h || "0"
+									"0"
+								}
 								unit="dollars"
 								className="text-[12px] "
 							/>
@@ -226,9 +228,9 @@ export const ExploreMobile = observer(() => {
 						className="w-full"
 						size="M"
 						variant="selector"
-						data-active={chartResolution === "1"}
+						data-active={chartResolution === "60"}
 						onClick={() => {
-							setChartResolution("1");
+							setChartResolution("60");
 						}}
 					>
 						{t("1m")}
@@ -237,9 +239,9 @@ export const ExploreMobile = observer(() => {
 						className="w-full"
 						size="M"
 						variant="selector"
-						data-active={chartResolution === "15"}
+						data-active={chartResolution === "900"}
 						onClick={() => {
-							setChartResolution("15");
+							setChartResolution("900");
 						}}
 					>
 						{t("15m")}
@@ -248,20 +250,9 @@ export const ExploreMobile = observer(() => {
 						className="w-full"
 						size="M"
 						variant="selector"
-						data-active={chartResolution === "30"}
+						data-active={chartResolution === "3600"}
 						onClick={() => {
-							setChartResolution("30");
-						}}
-					>
-						{t("30m")}
-					</Button>
-					<Button
-						className="w-full"
-						size="M"
-						variant="selector"
-						data-active={chartResolution === "60"}
-						onClick={() => {
-							setChartResolution("60");
+							setChartResolution("3600");
 						}}
 					>
 						{t("1h")}
@@ -270,9 +261,9 @@ export const ExploreMobile = observer(() => {
 						className="w-full"
 						size="M"
 						variant="selector"
-						data-active={chartResolution === "720"}
+						data-active={chartResolution === "86400"}
 						onClick={() => {
-							setChartResolution("720");
+							setChartResolution("86400");
 						}}
 					>
 						{t("12h")}
@@ -281,16 +272,13 @@ export const ExploreMobile = observer(() => {
 						className="w-full"
 						size="M"
 						variant="selector"
-						data-active={chartResolution === "1D"}
+						data-active={chartResolution === "86400"}
 						onClick={() => {
-							setChartResolution("1D");
+							setChartResolution("86400");
 						}}
 					>
 						{t("1d")}
 					</Button>
-					{/* <Button className="w-full" size="M" variant="selector">
-						{t("1w")}
-					</Button> */}
 				</div>
 				<div className="mt-4">
 					{currentGraph === "candles" && (
@@ -307,14 +295,14 @@ export const ExploreMobile = observer(() => {
 					<p className="font-[600] font-namu text-[24px] text-text-primary uppercase leading-[24px]">
 						{t("porfolio")}
 					</p>
-					{portfolioAssets?.length && portfolioAssets?.length > 10 && (
+					{/* {portfolioAssets?.length && portfolioAssets?.length > 10 && (
 						<Link
 							to="/assetList/$id"
 							params={{ id: currentPortfolio?.multipool || "" }}
 						>
 							<Button variant={"tertiary"}>{t("viewAll")}</Button>
 						</Link>
-					)}
+					)} */}
 				</div>
 				<PortfolioTable />
 			</div>

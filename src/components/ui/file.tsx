@@ -17,22 +17,27 @@ function FileInput({
 	required,
 	label,
 	onSelect,
+	onDelete,
+	defaultItem,
 }: {
 	className?: string;
 	label: string;
 	required: boolean;
 	onSelect?: (file?: File) => void;
+	onDelete?: () => void;
+	defaultItem?: File | null;
 }) {
 	const { t } = useTranslation(["main"]);
-	const [fileSelected, setFileSelected] = useState<FileList | null>(null);
+	const [fileSelected, setFileSelected] = useState<File | null>(
+		defaultItem || null,
+	);
 	const inputRef = useRef<HTMLInputElement | null>(null);
 
 	const uploadData = useMemo(() => {
-		if (!fileSelected || fileSelected.length === 0)
-			return { format: "", size: "", desc: "", value: false };
-		const size = getSize(fileSelected[0].size);
-		const format = fileSelected[0].name.split(".").pop();
-		if (fileSelected[0].size > 1000000)
+		if (!fileSelected) return { format: "", size: "", desc: "", value: false };
+		const size = getSize(fileSelected.size);
+		const format = fileSelected.name.split(".").pop();
+		if (fileSelected.size > 1000000)
 			return {
 				format,
 				size,
@@ -76,10 +81,10 @@ function FileInput({
 					)}
 					<span
 						data-visible={fileSelected !== null}
-						className="max-w-full truncate text-text-primary leading-[14px] transition-colors group-data-[invalid=true]:text-text-quartinary"
+						className="mt-[6px] max-w-full truncate text-text-primary leading-[14px] transition-colors group-data-[invalid=true]:text-text-quartinary"
 					>
 						{fileSelected ? (
-							fileSelected[0].name
+							fileSelected.name
 						) : (
 							<span className="text-text-secondary">{t("selectFile")}</span>
 						)}
@@ -104,7 +109,7 @@ function FileInput({
 						e.preventDefault();
 						const file = e.target.files?.[0];
 						if (file) {
-							setFileSelected(e.target.files);
+							setFileSelected(file);
 							onSelect?.(file);
 						}
 					}}
@@ -124,6 +129,7 @@ function FileInput({
 						inputRef.current.value = "";
 						setFileSelected(null);
 						onSelect?.(undefined);
+						onDelete?.();
 					}}
 				>
 					<TrashIcon className="text-text-primary" width={11} height={11} />

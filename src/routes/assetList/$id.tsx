@@ -1,8 +1,7 @@
 import { PortfolioTable } from "@/components/explorePortfolio/tables/PortfolioTable";
 import { Button } from "@/components/ui/button";
-import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ChevronIcon from "@/icons/chevron.svg?react";
-import { createFileRoute, useParams, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/assetList/$id")({
@@ -13,10 +12,7 @@ function RouteComponent() {
 	const router = useRouter();
 	const { t } = useTranslation(["main"]);
 
-	const { allPortfolios } = useExplorePortfolio();
-	const { id } = useParams({ from: "/assetList/$id" });
-
-	const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
+	// const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 
 	return (
 		<div>
@@ -32,17 +28,17 @@ function RouteComponent() {
 
 				<div className="flex h-[64px] w-full cursor-pointer items-center justify-between rounded-[2px] bg-bg-floor-2 p-3 pr-5">
 					<div className="flex items-center gap-4">
-						<img
+						{/* <img
 							src={currentPortfolio?.logo || "/icons/empty-token.svg"}
 							className="h-8 w-8"
 							alt="no-logo"
-						/>
+						/> */}
 						<div className="flex max-w-[150px] flex-col gap-2">
 							<span className="font-namu text-[24px] text-text-primary leading-[24px]">
-								{currentPortfolio?.symbol}
+								{/* {currentPortfolio?.symbol} */}
 							</span>
 							<span className="truncate font-droid text-[12px] text-text-secondary leading-[12px]">
-								{currentPortfolio?.name}
+								{/* {currentPortfolio?.name} */}
 							</span>
 						</div>
 					</div>

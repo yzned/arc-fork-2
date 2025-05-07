@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { observer } from "mobx-react-lite";
 import {
 	type ChangeEvent,
 	type Dispatch,
@@ -94,13 +95,13 @@ export const DropdownItem = <T extends DropdownItemType>({
 					{item.withCheckbox && (
 						<div className="h-4 w-4 rounded-[2px] bg-white opacity-0 transition-opacity duration-100 group-hover:opacity-100" />
 					)}
-					{item.iconLeft && (
-						<img
-							src={item.iconLeft}
-							alt="icon1"
-							className="h-4 w-4 overflow-hidden rounded-[2px]"
-						/>
-					)}
+
+					<img
+						src={item.iconLeft || "/icons/empty-token.svg"}
+						alt="icon1"
+						className="h-4 w-4 overflow-hidden rounded-full"
+					/>
+
 					<div className=" max-w-[200px] truncate whitespace-nowrap">
 						{currentValue &&
 							highlightText(item?.name || "", currentValue?.name || "")}
@@ -114,7 +115,7 @@ export const DropdownItem = <T extends DropdownItemType>({
 						<img
 							src={item.iconRight}
 							alt="icon1"
-							className="h-4 w-4 overflow-hidden rounded-[2px]"
+							className="h-4 w-4 overflow-hidden rounded-full"
 						/>
 					)}
 				</div>
@@ -169,6 +170,10 @@ const DropdownRaw = <T extends DropdownItemType>(
 	}, []);
 
 	useEffect(() => {
+		setFilteredItems(items);
+	}, [items]);
+
+	useEffect(() => {
 		if (items.some((item) => item.name === currentValue.name)) {
 			setFilteredItems(items);
 		}
@@ -208,13 +213,12 @@ const DropdownRaw = <T extends DropdownItemType>(
 							: "border-b-fill-secondary",
 					)}
 				>
-					{currentValue.iconLeft && (
-						<img
-							src={currentValue.iconLeft}
-							alt="icon1"
-							className="h-4 w-[22px] overflow-hidden"
-						/>
-					)}
+					<img
+						src={currentValue.iconLeft || "/icons/empty-token.svg"}
+						alt="icon1"
+						className="h-4 w-[22px] overflow-hidden rounded-full"
+					/>
+
 					<input
 						placeholder={placeholder}
 						value={currentValue.name}
@@ -276,7 +280,9 @@ const DropdownRaw = <T extends DropdownItemType>(
 
 DropdownRaw.displayName = "Dropdown";
 
-const Dropdown = forwardRef(DropdownRaw) as <T extends DropdownItemType>(
+const Dropdown = observer(forwardRef(DropdownRaw)) as <
+	T extends DropdownItemType,
+>(
 	props: DropdownProps<T> & { ref?: ForwardedRef<HTMLDivElement> },
 ) => JSX.Element;
 

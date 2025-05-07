@@ -4,10 +4,12 @@ import ChevronIcon from "../../icons/chevron.svg?react";
 
 import { useAccountStore } from "@/contexts/AccountContext";
 import { arcanumChains } from "@/lib/constants";
+import type { ChainId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { observer } from "mobx-react-lite";
 import type * as React from "react";
+import { useEffect } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
 
 const Select = observer(
@@ -139,14 +141,24 @@ export const ChainSelector = observer(() => {
 
 	const { setCurrentChain } = useAccountStore();
 
+	useEffect(() => {
+		const newChain =
+			arcanumChains.find(
+				(chain) => chain.id.toString() === chainId.toString(),
+			) || chains[0];
+
+		setCurrentChain(newChain);
+	}, [chainId]);
+
 	return (
 		<Select
 			value={chainId.toString()}
 			onValueChange={(value) => {
 				const newChain =
-					chains.find((chain) => chain.id.toString() === value) || chains[0];
+					arcanumChains.find((chain) => chain.id.toString() === value) ||
+					chains[0];
 
-				switchChain({ chainId: newChain.id });
+				switchChain({ chainId: newChain.id as ChainId });
 				setCurrentChain(newChain);
 
 				navigate({ to: "/" });

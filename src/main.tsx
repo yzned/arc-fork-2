@@ -8,6 +8,7 @@ import "react-spring-bottom-sheet/dist/style.css";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "./components/ui/toast";
 import { AccountStoreProvider } from "./contexts/AccountContext";
 import { ExplorePortfolioProvider } from "./contexts/ExplorePortfolioContext";
 import { config } from "./lib/config";
@@ -41,6 +42,7 @@ if (rootElement) {
 						<QueryClientProvider client={queryClient}>
 							<WagmiProvider config={config}>
 								<RouterProvider router={router} />
+								<Toaster />
 							</WagmiProvider>
 						</QueryClientProvider>
 					</TooltipProvider>

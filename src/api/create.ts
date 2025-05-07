@@ -1,29 +1,50 @@
 import { api } from "./api";
 
 export async function CreateMultipool({
-	chain_id,
-	name,
-	description,
-	logo,
-	multipool_address,
-	symbol,
+	l, // logo_bytes (base64 строка или data-URI)
+	ih, // init_code_hash (B256)
+	n, // name
+	s, // symbol
+	st, // salt (B256)
+	d, // description
 }: {
-	logo?: File | Blob;
-	name: string;
-	chain_id: number;
-	symbol: string;
-	description: string;
-	multipool_address: string;
+	l: string;
+	ih: string;
+	n: string;
+	s: string;
+	st: string;
+	d: string;
 }) {
-	const formData = new FormData();
+	const logoBytes = prepareLogoBase64(l);
 
-	if (logo) formData.append("logo", logo);
+	const normalizedRequest = {
+		l: logoBytes,
+		ih: cleanHex(ih),
+		st: cleanHex(st),
+		n,
+		s,
+		d,
+	};
 
-	formData.append("chain_id", chain_id.toString());
-	formData.append("name", name);
-	formData.append("description", description);
-	formData.append("multipool_address", multipool_address);
-	formData.append("symbol", symbol);
+	return await api.postMsgpack("portfolio/create", normalizedRequest);
+}
+function prepareLogoBase64(logoInput: string): string {
+	if (!logoInput) return "";
 
-	return await api.postFormData("/portfolio/create", formData);
+	// Удаляем data-URI префикс если есть
+	const pureBase64 = logoInput.startsWith("data:")
+		? logoInput.slice(logoInput.indexOf(",") + 1)
+		: logoInput;
+
+	// Проверяем валидность base64
+	if (!/^[A-Za-z0-9+/=]*$/.test(pureBase64)) {
+		console.error("Invalid base64 string");
+		return "";
+	}
+
+	return pureBase64;
+}
+
+function cleanHex(hexString: string): string {
+	return hexString.startsWith("0x") ? hexString.slice(2) : hexString;
 }

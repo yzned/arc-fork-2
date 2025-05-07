@@ -3,12 +3,13 @@ import { observer } from "mobx-react-lite";
 import LinkToPageIcon from "@/icons/linkToPage.svg?react";
 import SortAsc from "../../icons/sortAsc.svg?react";
 
-import type { ShortMultipoolData } from "@/api/types";
+import type { ShortMultipoolDataFormated } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { shorten } from "@/lib/formatNumber";
 import { Link } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
+import { zeroAddress } from "viem";
 import { PriceChange } from "../ui/priceChange";
 import { InfoTooltip } from "../ui/tooltips/InformationTooltip";
 
@@ -43,8 +44,8 @@ export const MainTable = observer(() => {
 				</thead>
 
 				<tbody className="w-full text-white ">
-					{allPortfolios.map((row) => (
-						<MainTableRow row={row} key={row.multipool} />
+					{allPortfolios?.map((row) => (
+						<MainTableRow row={row} key={row.address} />
 					))}
 				</tbody>
 			</table>
@@ -52,58 +53,54 @@ export const MainTable = observer(() => {
 	);
 });
 
-const MainTableRow = observer(({ row }: { row: ShortMultipoolData }) => {
-	return (
-		<Link to="/explore/$id" params={{ id: row.multipool }}>
-			<tr
-				className="group grid border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
-				style={{
-					gridTemplateColumns: "103px 1fr 1fr 1fr 1fr 257px 52px",
-				}}
-			>
-				<td className="flex items-center gap-2 px-3 py-4 text-left">
-					<img
-						src={row.logo || "/icons/empty-token.svg"}
-						alt="icon1"
-						className="h-4 w-4 overflow-hidden"
-					/>
-					<span>{row.symbol}</span>
-				</td>
-
-				<td className="py-4 pl-4">{row.name}</td>
-
-				<td className="px-3 py-4 text-left">
-					{shorten(new BigNumber(row.current_price))}
-				</td>
-				<td className="py-4 pl-4 ">
-					{shorten(
-						new BigNumber(
-							Number(row?.total_supply) * Number(row?.current_price),
-						).multipliedBy(10 ** -8),
-					)}
-				</td>
-
-				<td className="flex gap-2 py-4 pl-4">
-					{shorten(new BigNumber(row.current_price))}{" "}
-					<PriceChange
-						value={row?.change_24h || "0"}
-						growing={Number(row?.change_24h) > 0}
-					/>
-				</td>
-				<a
-					onClick={(e) => {
-						e.stopPropagation();
+const MainTableRow = observer(
+	({ row }: { row: ShortMultipoolDataFormated }) => {
+		return (
+			<Link to="/explore/$id" params={{ id: row?.address || zeroAddress }}>
+				<tr
+					className="group grid border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
+					style={{
+						gridTemplateColumns: "103px 1fr 1fr 1fr 1fr 257px 52px",
 					}}
-					href={`https://arbiscan.io/address/${row.multipool}`}
-					className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
 				>
-					{`${row.multipool.slice(0, 5)}...${row.multipool.slice(-4)}`}
-				</a>
+					<td className="flex items-center gap-2 px-3 py-4 text-left">
+						<img
+							src={row.logo || "/icons/empty-token.svg"}
+							alt="icon1"
+							className="h-4 w-4 overflow-hidden"
+						/>
+						<span>{row?.stats?.symbol}</span>
+					</td>
 
-				<td className="flex cursor-pointer items-center justify-center">
-					<LinkToPageIcon className="text-text-secondary group-hover:text-text-brand-secondary" />
-				</td>
-			</tr>
-		</Link>
-	);
-});
+					<td className="py-4 pl-4">{row?.stats?.name}</td>
+
+					<td className="px-3 py-4 text-left">
+						{shorten(new BigNumber(row?.stats?.currentPrice || 0), true)}{" "}
+					</td>
+					<td className="py-4 pl-4 ">{shorten(new BigNumber(row.tvl || 0))}</td>
+
+					<td className="flex gap-2 py-4 pl-4">
+						{shorten(new BigNumber(row?.absolutePriceChange || 0), true)}{" "}
+						<PriceChange
+							value={row?.relativePriceChange || "0"}
+							growing={Number(row?.relativePriceChange) > 0}
+						/>
+					</td>
+					<a
+						onClick={(e) => {
+							e.stopPropagation();
+						}}
+						href={`https://arbiscan.io/address/${row.address}`}
+						className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
+					>
+						{`${row.address?.slice(0, 5)}...${row.address?.slice(-4)}`}
+					</a>
+
+					<td className="flex cursor-pointer items-center justify-center">
+						<LinkToPageIcon className="text-text-secondary group-hover:text-text-brand-secondary" />
+					</td>
+				</tr>
+			</Link>
+		);
+	},
+);

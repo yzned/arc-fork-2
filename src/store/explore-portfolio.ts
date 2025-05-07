@@ -1,22 +1,19 @@
 import type {
 	CandleDataFormated,
 	LinearDataFormated,
-	MultipoolAsset,
-	MultipoolInfo,
-	ShortMultipoolData,
+	ShortMultipoolDataFormated,
 } from "@/api/types";
-import type { SetupToken, Token } from "@/lib/types";
+import type { SetupToken } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 import { v4 as uuidv4 } from "uuid";
-import type { Address } from "viem";
 
-export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
-	price?: {
-		price?: string;
-		timestamp?: number;
-	};
-	walletBalance?: bigint;
-}
+// export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
+// 	price?: {
+// 		price?: string;
+// 		timestamp?: number;
+// 	};
+// 	walletBalance?: bigint;
+// }
 
 export class ExplorePortfolioStore {
 	///for manage
@@ -27,22 +24,22 @@ export class ExplorePortfolioStore {
 	isOpenTransferModal: boolean;
 	isOpenPnlSettingsModal: boolean;
 
-	allPortfolios: ShortMultipoolData[];
+	allPortfolios: ShortMultipoolDataFormated[];
 
 	portfolioCandlesData: CandleDataFormated[];
 	portfolioLinearData: LinearDataFormated[];
-	chartResolution: "1" | "15" | "30" | "60" | "720" | "1D";
-	portfolioAssets?: MultipoolAssetFormated[];
-	shortPortfolioData?: MultipoolInfo;
+	chartResolution: "60" | "900" | "3600" | "86400";
+	// portfolioAssets?: MultipoolAssetFormated[];
+	// shortPortfolioData?: MultipoolInfo;
 
 	rightSectionState: "mint" | "burn" | "settings";
 
-	selectedAsset: Token = {
-		...this?.portfolioAssets?.[0],
-		address: this?.portfolioAssets?.[0].address as Address,
-		share: this?.portfolioAssets?.[0].share.toString(),
-		price: this?.portfolioAssets?.[0]?.price?.price,
-	};
+	// selectedAsset: Token = {
+	// 	...this?.portfolioAssets?.[0],
+	// 	address: this?.portfolioAssets?.[0].address as Address,
+	// 	share: this?.portfolioAssets?.[0].share.toString(),
+	// 	price: this?.portfolioAssets?.[0]?.price?.price,
+	// };
 
 	slippage: string;
 	mintBurnAmount?: string;
@@ -60,22 +57,22 @@ export class ExplorePortfolioStore {
 		this.allPortfolios = [];
 		this.portfolioCandlesData = [];
 		this.portfolioLinearData = [];
-		this.chartResolution = "1";
-		this.portfolioAssets = [];
+		this.chartResolution = "60";
+		// this.portfolioAssets = [];
 		this.manageState = "main-info";
 	}
 
-	updateManagingAssets() {
-		this.managingAsssets = this.portfolioAssets?.map((asset) => ({
-			id: asset.address,
-			name: asset.symbol || "Unknown",
-			symbol: asset.symbol || "",
-			address: asset.address as Address,
-			priceFeedType: "UniswapV3",
-			creationState: "readed",
-			share: asset.share?.toString() || "0",
-		}));
-	}
+	// updateManagingAssets() {
+	// 	this.managingAsssets = this.portfolioAssets?.map((asset) => ({
+	// 		id: asset.address,
+	// 		name: asset.symbol || "Unknown",
+	// 		symbol: asset.symbol || "",
+	// 		address: asset.address as Address,
+	// 		priceFeedType: "UniswapV3",
+	// 		creationState: "readed",
+	// 		share: asset.share?.toString() || "0",
+	// 	}));
+	// }
 
 	changeTokenState(
 		id: string,
@@ -142,26 +139,24 @@ export class ExplorePortfolioStore {
 		this.manageState = state;
 	};
 
-	setPortfolioAssets = (assets: MultipoolAssetFormated[]) => {
-		this.portfolioAssets = assets.map((item) => {
-			return {
-				...item,
-				price: item.price,
-			};
-		});
-	};
+	// setPortfolioAssets = (assets: MultipoolAssetFormated[]) => {
+	// 	this.portfolioAssets = assets.map((item) => {
+	// 		return {
+	// 			...item,
+	// 			price: item.price,
+	// 		};
+	// 	});
+	// };
 
-	setChartResolution = (
-		resolution: "1" | "15" | "30" | "60" | "720" | "1D",
-	) => {
+	setChartResolution = (resolution: "60" | "900" | "3600" | "86400") => {
 		this.chartResolution = resolution;
 	};
 
-	setShortPortfolioData = (shortData: MultipoolInfo) => {
-		this.shortPortfolioData = shortData;
-	};
+	// setShortPortfolioData = (shortData: MultipoolInfo) => {
+	// 	this.shortPortfolioData = shortData;
+	// };
 
-	setAllPortfolios = (portfolios: ShortMultipoolData[]) => {
+	setAllPortfolios = (portfolios: ShortMultipoolDataFormated[]) => {
 		this.allPortfolios = portfolios;
 	};
 
@@ -177,9 +172,9 @@ export class ExplorePortfolioStore {
 		this.isOpenAssetModal = value;
 	};
 
-	setSelectedAsset = (asset: Token) => {
-		this.selectedAsset = asset;
-	};
+	// setSelectedAsset = (asset: Token) => {
+	// 	this.selectedAsset = asset;
+	// };
 
 	changeRightPanelState = (value: "mint" | "burn" | "settings") => {
 		this.rightSectionState = value;

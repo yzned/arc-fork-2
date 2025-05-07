@@ -15,7 +15,6 @@ const Index = observer(() => {
 	const { allPortfolios } = useExplorePortfolio();
 
 	const isMobile = useMediaQuery("(max-width: 768px)");
-
 	return (
 		<div className="overflow-hidden">
 			<div className="mb-[80px] flex flex-col gap-6 pt-10 md:mb-[56px] md:gap-10 md:px-5">
@@ -36,59 +35,28 @@ const Index = observer(() => {
 						<RoundedPlusIcon />
 					</Button>
 				</div>
-				<div className=" flex w-full flex-col gap-1 overflow-y-hidden overflow-x-scroll pr-4 pl-[14px] md:gap-2 md:pr-0 md:pl-0">
-					{allPortfolios.map((portfolio) => (
-						<AssetCard
-							key={portfolio.multipool}
-							variant={isMobile ? "special" : "default"}
-							asset={portfolio}
-							className="w-[316px] md:w-full "
-						/>
-					))}
-					{/* <div className="flex w-fit gap-1 md:w-full md:gap-2 ">
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full "
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
+				<div className="flex w-full flex-col gap-1 md:gap-2">
+					<div className="flex flex-col gap-1 overflow-y-hidden overflow-x-scroll pr-4 pl-[14px] md:flex-row md:gap-2 md:pr-0 md:pl-0">
+						{allPortfolios?.slice(0, 4).map((portfolio) => (
+							<AssetCard
+								key={portfolio.address}
+								variant={isMobile ? "special" : "default"}
+								asset={portfolio}
+								className="w-full"
+							/>
+						))}
 					</div>
-					<div className="flex w-fit gap-1 md:w-full md:gap-2 ">
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-						<AssetCard
-							variant={isMobile ? "special" : "default"}
-							asset={ARBITRUM_TOKENS[6]}
-							className="w-[316px] md:w-full"
-						/>
-					</div> */}
+
+					<div className="flex flex-col gap-1 overflow-y-hidden overflow-x-scroll pr-4 pl-[14px] md:flex-row md:gap-2 md:pr-0 md:pl-0">
+						{allPortfolios?.slice(4, 8)?.map((portfolio) => (
+							<AssetCard
+								key={portfolio.address}
+								variant={isMobile ? "special" : "default"}
+								asset={portfolio}
+								className="w-full"
+							/>
+						))}
+					</div>
 				</div>
 			</div>
 			<span className="hidden overflow-clip text-nowrap border-[#252627] border-t border-b py-px font-droid text-[10px] text-text-tertiary leading-[120%] md:block">
@@ -106,7 +74,7 @@ const Index = observer(() => {
 			<div className="block flex flex-col gap-1 px-[14px] md:hidden">
 				{allPortfolios.map((portfolio) => (
 					<AssetCard
-						key={portfolio.multipool}
+						key={portfolio.address}
 						asset={portfolio}
 						className="w-full"
 					/>

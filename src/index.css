@@ -309,3 +309,16 @@ textarea:focus,
 input:focus {
 	outline: none;
 }
+
+@keyframes toast-progress {
+	from {
+		width: 90%;
+	}
+	to {
+		width: 0%;
+	}
+}
+
+.toast-progress-animation {
+	animation: toast-progress 5s linear forwards;
+}

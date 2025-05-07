@@ -20,9 +20,10 @@ export const PriceChange: FC<PriceChangeProps> = ({
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1 text-[14px] ",
-				growing && "text-positive-primary",
-				!growing && "text-negative-primary",
+				"flex items-center gap-1 text-[14px]",
+				value === "0" && "text-text-secondary",
+				value !== "0" && growing && "text-positive-primary",
+				value !== "0" && !growing && "text-negative-primary",
 				className,
 			)}
 		>
@@ -31,7 +32,9 @@ export const PriceChange: FC<PriceChangeProps> = ({
 				{Number(value).toFixed(decimals)}
 				{unit === "percents" && "%"}
 			</span>
-			<ArrowIcon className={cn("mb-[2px]", !growing && "rotate-180")} />
+			{value !== "0" && (
+				<ArrowIcon className={cn("mb-[2px]", !growing && "rotate-180")} />
+			)}
 		</div>
 	);
 };

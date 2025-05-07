@@ -14,6 +14,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BottomSheet } from "react-spring-bottom-sheet";
+import { zeroAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import ShortLogo from "/public/icons/logos/short.svg?react";
 import DiscordIcon from "/public/icons/socials/discord.svg?react";
@@ -77,7 +78,7 @@ export const AppHeader = () => {
 					</Link>
 					<Link
 						to="/explore/$id"
-						params={{ id: allPortfolios[0]?.multipool }}
+						params={{ id: allPortfolios[0]?.address || zeroAddress }}
 						className={cn(
 							"font-droid font-normal text-text-tertiary leading-[18.2px] tracking-[0.01em] transition-colors hover:text-text-primary",
 							currentPath.includes("/explore/") && "text-text-primary",
@@ -311,7 +312,7 @@ export const AppHeaderMobile = () => {
 						<Link
 							to="/explore/$id"
 							onClick={() => setIsOpenMenu(false)}
-							params={{ id: allPortfolios[0]?.multipool }}
+							params={{ id: allPortfolios[0]?.address || zeroAddress }}
 							className={cn(
 								" text-text-tertiary transition-colors hover:text-text-primary",
 								currentPath.includes("/explore/") && "text-text-primary",

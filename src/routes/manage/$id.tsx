@@ -7,12 +7,10 @@ import { TokenTable } from "@/components/ui/tokenTable";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
 import Chevron from "@/icons/chevron.svg?react";
-import { shorten } from "@/lib/formatNumber";
 
 import { createFileRoute, useParams, useRouter } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { Address } from "viem";
 
@@ -24,15 +22,15 @@ function RouteComponent() {
 	const { id: mpAddress } = useParams({ from: "/manage/$id" });
 	useMultipoolInfo(mpAddress as Address);
 
-	const {
-		portfolioAssets,
+	// const {
+	// 	portfolioAssets,
 
-		updateManagingAssets,
-	} = useExplorePortfolio();
+	// 	updateManagingAssets,
+	// } = useExplorePortfolio();
 
-	useEffect(() => {
-		updateManagingAssets();
-	}, [portfolioAssets]);
+	// useEffect(() => {
+	// 	updateManagingAssets();
+	// }, [portfolioAssets]);
 
 	return (
 		<>
@@ -111,7 +109,7 @@ export const MainSection = observer(() => {
 export const MainInfo = observer(() => {
 	const { t } = useTranslation(["main"]);
 
-	const { shortPortfolioData } = useExplorePortfolio();
+	// const { shortPortfolioData } = useExplorePortfolio();
 
 	return (
 		<div className="mt-[56px] flex flex-col gap-8 pl-6">
@@ -130,7 +128,7 @@ export const MainInfo = observer(() => {
 				label={t("description")}
 				description={t("upTo100Characters")}
 				className="max-w-[793px]"
-				defaultValue={shortPortfolioData?.description}
+				// defaultValue={shortPortfolioData?.description}
 				// onChange={(e) => {
 				// 	setDescription(e.target.value);
 				// }}
@@ -146,7 +144,7 @@ export const AssetSetup = observer(() => {
 		changeTokenState,
 		cancelEditToken,
 		editToken,
-		portfolioAssets,
+		// portfolioAssets,
 	} = useExplorePortfolio();
 
 	return (
@@ -188,7 +186,7 @@ export const AssetSetup = observer(() => {
 						</tr>
 					</thead>
 					<tbody className="text-white">
-						{portfolioAssets?.map((row) => (
+						{/* {portfolioAssets?.map((row) => (
 							<tr
 								key={row.address}
 								className="border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
@@ -202,7 +200,7 @@ export const AssetSetup = observer(() => {
 									{shorten(new BigNumber(row?.quantity).multipliedBy(10 ** -6))}
 								</td>
 							</tr>
-						))}
+						))} */}
 					</tbody>
 				</table>
 			</div>

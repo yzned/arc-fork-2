@@ -1,4 +1,5 @@
 const apiRoot = "https://api.arcanum.to";
+import { pack, unpack } from "msgpackr";
 
 export class ApiError extends Error {
 	constructor(description: string, error: string, trace_id: string) {
@@ -12,18 +13,16 @@ export class ApiError extends Error {
 async function request(
 	entrypoint: string,
 	method: "POST" | "GET" = "GET",
-	body?: FormData | object,
+	body?: object,
 ) {
 	const address =
 		apiRoot + (entrypoint[0] === "/" ? entrypoint : `/${entrypoint}`);
 
-	const isFormData = body instanceof FormData;
-
 	const res = await fetch(address, {
 		method,
-		body: isFormData ? body : JSON.stringify(body),
+		body: JSON.stringify(body),
 		headers: {
-			...(!isFormData && body && { "Content-Type": "application/json" }),
+			...(body && { "Content-Type": "application/json" }),
 		},
 	});
 
@@ -33,6 +32,46 @@ async function request(
 	}
 
 	return await res.json();
+}
+
+async function requestWithMsgpack(
+	entrypoint: string,
+	method: "POST" | "GET" = "GET",
+	body?: object,
+) {
+	const address =
+		apiRoot + (entrypoint[0] === "/" ? entrypoint : `/${entrypoint}`);
+
+	const res = await fetch(address, {
+		method,
+		body: method === "POST" ? pack(body) : JSON.stringify(body),
+		headers: {
+			...(body && { "Content-Type": "application/msgpack" }),
+			Accept: "application/x-msgpack",
+		},
+	});
+
+	if (!res.ok) {
+		try {
+			const errorBuffer = await res.arrayBuffer();
+			const errorData = unpack(new Uint8Array(errorBuffer));
+			throw new ApiError(
+				errorData.description || "Unknown error",
+				errorData.error || "server_error",
+				errorData.trace_id || "",
+			);
+		} catch {
+			const error = await res.json().catch(() => ({
+				description: "Failed to parse error response",
+				error: "parse_error",
+				trace_id: "",
+			}));
+			throw new ApiError(error.description, error.error, error.trace_id);
+		}
+	}
+
+	const buffer = await res.arrayBuffer();
+	return unpack(new Uint8Array(buffer));
 }
 
 const api = {
@@ -58,8 +97,26 @@ const api = {
 		return request(entrypoint, "POST", body);
 	},
 
-	postFormData(entrypoint: string, formData: FormData) {
-		return request(entrypoint, "POST", formData);
+	getMsgpack(
+		entrypoint: string,
+		queryObj?:
+			| string
+			| URLSearchParams
+			| Record<string, string | number>
+			| [string, string | number][],
+	) {
+		let queryStr = "";
+		if (queryObj) {
+			const normalized = new URLSearchParams(
+				Object.entries(queryObj).map(([key, value]) => [key, value.toString()]),
+			);
+			queryStr = `?${normalized.toString()}`;
+		}
+		return requestWithMsgpack(entrypoint + queryStr);
+	},
+
+	postMsgpack(entrypoint: string, body?: object) {
+		return requestWithMsgpack(entrypoint, "POST", body);
 	},
 };
 

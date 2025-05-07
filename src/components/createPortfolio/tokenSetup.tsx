@@ -1,4 +1,3 @@
-import { ARBITRUM_TOKENS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
@@ -15,6 +14,8 @@ import RoundedCheckIcon from "../../icons/roundedCheck.svg?react";
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
 import { useTranslation } from "react-i18next";
 
+import { useAccountStore } from "@/contexts/AccountContext";
+import { type Address, zeroAddress } from "viem";
 import { TokenTable } from "../ui/tokenTable";
 
 export const TokenSetup = observer(() => {
@@ -41,10 +42,14 @@ export const TokenSetup = observer(() => {
 		editToken,
 	} = useCreatePortfolio();
 
-	const liquidityDropdownTokens = ARBITRUM_TOKENS.map(({ logo, ...rest }) => ({
-		...rest,
-		iconLeft: logo,
-	}));
+	const { currentChain } = useAccountStore();
+
+	const liquidityDropdownTokens = currentChain?.availableTokens?.map(
+		({ logo, ...rest }) => ({
+			...rest,
+			iconLeft: logo,
+		}),
+	);
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setInitialLiqudityAmount(e.target.value);
@@ -169,14 +174,17 @@ export const TokenSetup = observer(() => {
 					<div>
 						<Label className="" text="Initial liquidity token" isRequired />
 						<Dropdown
-							items={liquidityDropdownTokens}
-							defaultItem={liquidityDropdownTokens.find(
-								(item) => item.address === initialLiquidityToken,
+							items={liquidityDropdownTokens || []}
+							defaultItem={liquidityDropdownTokens?.find(
+								(item) => item.address === initialLiquidityToken?.address,
 							)}
 							className="mt-[11px] w-[254px]"
 							placeholder={t("selectToken")}
 							onSelect={(item) => {
-								setInitialLiquidityToken(item.address);
+								setInitialLiquidityToken({
+									address: (item.address || zeroAddress) as Address,
+									symbol: item.symbol || "",
+								});
 							}}
 						/>
 					</div>
@@ -239,7 +247,6 @@ export const TokenSetup = observer(() => {
 						cancelEditToken(id);
 					}}
 					onEditToken={(item) => {
-						console.log("item: ", item);
 						editToken(item);
 					}}
 				/>
@@ -250,9 +257,9 @@ export const TokenSetup = observer(() => {
 						onClick={() => {
 							addNewToken();
 						}}
-						className="w-fit"
+						className="group w-fit"
 					>
-						<span className="font-droid font-normal text-sm text-text-accent leading-[130%] tracking-[0.01em]">
+						<span className="font-droid font-normal text-sm text-text-accent leading-[130%] tracking-[0.01em] transition-colors group-hover:text-text-primary">
 							{t("addToken")}
 						</span>
 						<PlusRoundedIcon className="h-4 w-4" fill="#18171C" />

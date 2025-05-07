@@ -256,7 +256,7 @@ export const Fees = observer(({ className }: { className?: string }) => {
 							type="number"
 							label={t("baseFee")}
 							required={true}
-							placeholder={t("10%")}
+							placeholder={t("10 %")}
 							className="w-full"
 							onKeyDown={(e) => {
 								if (

@@ -13,20 +13,21 @@ const chainsMetadata: ChainMetadata[] = [
 		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
-		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
+		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
 	},
 	{
 		id: 10143,
 		color: "#836EF9",
 		logo: "/icons/chains/monad.svg",
-		nativeTokenAddress: "0xc555D625828c4527d477e595fF1Dd5801B4a600e",
+		nativeTokenAddress: "0x760AfE86e5de5fa0Ee542fc7B7B713e1c5425701",
 
 		traderAddress: "0xF69ae94063f4671Ea4e4b9f8c97eb1aAC1731cb8",
 		mpImplAddress: "0x14090b42338e02C786cDd6F29Bb83553FDe8f084",
 		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
-		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
+		routerAddress: "0x500f1A73cB5B06dc8aA4e61888Ad2e461aDf2ceD",
+		uniswapV3FactoryAddress: "0x961235a9020B05C44DF1026D956D1F4D78014276",
 	},
 	{
 		id: 42161,
@@ -39,8 +40,18 @@ const chainsMetadata: ChainMetadata[] = [
 		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
-		routerAddress: "0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda",
+		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
 	},
+];
+
+export const TAGS = [
+	"Infrastructure",
+	"DeFi",
+	"LST",
+	"AI",
+	"AMM Dex",
+	"Stablecoins",
+	"Memecoins",
 ];
 
 export const arcanumChains: ExtendedChain[] = config.chains.map((chain) => {
@@ -123,29 +134,11 @@ export const arcanumChains: ExtendedChain[] = config.chains.map((chain) => {
 // 	color: "#1A373D",
 // },
 
-export const MULTIPOOL_ROUTER_ADDRESS =
-	"0xf48bcefbb755f658e7766aff961885b0b9052628";
-
-export const MONAD_MP_ROUTER_ADDRESS =
-	"0x8C6d9A6c96Ee6aB6DA5180E5d404b60413599Eda";
-
-export const ARCANUM_MULTIPOOL_FACTORY_ADDRESS =
-	"0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f";
-
 export const ARBITRUM_SEPOLIA_CHAIN_ID = 421614 as const;
 export const ARBITRUM_CHAIN_ID = 42161 as const;
 export const ARBITRUM_RPC = "https://arb1.arbitrum.io/rpc";
 
 export const UNI_FEES = [100, 500, 3000, 10000];
-
-export const UNISWAP_POOL_FACTORY_CONTRACT_ADDRESS =
-	"0x1F98431c8aD98523631AE4a59f267346ea31F984";
-
-export const UNISWAP_QUOTER_CONTRACT_ADDRESS =
-	"0x61fFE014bA17989E743c5F6cB21bF9697530B21e";
-
-export const UNISWAP_SWAP_ROUTER_ADDRESS =
-	"0xE592427A0AEce92De3Edee1F18E0157C05861564";
 
 export const MAX_FEE_PER_GAS = 100000000000;
 export const MAX_PRIORITY_FEE_PER_GAS = 100000000000;

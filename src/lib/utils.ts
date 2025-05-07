@@ -1,4 +1,3 @@
-import { ARCANUM_MULTIPOOL_FACTORY_ADDRESS } from "@/lib/constants";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
@@ -6,6 +5,7 @@ import {
 	concat,
 	encodeDeployData,
 	encodePacked,
+	isAddress,
 	keccak256,
 	pad,
 	toBytes,
@@ -42,7 +42,8 @@ const IMPL_ADDRESS = "0x14090b42338e02C786cDd6F29Bb83553FDe8f084";
 
 export const getMultipoolContractAddress = ({
 	chainId,
-}: { chainId: number }) => {
+	factoryAddress,
+}: { chainId: number; factoryAddress: Address }) => {
 	const nonce = generateNonce();
 
 	const initCode = encodeDeployData({
@@ -58,12 +59,12 @@ export const getMultipoolContractAddress = ({
 	);
 
 	const create2Address = computeCreate2Address(
-		ARCANUM_MULTIPOOL_FACTORY_ADDRESS,
+		factoryAddress,
 		salt,
 		initCodeHash,
 	);
 
-	return { contractAddress: create2Address, nonce };
+	return { contractAddress: create2Address, nonce, initCodeHash, salt };
 };
 
 function computeCreate2Address(
@@ -97,4 +98,30 @@ export const encodeUniV3PriceData = (
 
 		pad("0x00", { size: 2 }),
 	]);
+};
+
+export const toBase64 = (file: File): Promise<string> =>
+	new Promise((resolve, reject) => {
+		const reader = new FileReader();
+		reader.readAsDataURL(file);
+		reader.onload = () => {
+			if (typeof reader.result === "string") {
+				resolve(reader.result);
+			} else {
+				reject(new Error("Failed to convert file to base64 string"));
+			}
+		};
+		reader.onerror = () => reject(reader.error);
+	});
+
+export const getValidAddress = (
+	address: string,
+	fallback: Address,
+): Address => {
+	if (!address) return fallback;
+	try {
+		return isAddress(address) ? address : fallback;
+	} catch {
+		return fallback;
+	}
 };

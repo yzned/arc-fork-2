@@ -1,6 +1,5 @@
 import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { formatAddress } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -10,8 +9,7 @@ import { PriceChange } from "../ui/priceChange";
 export const RightSection = observer(() => {
 	const { t } = useTranslation(["main"]);
 
-	const { shortPortfolioData, managingAsssets, manageState } =
-		useExplorePortfolio();
+	const { managingAsssets, manageState } = useExplorePortfolio();
 
 	const { currentChain } = useAccountStore();
 
@@ -24,16 +22,16 @@ export const RightSection = observer(() => {
 						<AvatarFallback>U</AvatarFallback>
 					</Avatar>
 					<div className="flex flex-col gap-2">
-						<span className="font-namu font-semibold text-sm text-text-primary uppercase leading-[12px] tracking-[0.015em]">
+						{/* <span className="font-namu font-semibold text-sm text-text-primary uppercase leading-[12px] tracking-[0.015em]">
 							{shortPortfolioData?.name
 								? shortPortfolioData?.name
 								: t("portfolioName")}
-						</span>
-						<span className="font-namu font-semibold text-sm text-text-tertiary uppercase leading-[12px] tracking-[0.015em]">
+						</span> */}
+						{/* <span className="font-namu font-semibold text-sm text-text-tertiary uppercase leading-[12px] tracking-[0.015em]">
 							{shortPortfolioData?.symbol
 								? shortPortfolioData?.symbol
 								: t("symbol")}
-						</span>
+						</span> */}
 					</div>
 				</div>
 
@@ -70,7 +68,7 @@ export const RightSection = observer(() => {
 					<div className="flex justify-between">
 						<span className="text-text-secondary">{t("managementFee")}</span>
 						<span className="text-text-primary">
-							{shortPortfolioData?.cache.management_fee}
+							{/* {shortPortfolioData?.cache.management_fee} */}
 						</span>
 					</div>
 					<div className="flex justify-between">
@@ -78,7 +76,7 @@ export const RightSection = observer(() => {
 							{t("managementFeeReceiver")}
 						</span>
 						<span className="text-text-primary">
-							{formatAddress(shortPortfolioData?.cache.management_fee_receiver)}
+							{/* {formatAddress(shortPortfolioData?.cache.management_fee_receiver)} */}
 						</span>
 					</div>
 				</div>
@@ -87,7 +85,7 @@ export const RightSection = observer(() => {
 					<div className="mb-4 flex justify-between">
 						<span className="text-text-secondary">{t("price")}</span>
 						<span className="text-text-primary">
-							{shortPortfolioData?.current_price}
+							{/* {shortPortfolioData?.current_price} */}
 						</span>
 					</div>
 					<div className="flex flex-col gap-2">

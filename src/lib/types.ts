@@ -1,3 +1,4 @@
+import type { AvailableChainTokensDataFormated } from "@/api/types";
 import type BigNumber from "bignumber.js";
 import type { Address, Chain } from "viem";
 
@@ -42,6 +43,9 @@ export type ChainMetadata = {
 	factoryAddress?: string;
 	factoryImplAddress?: string;
 	routerAddress?: string;
+	uniswapV3FactoryAddress?: string;
+
+	availableTokens?: AvailableChainTokensDataFormated[];
 };
 
 export type ExtendedChain = Chain & Partial<ChainMetadata>;

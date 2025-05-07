@@ -1,12 +1,19 @@
 import { Input } from "@/components/ui/Input";
 import { useAccountStore } from "@/contexts/AccountContext";
 import CheckIcon from "@/icons/checkMark.svg?react";
+import ChevronIcon from "@/icons/chevron.svg?react";
+import RoundedCheck from "@/icons/roundedCheck.svg?react";
+
+import type { AvailableChainTokensDataFormated } from "@/api/types";
+import { getDecimals, getPoolsData } from "@/api/uniswap";
+import { UNI_FEES } from "@/lib/constants";
 import { shorten } from "@/lib/formatNumber";
-import type { ShortPoolData, Token } from "@/lib/types";
+import type { ShortPoolData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Token } from "@uniswap/sdk-core";
+import { Pool, computePoolAddress } from "@uniswap/v3-sdk";
 import BigNumber from "bignumber.js";
 import { Loader2 } from "lucide-react";
-import { observer } from "mobx-react-lite";
 import {
 	type Dispatch,
 	type SetStateAction,
@@ -15,33 +22,42 @@ import {
 	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { type Address, zeroAddress } from "viem";
+import { usePublicClient } from "wagmi";
 import FilterIcon from "/src/icons/filter.svg?react";
 import SearchIcon from "/src/icons/search.svg?react";
 import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
+import { InfoTooltip } from "./tooltips/InformationTooltip";
 
 interface FindAssetProps<T, S> {
 	data: T[];
 	filters?: string[];
-	onSelectAsset?: (asset: T) => void;
+	onSelectAsset?: (asset: T | null) => void;
 	className?: string;
-	defaultActiveItem: T;
+	defaultActiveItem?: T;
 	listClassName?: string;
 	additionalActiveItemInfo?: S[];
-	variant?: "basic" | "with-additional-data";
+	variant?: "default" | "with-oracles";
 }
 
-interface FindAssetItemProps<T extends Token, S extends ShortPoolData> {
+interface FindAssetItemProps<
+	T extends AvailableChainTokensDataFormated,
+	S extends ShortPoolData,
+> {
 	item: T;
-	currentAsset: T;
-	setCurrentAsset: Dispatch<SetStateAction<T>>;
-	onSelectAsset?: (asset: T) => void;
-	variant?: "basic" | "with-additional-data";
+	selectAsset?: T | null;
+	setSelectAsset: Dispatch<SetStateAction<T | null>>;
+	onSelectAsset?: (asset: T | null) => void;
+	variant?: "default" | "with-oracles";
 	additionalActiveItemInfo?: S[];
 }
 
-export function FindAsset<T extends Token, S extends ShortPoolData>({
+export function FindAsset<
+	T extends AvailableChainTokensDataFormated,
+	S extends ShortPoolData,
+>({
 	data,
 	filters,
 	onSelectAsset,
@@ -49,20 +65,36 @@ export function FindAsset<T extends Token, S extends ShortPoolData>({
 	additionalActiveItemInfo,
 	listClassName,
 	defaultActiveItem,
-	variant = "basic",
+	variant = "default",
 }: FindAssetProps<T, S>) {
-	const [asset, setAsset] = useState<T>(defaultActiveItem);
+	const [selectAsset, setSelectAsset] = useState<T | null>(
+		defaultActiveItem || null,
+	);
 
 	const [isOpen, setIsOpen] = useState(false);
 	const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
 	const filtersRef = useRef<HTMLDivElement>(null);
+	const [hasScrollShadow, setHasScrollShadow] = useState(true);
+	const scrollContainerRef = useRef<HTMLDivElement>(null);
 
 	const handleKeyDown = (event: KeyboardEvent) => {
 		if (event.key === "Escape" || event.key === "Enter") {
 			setIsOpen(false);
 		}
 	};
+
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		if (!container) return;
+
+		const handleScroll = () => {
+			setHasScrollShadow(container.scrollTop === 0);
+		};
+
+		container.addEventListener("scroll", handleScroll);
+		return () => container.removeEventListener("scroll", handleScroll);
+	}, []);
 
 	useEffect(() => {
 		document.addEventListener("keydown", handleKeyDown);
@@ -89,7 +121,11 @@ export function FindAsset<T extends Token, S extends ShortPoolData>({
 
 	return (
 		<div className={cn(className)}>
-			<div className="flex flex-col">
+			{/*   */}
+			<div
+				data-shadow={hasScrollShadow}
+				className="flex h-[80px] flex-col justify-center px-4 transition-all data-[shadow=false]:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.25)]"
+			>
 				<div className="relative flex items-center">
 					<Input
 						placeholder="Search asset..."
@@ -175,16 +211,17 @@ export function FindAsset<T extends Token, S extends ShortPoolData>({
 
 			<div
 				className={cn(
-					"mt-6 flex h-full flex-col gap-1 overflow-scroll",
+					" flex h-full flex-col gap-1 overflow-scroll",
 					listClassName,
 				)}
+				ref={scrollContainerRef}
 			>
 				{data.map((item) => (
 					<FindAssetItem
 						item={item}
 						variant={variant}
-						currentAsset={asset}
-						setCurrentAsset={setAsset}
+						selectAsset={selectAsset}
+						setSelectAsset={setSelectAsset}
 						onSelectAsset={onSelectAsset}
 						key={item.address}
 						additionalActiveItemInfo={additionalActiveItemInfo}
@@ -195,142 +232,323 @@ export function FindAsset<T extends Token, S extends ShortPoolData>({
 	);
 }
 
-export function FindAssetItem<T extends Token, S extends ShortPoolData>({
+export function FindAssetItem<
+	T extends AvailableChainTokensDataFormated,
+	S extends ShortPoolData,
+>({
 	item,
-	currentAsset,
-	setCurrentAsset,
+	selectAsset,
+	setSelectAsset,
 	onSelectAsset,
-	variant = "basic",
+	variant = "default",
 	additionalActiveItemInfo,
 }: FindAssetItemProps<T, S>) {
 	const { t } = useTranslation(["main"]);
+	const { currentChain } = useAccountStore();
 
-	const [selectedOracle, setSelectedOracle] = useState(
-		additionalActiveItemInfo?.[0]?.poolAddress || "",
-	);
+	const isActive = item?.address === selectAsset?.address;
 
-	const isActive = item?.address === currentAsset?.address;
+	if (variant === "with-oracles") {
+		const handleAssetSelect = async () => {
+			if (isActive) {
+				onSelectAsset?.({
+					...item,
+					poolAddress: selectedOracle,
+				});
+			} else {
+				const decimals = await getDecimals({
+					addresses: [
+						item.address as Address,
+						currentChain?.nativeTokenAddress as Address,
+					],
+				});
 
-	const handleAssetSelect = () => {
-		setCurrentAsset(item);
-		if (!isActive) {
-			onSelectAsset?.(item);
-		}
-	};
+				const tokenA = new Token(
+					currentChain?.id || 42161,
+					item.address as Address,
+					Number(decimals[0]),
+				);
 
-	const BasicContent = () => {
+				const tokenB = new Token(
+					currentChain?.id || 42161,
+					currentChain?.nativeTokenAddress as Address,
+					Number(decimals[1]),
+				);
+
+				for (const fee of UNI_FEES) {
+					const poolAddress = computePoolAddress({
+						factoryAddress: currentChain?.uniswapV3FactoryAddress as Address,
+						tokenA,
+						tokenB,
+						fee,
+					});
+
+					const bytecode = await client.getCode({
+						address: poolAddress as Address,
+					});
+
+					if (bytecode && bytecode !== "0x") {
+						onSelectAsset?.({
+							...item,
+							poolAddress,
+						});
+						break;
+					}
+				}
+			}
+		};
+
+		const itemRef = useRef<HTMLDivElement>(null);
+		const [pools, setPools] = useState<ShortPoolData[]>();
+
+		const [selectedOracle, setSelectedOracle] = useState(
+			additionalActiveItemInfo?.[0]?.poolAddress || "",
+		);
+
+		const client = usePublicClient();
+
+		useEffect(() => {
+			if (isActive && itemRef.current) {
+				itemRef.current?.scrollIntoView({
+					behavior: "smooth",
+					block: "start",
+					inline: "start",
+				});
+			}
+		}, [isActive]);
+
+		useEffect(() => {
+			setSelectedOracle("");
+		}, [selectAsset?.address]);
+
+		useEffect(() => {
+			async function fetchPools() {
+				try {
+					if (isActive) {
+						setPools([]);
+
+						const pools = await getPoolsData(
+							(currentChain?.nativeTokenAddress || zeroAddress) as Address,
+							(item?.address || zeroAddress) as Address,
+							currentChain?.uniswapV3FactoryAddress as Address,
+						);
+
+						const poolsResult = await Promise.all(
+							pools.map(async (pool, index) => {
+								const liquidity = new BigNumber(pool.liquidity.toString());
+
+								const liquidityInToken0 = liquidity
+									.div(
+										new BigNumber(10).pow(
+											currentChain?.nativeCurrency.decimals || 18,
+										),
+									)
+									.multipliedBy(1);
+
+								const poolAddress = Pool.getAddress(
+									pool.token0,
+									pool.token1,
+									pool.fee,
+								);
+
+								return {
+									priceFeedType: "UniswapV3",
+									poolAddress: poolAddress,
+									liquidity: liquidityInToken0.toString() || "0",
+									fee: UNI_FEES[index],
+								};
+							}),
+						);
+
+						const filteredPools = poolsResult?.filter(
+							(pool) => pool?.liquidity !== undefined && pool.fee !== undefined,
+						);
+
+						setPools(filteredPools);
+					}
+				} catch (err) {
+					console.error(err);
+				}
+			}
+
+			fetchPools();
+		}, [item.address, currentChain?.nativeTokenAddress, isActive]);
+
 		return (
-			<div className="flex w-full justify-between">
-				<div className="flex gap-4">
-					<img
-						src={item.logo || "/icons/empty-token.svg"}
-						className="h-10 w-10"
-						alt={item.symbol || "token"}
-					/>
-					<div className="flex flex-col items-start justify-center">
-						<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
-							{item?.symbol || "-"}
-						</span>
-						<span className="font-[600] font-namu text-[14px] text-text-tertiary">
-							{item.name}
-						</span>
+			<div
+				ref={itemRef}
+				className={cn(
+					"flex w-full flex-col justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
+					isActive ? "bg-fill-primary-800" : "hover:bg-fill-primary-800",
+				)}
+			>
+				<button
+					type="button"
+					onClick={() => {
+						if (selectAsset?.address === item.address) {
+							setSelectAsset(null);
+						} else {
+							setSelectAsset(item);
+						}
+					}}
+					key={item.address}
+					className="flex w-full cursor-pointer justify-between"
+				>
+					<div className="flex w-full items-center justify-between">
+						<div className="flex gap-4">
+							<img
+								src={item.logo || "/icons/empty-token.svg"}
+								className="h-10 w-10 rounded-full"
+								alt={""}
+							/>
+							<div className="flex flex-col items-start justify-center">
+								<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
+									{item?.symbol || "-"}
+								</span>
+								<span className="font-[600] font-namu text-[14px] text-text-tertiary">
+									{item.name}
+								</span>
+							</div>
+						</div>
+						<div className="flex items-center gap-3">
+							<Button
+								className="h-10 transition-colors data-[active=false]:bg-fill-tertiary"
+								data-active={isActive}
+								disabled={isActive ? !selectedOracle : false}
+								onClick={handleAssetSelect}
+							>
+								<RoundedCheck className="scale-100" />
+								{isActive && t("useAsset")}
+							</Button>
+
+							<div>
+								<ChevronIcon
+									width={16}
+									height={16}
+									data-active={isActive}
+									className="rotate-[180deg] text-text-tertiary transition-all duration-150 data-[active=true]:rotate-[0deg] data-[active=true]:text-text-primary"
+								/>
+							</div>
+						</div>
 					</div>
-				</div>
-				<div className="flex flex-col justify-center text-[14px]">
-					<span className="text-text-primary">
-						{shorten(new BigNumber(item.price || 0))} $
-					</span>
-				</div>
-			</div>
-		);
-	};
-
-	const OracleInfo = observer(() => {
-		if (!isActive || variant !== "with-additional-data") return null;
-
-		const { currentChain } = useAccountStore();
-
-		return (
-			<div className="mt-6 flex flex-col gap-4">
-				<span className="text-start">{t("selectOracle")}</span>
-				<div className="flex flex-col gap-2">
-					{additionalActiveItemInfo?.length === 0 && (
-						<Loader2 className="scale-75 animate-spin" />
-					)}
-					{additionalActiveItemInfo?.map((oracle) => (
-						<button
-							type="button"
-							className={cn(
-								"flex w-full cursor-pointer flex-col gap-4 rounded-[8px] border-[1px] border-fill-secondary p-4",
-								selectedOracle === oracle?.poolAddress &&
-									"border-fill-secondary bg-fill-secondary",
-							)}
-							onClick={() => {
-								setSelectedOracle(oracle?.poolAddress);
-								onSelectAsset?.({
-									...item,
-									poolAddress: oracle.poolAddress,
-								});
-							}}
-							key={oracle?.priceFeedType}
-						>
-							<div className="flex items-center justify-between text-text-primary">
-								<div className="flex items-center gap-4">
-									<span>{oracle?.priceFeedType}</span>
-									<span className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px]">
-										{oracle?.fee / 1000} %
-									</span>
-								</div>
-								{selectedOracle === oracle?.poolAddress && (
-									<CheckIcon className="scale-190 text-fill-brand-primary-700" />
+				</button>
+				{isActive && (
+					<div className="flex flex-col gap-6">
+						<div className="mt-6 flex flex-col gap-4">
+							<span className="flex gap-2 text-start text-text-tertiary">
+								{t("selectOracle")}
+								<InfoTooltip />
+							</span>
+							<div className="flex flex-col gap-2">
+								{pools?.length === 0 && (
+									<Loader2 className="scale-75 animate-spin" />
 								)}
+								{pools?.map((pool) => (
+									<button
+										type="button"
+										className={cn(
+											"flex w-full cursor-pointer flex-col gap-4 rounded-[8px] border-[1px] border-fill-secondary p-4",
+											selectedOracle === pool?.poolAddress &&
+												"border-fill-secondary bg-fill-secondary",
+										)}
+										onClick={() => {
+											setSelectedOracle(pool?.poolAddress);
+										}}
+										key={pool?.priceFeedType}
+									>
+										<div className="flex items-center justify-between text-text-primary">
+											<div className="flex items-center gap-4">
+												<span>{pool?.priceFeedType}</span>
+												<span
+													data-active={selectedOracle === pool?.poolAddress}
+													className="flex h-[24px] items-center rounded-[4px] bg-fill-secondary p-2 text-[12px] data-[active=true]:bg-fill-tertiary"
+												>
+													{pool?.fee / 1000} %
+												</span>
+											</div>
+											{selectedOracle === pool?.poolAddress && (
+												<div className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-brand-primary-700">
+													<CheckIcon className="h-[12px] w-[15px]" />
+												</div>
+											)}
+										</div>
+										<div className="flex flex-col gap-1">
+											<div className="flex items-center justify-between text-[12px]">
+												<span className="text-text-secondary">
+													{t("liquidity")}
+												</span>
+												<span className="text-text-primary">
+													{new BigNumber(pool?.liquidity || 0)
+														.toFixed(6)
+														.toString()}{" "}
+													{currentChain?.nativeCurrency.symbol}
+												</span>
+											</div>
+										</div>
+									</button>
+								))}
 							</div>
-							<div className="flex flex-col gap-1">
-								<div className="flex items-center justify-between text-[12px]">
-									<span className="text-text-secondary">{t("liquidity")}</span>
-									<span className="text-text-primary">
-										{new BigNumber(oracle?.liquidity || 0)
-											.toFixed(6)
-											.toString()}{" "}
-										{currentChain?.nativeCurrency.symbol}
-									</span>
+						</div>
+
+						<div className="flex flex-wrap gap-2">
+							{item.tags?.map((tag) => (
+								<div
+									key={tag}
+									className="w-fit rounded-[4px] bg-fill-secondary px-2 py-[7px]"
+								>
+									{tag}
 								</div>
-							</div>
-						</button>
-					))}
-				</div>
+							))}
+							{/* <div className="bg-fill-secondary rounded-[4px] py-[7px] px-2 w-fit">
+								{item.address}
+							</div> */}
+						</div>
+					</div>
+				)}
 			</div>
 		);
-	});
+	}
 
-	return variant === "basic" ? (
-		<button
-			type="button"
-			onClick={handleAssetSelect}
-			key={item.address}
-			className={cn(
-				"flex h-[56px] w-full cursor-pointer justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
-				isActive ? "bg-text-brand-primary" : "hover:bg-bg-floor-2",
-			)}
-		>
-			<BasicContent />
-		</button>
-	) : (
-		<div
-			className={cn(
-				"flex w-full flex-col justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
-				isActive ? "bg-fill-primary-800" : "hover:bg-fill-primary-800",
-			)}
-		>
+	if (variant === "default") {
+		const handleAssetSelect = () => {
+			setSelectAsset(item);
+			if (!isActive) {
+				onSelectAsset?.(item);
+			}
+		};
+		return (
 			<button
 				type="button"
 				onClick={handleAssetSelect}
 				key={item.address}
-				className="flex w-full cursor-pointer justify-between"
+				className={cn(
+					"flex h-[56px] w-full cursor-pointer justify-between rounded-[8px] p-2 transition-colors duration-200 ease-out",
+					isActive ? "bg-text-brand-primary" : "hover:bg-bg-floor-2",
+				)}
 			>
-				<BasicContent />
+				<div className="flex w-full justify-between">
+					<div className="flex gap-4">
+						<img
+							src={item.logo || "/icons/empty-token.svg"}
+							className="h-10 w-10"
+							alt={item.symbol || "token"}
+						/>
+						<div className="flex flex-col items-start justify-center">
+							<span className="font-[600] font-namu text-[14px] text-text-primary uppercase">
+								{item?.symbol || "-"}
+							</span>
+							<span className="font-[600] font-namu text-[14px] text-text-tertiary">
+								{item.name}
+							</span>
+						</div>
+					</div>
+					<div className="flex flex-col justify-center text-[14px]">
+						<span className="text-text-primary">
+							{shorten(new BigNumber(item.price || 0))} $
+						</span>
+					</div>
+				</div>
 			</button>
-			<OracleInfo />
-		</div>
-	);
+		);
+	}
 }

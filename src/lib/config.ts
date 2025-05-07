@@ -1,4 +1,6 @@
 import { createConfig } from "@privy-io/wagmi";
+import ArDB from "ardb";
+import Arweave from "arweave";
 import { http } from "wagmi";
 import { arbitrum, arbitrumSepolia, monadTestnet } from "wagmi/chains";
 import {
@@ -7,6 +9,9 @@ import {
 	safe,
 	walletConnect,
 } from "wagmi/connectors";
+
+export const arweave = Arweave.init({});
+export const ardb = new ArDB(arweave);
 
 export const config = createConfig({
 	multiInjectedProviderDiscovery: true,

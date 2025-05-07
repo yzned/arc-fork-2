@@ -1,4 +1,4 @@
-import type { BalancesToken } from "@/lib/types";
+// import type { BalancesToken } from "@/lib/types";
 import { observer } from "mobx-react-lite";
 
 import { useAccountStore } from "@/contexts/AccountContext";
@@ -9,11 +9,12 @@ import { useTranslation } from "react-i18next";
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/button";
 import { ModalBase } from "../../ui/modalBase";
+// import { AvailableChainTokensDataFormated } from "@/api/types";
 
 export const BalancesTable = observer(() => {
 	const { isOpenTransferModal, setIsOpenTransferModal } = useExplorePortfolio();
 
-	const { tokensInformation } = useAccountStore();
+	const { currentChain } = useAccountStore();
 	const { t } = useTranslation(["main"]);
 
 	return (
@@ -43,7 +44,7 @@ export const BalancesTable = observer(() => {
 				</thead>
 
 				<tbody className="w-full text-white ">
-					{tokensInformation?.map((row, index) => (
+					{currentChain?.availableTokens?.map((row, index) => (
 						<BalancesTableRow row={row} key={`${index}-${row.address}`} />
 					))}
 				</tbody>
@@ -52,49 +53,56 @@ export const BalancesTable = observer(() => {
 	);
 });
 
-const BalancesTableRow = observer(({ row }: { row: BalancesToken }) => {
-	const { setIsOpenTransferModal } = useExplorePortfolio();
+const BalancesTableRow = observer(
+	({
+		row,
+	}: {
+		row: //@ts-ignore
+		AvailableChainTokensDataFormated;
+	}) => {
+		const { setIsOpenTransferModal } = useExplorePortfolio();
 
-	const { t } = useTranslation(["main"]);
+		const { t } = useTranslation(["main"]);
 
-	return (
-		<tr
-			className="grid border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
-			style={{
-				gridTemplateColumns: "103px 187px 101px 1fr 133px",
-			}}
-		>
-			<td className="flex items-center gap-2 px-3 py-4 text-left">
-				<img src={row.logo} alt="icon1" className="h-4 w-4 overflow-hidden" />
-				<span>{row.symbol}</span>
-			</td>
-
-			<td className="px-4 py-4">{row.quantityOnWallet?.toFixed(4)}</td>
-
-			<td className="py-4 pr-2 text-right">{row.price?.toFixed(4)}</td>
-
-			<a
-				onClick={(e) => {
-					e.stopPropagation();
+		return (
+			<tr
+				className="grid border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
+				style={{
+					gridTemplateColumns: "103px 187px 101px 1fr 133px",
 				}}
-				href={`https://arbiscan.io/token/${row.address}`}
-				className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
 			>
-				{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}
-			</a>
+				<td className="flex items-center gap-2 px-3 py-4 text-left">
+					<img src={row.logo} alt="icon1" className="h-4 w-4 overflow-hidden" />
+					<span>{row.symbol}</span>
+				</td>
 
-			<td className=" flex items-center justify-center">
-				<Button
-					variant={"tertiary"}
-					className="h-[32px]"
-					onClick={() => setIsOpenTransferModal(true)}
+				<td className="px-4 py-4">{row.quantityOnWallet?.toFixed(4)}</td>
+
+				<td className="py-4 pr-2 text-right">{row.price?.toFixed(4)}</td>
+
+				<a
+					onClick={(e) => {
+						e.stopPropagation();
+					}}
+					href={`https://arbiscan.io/token/${row.address}`}
+					className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
 				>
-					{t("transfer")}
-				</Button>
-			</td>
-		</tr>
-	);
-});
+					{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}
+				</a>
+
+				<td className=" flex items-center justify-center">
+					<Button
+						variant={"tertiary"}
+						className="h-[32px]"
+						onClick={() => setIsOpenTransferModal(true)}
+					>
+						{t("transfer")}
+					</Button>
+				</td>
+			</tr>
+		);
+	},
+);
 
 const TransferModalContent = observer(() => {
 	const { setIsOpenTransferModal } = useExplorePortfolio();

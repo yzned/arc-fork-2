@@ -1,12 +1,11 @@
 import { Input } from "@/components/ui/Input";
 
-import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import Chevron from "@/icons/chevron.svg?react";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
 import TemplatesIcon from "@/icons/templates.svg?react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 export const Fees = observer(() => {
@@ -16,12 +15,12 @@ export const Fees = observer(() => {
 	const [selectedId, setSelectedId] = useState(100);
 	const [advOpen, setAdvOpen] = useState(false);
 
-	const { portfolioAssets, updateManagingAssets, shortPortfolioData } =
-		useExplorePortfolio();
+	// const { portfolioAssets, updateManagingAssets, shortPortfolioData } =
+	// 	useExplorePortfolio();
 
-	useEffect(() => {
-		updateManagingAssets();
-	}, [portfolioAssets]);
+	// useEffect(() => {
+	// 	updateManagingAssets();
+	// }, [portfolioAssets]);
 
 	// const handleChange = (
 	// 	e: React.ChangeEvent<HTMLInputElement>,
@@ -156,7 +155,7 @@ export const Fees = observer(() => {
 						placeholder={t("enterPrice")}
 						className="w-[384px]"
 						min="0"
-						defaultValue={shortPortfolioData?.cache.initial_share_price}
+						// defaultValue={shortPortfolioData?.cache.initial_share_price}
 						onKeyDown={(e) => {
 							if (
 								e.key === "-" ||
@@ -178,7 +177,7 @@ export const Fees = observer(() => {
 						required={true}
 						placeholder={`${t("enterFee")} %`}
 						className="w-[384px]"
-						defaultValue={shortPortfolioData?.cache.management_fee}
+						// defaultValue={shortPortfolioData?.cache.management_fee}
 						// onChange={(e) => {
 						// 	handleChangePercents(e, setManagementFee);
 						// }}
@@ -211,7 +210,7 @@ export const Fees = observer(() => {
 							e.preventDefault();
 						}
 					}}
-					defaultValue={shortPortfolioData?.cache.management_fee_receiver}
+					// defaultValue={shortPortfolioData?.cache.management_fee_receiver}
 					// onChange={(e) => {
 					// 	handleChange(e, setManagementFeeRecipient);
 					// }}
@@ -241,9 +240,9 @@ export const Fees = observer(() => {
 							type="number"
 							label={t("baseFee")}
 							required={true}
-							placeholder={t("10%")}
+							placeholder={t("10 %")}
 							className="w-full"
-							defaultValue={shortPortfolioData?.cache.base_fee}
+							// defaultValue={shortPortfolioData?.cache.base_fee}
 							onKeyDown={(e) => {
 								if (
 									e.key === "-" ||
@@ -263,7 +262,7 @@ export const Fees = observer(() => {
 							required={true}
 							placeholder="10 %"
 							className="w-full"
-							defaultValue={shortPortfolioData?.cache.deviation_limit}
+							// defaultValue={shortPortfolioData?.cache.deviation_limit}
 							// value={deviationLimit}
 							// onChange={(e) => handleChangePercents(e, setDeviationLimit)}
 							onKeyDown={(e) => {
@@ -283,7 +282,7 @@ export const Fees = observer(() => {
 							required={true}
 							placeholder="10 %"
 							defaultValue={Number(
-								shortPortfolioData?.cache.deviation_increase_fee,
+								// shortPortfolioData?.cache.deviation_increase_fee,
 							)}
 							className="w-full"
 							// value={deviationFee}
@@ -304,7 +303,7 @@ export const Fees = observer(() => {
 							label={t("cashbackFeeShare")}
 							required={true}
 							placeholder="10 %"
-							defaultValue={shortPortfolioData?.cache.initial_share_price}
+							// defaultValue={shortPortfolioData?.cache.initial_share_price}
 							// value={cashbackFeeShare}
 							// onChange={(e) => handleChangePercents(e, setCashbackFeeShare)}
 							className="w-full"

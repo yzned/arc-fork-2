@@ -2,51 +2,62 @@ import BigNumber from "bignumber.js";
 
 export function shorten(
 	BNAmount: BigNumber,
+	isExact = false,
 	dollars = false,
 	insertSpaces = true,
 ) {
-	function getShortenMode(BNAmount: BigNumber) {
-		if (BNAmount.isEqualTo(new BigNumber(0))) return "zero";
-		if (BNAmount.isGreaterThanOrEqualTo(new BigNumber(1_000_000_000)))
+	const absAmount = BNAmount.absoluteValue();
+	const isNegative = BNAmount.isLessThan(0);
+
+	function getShortenMode(absAmount: BigNumber) {
+		if (absAmount.isEqualTo(new BigNumber(0))) return "zero";
+		if (absAmount.isGreaterThanOrEqualTo(new BigNumber(1_000_000_000)))
 			return "b";
-		if (BNAmount.isGreaterThanOrEqualTo(new BigNumber(1_000_000))) return "m";
-		if (BNAmount.isGreaterThanOrEqualTo(new BigNumber(1_000))) return "k";
-		if (BNAmount.isLessThan(new BigNumber(0.000001))) return "d";
+		if (absAmount.isGreaterThanOrEqualTo(new BigNumber(1_000_000))) return "m";
+		if (absAmount.isGreaterThanOrEqualTo(new BigNumber(1_000))) return "k";
+		if (absAmount.isLessThan(new BigNumber(0.000001))) return "d";
 		return "cut";
 	}
 
-	const mode = getShortenMode(BNAmount);
+	const mode = getShortenMode(absAmount);
 
 	if (mode === "zero") return dollars ? "0.00" : "0";
 
+	const formatResult = (value: string, suffix = "") => {
+		let res = value;
+		if (!dollars) res = new BigNumber(res).toString();
+		if (insertSpaces) res = formatNumberWithSpaces(res);
+		return `${isNegative ? "-" : ""}${res}${suffix}`;
+	};
+
 	switch (mode) {
 		case "b": {
-			let res = BNAmount.dividedBy(new BigNumber(1_000_000_000)).toFixed(2, 1);
-			if (!dollars) res = new BigNumber(res).toString();
-			if (insertSpaces) res = formatNumberWithSpaces(res);
-			return `${res}B`;
+			const res = absAmount
+				.dividedBy(new BigNumber(1_000_000_000))
+				.toFixed(2, 1);
+			return formatResult(res, "B");
 		}
 		case "m": {
-			let res = BNAmount.dividedBy(new BigNumber(1_000_000)).toFixed(2, 1);
-			if (!dollars) res = new BigNumber(res).toString();
-			if (insertSpaces) res = formatNumberWithSpaces(res);
-			return `${res}M`;
+			const res = absAmount.dividedBy(new BigNumber(1_000_000)).toFixed(2, 1);
+			return formatResult(res, "M");
 		}
 		case "k": {
-			let res = BNAmount.dividedBy(new BigNumber(1_000)).toFixed(2, 1);
-			if (!dollars) res = new BigNumber(res).toString();
-			if (insertSpaces) res = formatNumberWithSpaces(res);
-			return `${res}K`;
+			const res = absAmount.dividedBy(new BigNumber(1_000)).toFixed(2, 1);
+			return formatResult(res, "K");
 		}
 		case "d": {
-			return "< 0.000001";
+			if (isExact) {
+				const rounded = absAmount.toPrecision(3);
+				return `${isNegative ? "-" : ""}${new BigNumber(rounded).toExponential()}`;
+			}
+			return `${isNegative ? "-" : ""}< 0.000001`;
 		}
 		default: {
-			return new BigNumber(BNAmount.toFixed(dollars ? 2 : 4, 1)).toString();
+			const res = absAmount.toFixed(dollars ? 2 : 4, 1);
+			return formatResult(res);
 		}
 	}
 }
-
 export function cutDecimals(purifiedNumber: string, decimals = 3) {
 	if (!decimals) return purifiedNumber.replace(/[^0-9]/gi, "");
 
