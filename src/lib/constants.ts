@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js";
 import { config } from "./config";
 import type { ChainMetadata, ExtendedChain, Token } from "./types";
 
@@ -43,6 +44,8 @@ const chainsMetadata: ChainMetadata[] = [
 		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
 	},
 ];
+
+export const twoPow96 = new BigNumber(2).pow(96);
 
 export const TAGS = [
 	"Infrastructure",

@@ -1,17 +1,24 @@
-import type { CandleDataFormated } from "@/api/types";
+import { GetMultipoolChartData, GetMultipoolChartStats } from "@/api/explore";
+import { type CandleDataRequest, queryKeys, type CandleDataFormated } from "@/api/types";
+import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useDebounceValue } from "@/hooks/use-debounce-value";
+import { twoPow96 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import BigNumber from "bignumber.js";
 import {
+	type CandlestickData,
 	CandlestickSeries,
 	ColorType,
-	type Time,
 	createChart,
+	type ISeriesApi,
+	type Time,
+	type WhitespaceData
 } from "lightweight-charts";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 
 type CandleChartProps = {
-	data: CandleDataFormated[];
-
 	backgroundColor?: string;
 	mainLineColor?: string;
 	gridColor?: string;
@@ -24,29 +31,284 @@ export const CandleChart = observer(
 	({
 		backgroundColor = "#17161B",
 		gridColor = "#1F1F1F",
-		mainLineColor = "#0148FE",
 		textColor = "#8A8B8C",
 		height = 400,
-		data,
 	}: CandleChartProps) => {
+		const {
+			chartResolution,
+		} = useExplorePortfolio();
 		const chartContainerRef = useRef<HTMLDivElement>(null);
 
-		const [candleData, setCandleData] = useState<CandleDataFormated>(
-			data[data?.length - 1],
-		);
+		const [previousCandleState, setPreviousCandle] = useState<CandleDataRequest>();
+		const [currentFrom, setCurrentFrom] = useDebounceValue(0, 500)
+		const [chartOHLC, setChartOHLC] = useState<ISeriesApi<"Candlestick", Time, CandlestickData<Time> | WhitespaceData<Time>> | null>(null);
+		const [candleData, setCandleData] = useState<CandleDataFormated>({
+			time: Date.now().toString(),
+			open: 0,
+			high: 0,
+			low: 0,
+			close: 0,
+		});
+
+		const { mutate: getCachedCandles, mutateAsync: getCachedCandlesAsync } = useMutation({
+			mutationKey: [queryKeys.multipoolsList, chartResolution],
+			mutationFn: async () => {
+				const data = await GetMultipoolChartData({
+					m: "0x2ae0a75888014e01d2247fff2a8748c0a0c65f43",
+					r: Number(chartResolution),
+				});
+
+				const sortedData = [...data].sort((a, b) => Number(a.t) - Number(b.t));
+
+				const uniqueData = sortedData.reduce<CandleDataRequest[]>(
+					(acc, current) => {
+						const existing = acc.find((item) => item.t === current.t);
+						if (!existing) {
+							acc.push(current);
+						} else {
+							const index = acc.indexOf(existing);
+							acc[index] = current;
+						}
+						return acc;
+					},
+					[],
+				);
+
+				const candleData = uniqueData.map((item) => {
+					const formattedHigh = new BigNumber(item.h)
+						.div(twoPow96)
+						.toString();
+
+					const formattedLow = new BigNumber(item.l)
+						.div(twoPow96)
+						.toString();
+
+					const formattedClose = new BigNumber(item.c)
+						.div(twoPow96)
+						.toString();
+
+					const formattedOpen = new BigNumber(item.o)
+						.div(twoPow96)
+						.toString();
+
+					return {
+						time: Number(item.t) as Time,
+						open: Number.parseFloat(formattedOpen),
+						high: Number.parseFloat(formattedHigh),
+						low: Number.parseFloat(formattedLow),
+						close: Number.parseFloat(formattedClose),
+					};
+				});
+
+				return candleData;
+			},
+		});
+
+		useQuery({
+			queryKey: [queryKeys.multipoolsList, chartResolution, currentFrom],
+			queryFn: async () => {
+				if (currentFrom >= -15) {
+					return [];
+				}
+				if (!chartOHLC) {
+					return [];
+				}
+
+				const currentData = chartOHLC.data();
+				const earliestTimestamp = Number.parseInt(currentData[0].time.toString()) - 1;
+				const countback = Number.parseInt((50 - currentFrom).toString());
+
+				const data = await GetMultipoolChartData({
+					m: "0x2ae0a75888014e01d2247fff2a8748c0a0c65f43",
+					r: Number(chartResolution),
+					c: countback,
+					t: earliestTimestamp.toString(),
+				});
+
+				const history = data.map((item) => {
+					const formattedHigh = new BigNumber(item.h)
+						.div(twoPow96)
+						.toString();
+
+					const formattedLow = new BigNumber(item.l)
+						.div(twoPow96)
+						.toString();
+
+					const formattedClose = new BigNumber(item.c)
+						.div(twoPow96)
+						.toString();
+
+					const formattedOpen = new BigNumber(item.o)
+						.div(twoPow96)
+						.toString();
+
+					return {
+						time: Number(item.t) as Time,
+						open: Number.parseFloat(formattedOpen),
+						high: Number.parseFloat(formattedHigh),
+						low: Number.parseFloat(formattedLow),
+						close: Number.parseFloat(formattedClose),
+					};
+				});
+
+				// combine existing data with history
+				const combinedData = [...history, ...currentData].sort((a, b) => Number(a.time) - Number(b.time));
+
+				chartOHLC.setData(combinedData as CandlestickData<Time>[]);
+
+				return combinedData;
+			}
+		});
+
+		useQuery({
+			queryKey: [queryKeys.multipoolsList, chartResolution],
+			queryFn: async () => {
+				if (!chartOHLC) {
+					return;
+				}
+				const currentData = chartOHLC.data();
+
+				const data = await GetMultipoolChartStats({
+					m: "0x2ae0a75888014e01d2247fff2a8748c0a0c65f43",
+					r: Number(chartResolution),
+				});
+
+				const currentCandle = data.cc;
+				const previousCandle = data.pc;
+
+				if (!previousCandleState) {
+					setPreviousCandle(previousCandle);
+				}
+
+				if (chartResolution === "60") {
+					// check if we have any of current candle OR previous candle
+					const isSynced = currentData.some(
+						(item) => item.time === Number.parseInt(currentCandle.t) || item.time === Number.parseInt(previousCandle.t),
+					);
+
+					if (!isSynced) {
+						// refetch cached candles data
+						const newCachedCandles = await getCachedCandlesAsync();
+						if (!newCachedCandles) {
+							throw new Error("No cached candles data available");
+						}
+
+						chartOHLC.setData(newCachedCandles);
+					}
+				} else {
+					// check if we have any of current candle OR previous candle
+					const isSynced = [previousCandleState, currentCandle].some(
+						(item) => Number.parseInt(item?.t || "0") === Number.parseInt(currentCandle.t) || Number.parseInt(item?.t || "0") === Number.parseInt(previousCandle.t),
+					);
+
+					if (!isSynced) {
+						// refetch cached candles data
+						const newCachedCandles = await getCachedCandlesAsync();
+						if (!newCachedCandles) {
+							throw new Error("No cached candles data available");
+						}
+
+						chartOHLC.setData(newCachedCandles);
+					}
+				}
+
+				// from stats endpoint, we always get the latest minute candle
+				// so we need to update the chart with the integration of latest candle
+
+				const rndo = Math.floor(Math.random() * 1000);
+				const rndh = Math.floor(Math.random() * 1000);
+				const rndl = Math.floor(Math.random() * 1000);
+				const rndc = Math.floor(Math.random() * 1000);
+
+				switch (chartResolution) {
+					case "60": {
+						const timeToUpdate = Number.parseInt(currentCandle.t);
+						chartOHLC.update({
+							time: timeToUpdate as Time,
+							open: rndo,
+							high: rndh,
+							low: rndl,
+							close: rndc,
+						});
+					}
+						break;
+					case "900": {
+						// 15mins candle, calculate the time to update
+						const timeToUpdate = Number.parseInt(currentCandle.t) - (Number.parseInt(currentCandle.t) % 900) + 900;
+						console.log("timeToUpdate", timeToUpdate);
+						chartOHLC.update({
+							time: timeToUpdate as Time,
+							open: rndo,
+							high: rndh,
+							low: rndl,
+							close: rndc,
+						});
+					}
+						break;
+					case "3600": {
+						// 1 hour candle, calculate the time to update
+						const timeToUpdate = Number.parseInt(currentCandle.t) - (Number.parseInt(currentCandle.t) % 3600) + 3600;
+						chartOHLC.update({
+							time: timeToUpdate as Time,
+							open: rndo,
+							high: rndh,
+							low: rndl,
+							close: rndc,
+						});
+					}
+						break;
+					case "86400": {
+						// 1 day candle, calculate the time to update
+						const timeToUpdate = Number.parseInt(currentCandle.t) - (Number.parseInt(currentCandle.t) % 86400) + 86400;
+						chartOHLC.update({
+							time: timeToUpdate as Time,
+							open: rndo,
+							high: rndh,
+							low: rndl,
+							close: rndc,
+						});
+					}
+						break;
+				}
+
+				return currentCandle;
+			},
+			enabled: chartOHLC !== null,
+			refetchInterval: 1000,
+			refetchOnWindowFocus: false,
+		});
+
+		//
 
 		useEffect(() => {
 			if (chartContainerRef.current) {
 				const chart = createChart(chartContainerRef.current, {
 					timeScale: {
 						tickMarkFormatter: (time: number) => {
-							const date = new Date(time);
-							return date.toLocaleDateString("en-US", {
-								month: "short",
-								day: "numeric",
-								minute: "numeric",
-								second: "numeric",
-							});
+							switch (chartResolution) {
+								case "60":
+									return new Date(time * 1000).toLocaleTimeString("en-US", {
+										hour: "2-digit",
+										minute: "2-digit",
+									});
+								case "900":
+									return new Date(time * 1000).toLocaleTimeString("en-US", {
+										hour: "2-digit",
+										minute: "2-digit",
+									});
+								case "3600":
+									return new Date(time * 1000).toLocaleDateString("en-US", {
+										day: "2-digit",
+										month: "2-digit",
+										year: "2-digit",
+									});
+								default:
+									return new Date(time * 1000).toLocaleDateString("en-US", {
+										day: "2-digit",
+										month: "2-digit",
+										year: "2-digit",
+									});
+							}
 						},
 					},
 					layout: {
@@ -67,9 +329,7 @@ export const CandleChart = observer(
 					height: height,
 				});
 
-				chart.timeScale().fitContent();
-
-				const newSeries = chart.addSeries(CandlestickSeries, {
+				const ohlc = chart.addSeries(CandlestickSeries, {
 					upColor: "#12A610",
 					downColor: "#D10F0F",
 					borderDownColor: "#D10F0F",
@@ -78,18 +338,27 @@ export const CandleChart = observer(
 					wickUpColor: "#12A610",
 				});
 
-				if (data) {
-					newSeries.setData(
-						data.map((item) => {
-							return { ...item, time: item.time as Time };
-						}),
-					);
-				}
+				setChartOHLC(ohlc);
+				getCachedCandles(undefined, {
+					onSuccess: (data) => {
+						console.log("cached candles data", data);
+						ohlc.setData(data as CandlestickData<Time>[]);
+					}
+				});
+
+				chart.timeScale().fitContent();
+				chart.timeScale().scrollToPosition(5, false);
 
 				chart.subscribeCrosshairMove((item) => {
 					const data = item.seriesData as Map<unknown, CandleDataFormated>;
 					for (const [, value] of data) {
 						setCandleData(value);
+					}
+				});
+
+				chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+					if (range) {
+						setCurrentFrom(range.from);
 					}
 				});
 
@@ -106,7 +375,7 @@ export const CandleChart = observer(
 					chart.remove();
 				};
 			}
-		}, [backgroundColor, mainLineColor, gridColor, textColor, data]);
+		}, [chartResolution]);
 
 		return (
 			<div className="relative h-full w-full ">
@@ -117,9 +386,9 @@ export const CandleChart = observer(
 							<span
 								className={cn(
 									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
+									"text-negative-secondary",
 									candleData?.open < candleData?.close &&
-										"text-positive-primary",
+									"text-positive-primary",
 								)}
 							>
 								{candleData?.open}
@@ -130,9 +399,9 @@ export const CandleChart = observer(
 							<span
 								className={cn(
 									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
+									"text-negative-secondary",
 									candleData?.open < candleData?.close &&
-										"text-positive-primary",
+									"text-positive-primary",
 								)}
 							>
 								{candleData?.high}
@@ -143,9 +412,9 @@ export const CandleChart = observer(
 							<span
 								className={cn(
 									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
+									"text-negative-secondary",
 									candleData?.open < candleData?.close &&
-										"text-positive-primary",
+									"text-positive-primary",
 								)}
 							>
 								{candleData?.low}
@@ -156,9 +425,9 @@ export const CandleChart = observer(
 							<span
 								className={cn(
 									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
+									"text-negative-secondary",
 									candleData?.open < candleData?.close &&
-										"text-positive-primary",
+									"text-positive-primary",
 								)}
 							>
 								{candleData?.close}

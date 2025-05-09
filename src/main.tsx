@@ -1,6 +1,5 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
-import "./index.css";
 import "./lib/i18n";
 import { TooltipProvider } from "./components/ui/tooltips/Tooltip";
 import { routeTree } from "./routeTree.gen";

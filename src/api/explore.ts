@@ -4,6 +4,7 @@ import { api } from "./api";
 import type {
 	AvailableChainTokensData,
 	CandleDataRequest,
+	CandleDataRequestStats,
 	ShortMultipoolData,
 } from "./types";
 
@@ -21,13 +22,24 @@ export async function GetMultipoolChartData(params: {
 	// t - time from which to count back (inclusive)
 	// c - countback (number of candles)
 	// r - resolution (1 from [60, 900, 3600, 86400] )
-	// m - multipool address (translate to English)
+	// m - multipool address
 	r?: number;
 	t?: string;
 	m?: Address;
 	c?: number;
 }): Promise<CandleDataRequest[]> {
 	return await api.getMsgpack("/portfolio/candles", params);
+}
+
+export async function GetMultipoolChartStats(params: {
+	// t - time from which to count back (inclusive)
+	// r - resolution (1 from [60, 900, 3600, 86400] )
+	// m - multipool address
+	r?: number;
+	t?: string;
+	m?: Address;
+}): Promise<CandleDataRequestStats> {
+	return await api.getMsgpack("/portfolio/stats", params);
 }
 
 // export async function GetMultipoolInfo(params: {

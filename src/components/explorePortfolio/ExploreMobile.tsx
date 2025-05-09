@@ -40,7 +40,6 @@ export const ExploreMobile = observer(() => {
 	>("balances");
 
 	const {
-		portfolioCandlesData,
 		// portfolioAssets,
 		portfolioLinearData,
 		chartResolution,
@@ -112,35 +111,58 @@ export const ExploreMobile = observer(() => {
 							)}
 						>
 							<FindAsset
-								// defaultActiveItem={
-								// 	currentPortfolio
-								// 		? {
-								// 				address: currentPortfolio?.multipool as Address,
-								// 				price: currentPortfolio?.current_price,
-								// 				symbol: currentPortfolio?.symbol,
-								// 				name: currentPortfolio?.name,
-								// 				logo: currentPortfolio?.logo,
-								// 			}
-								// 		: {
-								// 				address: allPortfolios[0]?.multipool as Address,
-								// 				price: allPortfolios[0]?.current_price,
-								// 				symbol: allPortfolios[0]?.symbol,
-								// 				name: allPortfolios[0]?.name,
-								// 				logo: allPortfolios[0]?.logo,
-								// 			}
-								// }
-								data={
-									[]
-									// 	allPortfolios.map((item) => {
-									// 	return {
-									// 		address: item.multipool as Address,
-									// 		price: item.current_price,
-									// 		symbol: item.symbol,
-									// 		name: item.name,
-									// 		logo: item.logo,
-									// 	};
-									// })
+								defaultActiveItem={
+									currentPortfolio
+										? {
+												//@ts-ignore
+
+												address: currentPortfolio?.multipool as Address,
+												//@ts-ignore
+
+												price: currentPortfolio?.current_price,
+												//@ts-ignore
+
+												symbol: currentPortfolio?.symbol,
+												//@ts-ignore
+
+												name: currentPortfolio?.name,
+												logo: currentPortfolio?.logo,
+											}
+										: {
+												//@ts-ignore
+
+												address: allPortfolios[0]?.multipool as Address,
+												//@ts-ignore
+
+												price: allPortfolios[0]?.current_price,
+												//@ts-ignore
+
+												symbol: allPortfolios[0]?.symbol,
+												//@ts-ignore
+
+												name: allPortfolios[0]?.name,
+												logo: allPortfolios[0]?.logo,
+											}
 								}
+								data={allPortfolios.map((item) => {
+									return {
+										//@ts-ignore
+
+										address: item.multipool as Address,
+										//@ts-ignore
+
+										price: item.current_price,
+										//@ts-ignore
+
+										symbol: item.symbol,
+										//@ts-ignore
+
+										name: item.name,
+										//@ts-ignore
+
+										logo: item.logo,
+									};
+								})}
 								className="h-[60svh] w-full bg-floor-2 px-4 pt-6"
 							/>
 						</div>
@@ -281,9 +303,7 @@ export const ExploreMobile = observer(() => {
 					</Button>
 				</div>
 				<div className="mt-4">
-					{currentGraph === "candles" && (
-						<CandleChart height={443} data={portfolioCandlesData} />
-					)}
+					{currentGraph === "candles" && <CandleChart />}
 					{currentGraph === "linear" && (
 						<LinearChart height={443} data={portfolioLinearData} />
 					)}

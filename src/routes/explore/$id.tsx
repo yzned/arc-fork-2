@@ -36,12 +36,12 @@ import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useMintBurn } from "@/hooks/mutations/useMintBurn";
-import { useChart } from "@/hooks/queries/useChart";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 
 import { useAccountStore } from "@/contexts/AccountContext";
 import { shorten } from "@/lib/formatNumber";
+import { parseUnits } from "viem";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -63,8 +63,6 @@ function RouteComponent() {
 }
 
 export const MainSection = observer(() => {
-	useChart();
-
 	const [currentGraph, setCurrentGraph] = useState<
 		"candles" | "linear" | "portfolio"
 	>("candles");
@@ -86,7 +84,6 @@ export const MainSection = observer(() => {
 		setIsOpenPnlSettingsModal,
 		chartResolution,
 		setChartResolution,
-		portfolioCandlesData,
 		portfolioLinearData,
 	} = useExplorePortfolio();
 
@@ -173,35 +170,58 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
-								// defaultActiveItem={
-								// 	currentPortfolio
-								// 		? {
-								// 				address: currentPortfolio?.multipool as Address,
-								// 				price: currentPortfolio?.current_price,
-								// 				symbol: currentPortfolio?.symbol,
-								// 				name: currentPortfolio?.name,
-								// 				logo: currentPortfolio?.logo,
-								// 			}
-								// 		: {
-								// 				address: allPortfolios[0]?.multipool as Address,
-								// 				price: allPortfolios[0]?.current_price,
-								// 				symbol: allPortfolios[0]?.symbol,
-								// 				name: allPortfolios[0]?.name,
-								// 				logo: allPortfolios[0]?.logo,
-								// 			}
-								// }
-								data={
-									[]
-									// 	allPortfolios.map((item) => {
-									// 	return {
-									// 		address: item.multipool as Address,
-									// 		price: item.current_price,
-									// 		symbol: item.symbol,
-									// 		name: item.name,
-									// 		logo: item.logo,
-									// 	};
-									// })
+								defaultActiveItem={
+									//@ts-ignore
+
+									currentPortfolio
+										? {
+												//@ts-ignore
+
+												address: currentPortfolio?.multipool as Address,
+												//@ts-ignore
+
+												price: currentPortfolio?.current_price,
+												//@ts-ignore
+
+												symbol: currentPortfolio?.symbol,
+												//@ts-ignore
+
+												name: currentPortfolio?.name,
+												//@ts-ignore
+
+												logo: currentPortfolio?.logo,
+											}
+										: {
+												//@ts-ignore
+
+												address: allPortfolios[0]?.multipool as Address,
+												//@ts-ignore
+
+												price: allPortfolios[0]?.current_price,
+												//@ts-ignore
+
+												symbol: allPortfolios[0]?.symbol,
+												//@ts-ignore
+
+												name: allPortfolios[0]?.name,
+												//@ts-ignore
+
+												logo: allPortfolios[0]?.logo,
+											}
 								}
+								//@ts-ignore
+
+								data={allPortfolios.map((item) => {
+									return {
+										//@ts-ignore
+
+										address: item.multipool as Address,
+										price: item.current_price,
+										symbol: item.symbol,
+										name: item.name,
+										logo: item.logo,
+									};
+								})}
 								className="h-[540px] w-full border-fill-secondary border-t px-4 pt-6"
 							/>
 						</div>
@@ -231,7 +251,7 @@ export const MainSection = observer(() => {
 									${" "}
 									{/* {new BigNumber(
 										Number(currentPortfolio?.total_supply) *
-											Number(currentPortfolio?.current_price),
+										Number(currentPortfolio?.current_price),
 									)
 										.multipliedBy(10 ** -8)
 										.toFixed(4)
@@ -388,9 +408,7 @@ export const MainSection = observer(() => {
 				</div>
 
 				<div className={cn(currentGraph !== "portfolio" && "pr-[55px] pl-6")}>
-					{currentGraph === "candles" && (
-						<CandleChart height={443} data={portfolioCandlesData} />
-					)}
+					{currentGraph === "candles" && <CandleChart />}
 					{currentGraph === "linear" && (
 						<LinearChart height={443} data={portfolioLinearData} />
 					)}
@@ -804,14 +822,15 @@ export const RightSection = observer(() => {
 							</div>
 							<Button
 								className="mt-4 h-10 w-full"
-								// disabled={
-								// 	parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
-								// 	parseUnits(mintBurnAmount?.toString() || "0", 6) >
-								// 		parseUnits(
-								// 			selectedAssetData?.walletBalance?.toString() || "0",
-								// 			-6,
-								// 		)
-								// }
+								disabled={
+									parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
+									parseUnits(mintBurnAmount?.toString() || "0", 6) >
+										parseUnits(
+											//@ts-ignore
+											selectedAssetData?.walletBalance?.toString() || "0",
+											-6,
+										)
+								}
 								onClick={handleMintBurn}
 							>
 								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>

@@ -1,4 +1,5 @@
 import type BigNumber from "bignumber.js";
+import type { Time } from "lightweight-charts";
 import type { Address } from "viem";
 
 export type priceFeedType =
@@ -12,6 +13,7 @@ export enum queryKeys {
 	multipoolsList = "multipoolsList",
 	multipoolsChart = "multipoolChart",
 	tokensList = "tokensList",
+	nativeToken = "nativeToken",
 }
 
 export interface CandleDataRequest {
@@ -22,8 +24,20 @@ export interface CandleDataRequest {
 	c: string; // close: number;
 }
 
+export interface CandleDataRequestStats {
+	n: string
+	s: string
+	l: string
+	h: string
+	c: string
+	o: string
+	t: string
+	cc: CandleDataRequest
+	pc: CandleDataRequest
+}
+
 export interface CandleDataFormated {
-	time: number; // time: string[];
+	time: Time; // time: string[];
 	open: number; // open: number;
 	high: number; // high: number;
 	low: number; // low: number;
@@ -34,51 +48,6 @@ export interface LinearDataFormated {
 	time: number;
 	value: number;
 }
-
-// stats
-// :
-// {c: "0", cc: null, h: "0", l: "0", n: "TEST_ETF", o: "0", pc: null, s: "tETF", t: "0"}
-// c
-// :
-// "0"
-// cc
-// :
-// null
-// h
-// :
-// "0"
-// l
-// :
-// "0"
-// n
-// :
-// "TEST_ETF"
-// o
-// :
-// "0"
-// pc
-// :
-// null
-// s
-// :
-// "tETF"
-// t
-// :
-// "0"
-
-// export interface ShortMultipoolData {
-// 	logo?: string;
-// 	name: string;
-// 	symbol: string;
-// 	description: string;
-// 	chain_id: number;
-// 	multipool: string;
-// 	change_24h: string;
-// 	low_24h: string;
-// 	high_24h: string;
-// 	current_price: string;
-// 	total_supply: string;
-// }
 
 export interface Price {
 	timestamp: number;
