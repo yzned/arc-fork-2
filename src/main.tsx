@@ -1,6 +1,7 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
 import "./lib/i18n";
+
 import { TooltipProvider } from "./components/ui/tooltips/Tooltip";
 import { routeTree } from "./routeTree.gen";
 import "react-spring-bottom-sheet/dist/style.css";
