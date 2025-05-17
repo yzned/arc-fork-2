@@ -6,9 +6,9 @@ import {
 } from "@tanstack/react-router";
 
 import { LinearChart } from "@/components/ui/Charts/LinearChart";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { ModalBase } from "@/components/ui/modalBase";
-import { cn } from "@/lib/utils";
+import { cn, shrinkNumber } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 
@@ -35,19 +35,24 @@ import { FindAsset } from "@/components/ui/findAsset";
 import { PriceChange } from "@/components/ui/priceChange";
 import { Toggle } from "@/components/ui/toggle";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { useMintBurn } from "@/hooks/mutations/useMintBurn";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 
 import { useAccountStore } from "@/contexts/AccountContext";
 import { shorten } from "@/lib/formatNumber";
-import { parseUnits } from "viem";
+import { type Address, parseUnits } from "viem";
+import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
+import { useOnClickOutside } from "usehooks-ts";
+import { useTokensList } from "@/hooks/queries/useTokensList";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
 });
 
 function RouteComponent() {
+	useMultipoolInfo();
+	useTokensList();
+
 	return (
 		<>
 			<div className="hidden grid-cols-[1fr_329px] grid-rows-1 gap-0 md:grid">
@@ -85,29 +90,27 @@ export const MainSection = observer(() => {
 		chartResolution,
 		setChartResolution,
 		portfolioLinearData,
+		allPortfolios,
+		multipoolSupplyPriceData,
 	} = useExplorePortfolio();
 
 	const { currentChain } = useAccountStore();
 
 	const { id } = useParams({ from: "/explore/$id" });
 
-	// const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
+	const currentPortfolio =
+		allPortfolios?.find(
+			(item) => item.address?.toLowerCase() === id?.toLowerCase(),
+		) ?? allPortfolios?.[0];
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				assetSelectorRef.current &&
-				!assetSelectorRef.current.contains(event.target as Node)
-			) {
-				setIsOpenAssetSelector(false);
-			}
-		};
+	const handleClickOutside = () => {
+		setIsOpenAssetSelector(false);
+	};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
+	useOnClickOutside(
+		assetSelectorRef as React.RefObject<HTMLElement>,
+		handleClickOutside,
+	);
 
 	const navigate = useNavigate();
 
@@ -140,17 +143,16 @@ export const MainSection = observer(() => {
 					>
 						<div className="flex items-center gap-4">
 							<img
-								// src="https://s2.coinmarketcap.com/static/img/coins/64x64/825.png"
-								// src={currentPortfolio?.logo || "/icons/empty-token.svg"}
+								src={currentPortfolio?.logo || "/icons/empty-token.svg"}
 								className="h-8 w-8"
 								alt="no-logo"
 							/>
 							<div className="flex max-w-[150px] flex-col gap-2">
 								<span className="font-namu text-[24px] text-text-primary leading-[24px]">
-									{/* {currentPortfolio?.symbol} */}
+									{currentPortfolio?.stats?.symbol}
 								</span>
 								<span className="truncate font-droid text-[12px] text-text-secondary leading-[12px]">
-									{/* {currentPortfolio?.name} */}
+									{currentPortfolio?.stats?.name}
 								</span>
 							</div>
 						</div>
@@ -170,55 +172,14 @@ export const MainSection = observer(() => {
 							)}
 						>
 							<FindAsset
-								defaultActiveItem={
-									//@ts-ignore
-
-									currentPortfolio
-										? {
-												//@ts-ignore
-
-												address: currentPortfolio?.multipool as Address,
-												//@ts-ignore
-
-												price: currentPortfolio?.current_price,
-												//@ts-ignore
-
-												symbol: currentPortfolio?.symbol,
-												//@ts-ignore
-
-												name: currentPortfolio?.name,
-												//@ts-ignore
-
-												logo: currentPortfolio?.logo,
-											}
-										: {
-												//@ts-ignore
-
-												address: allPortfolios[0]?.multipool as Address,
-												//@ts-ignore
-
-												price: allPortfolios[0]?.current_price,
-												//@ts-ignore
-
-												symbol: allPortfolios[0]?.symbol,
-												//@ts-ignore
-
-												name: allPortfolios[0]?.name,
-												//@ts-ignore
-
-												logo: allPortfolios[0]?.logo,
-											}
-								}
 								//@ts-ignore
-
-								data={allPortfolios.map((item) => {
+								defaultActiveItem={currentPortfolio}
+								data={allPortfolios?.map((item) => {
 									return {
-										//@ts-ignore
-
-										address: item.multipool as Address,
-										price: item.current_price,
-										symbol: item.symbol,
-										name: item.name,
+										address: item.address as Address,
+										price: new BigNumber(item.stats.currentPrice || 0),
+										symbol: item.stats.symbol,
+										name: item.stats.name,
 										logo: item.logo,
 									};
 								})}
@@ -235,7 +196,9 @@ export const MainSection = observer(() => {
 									{t("price")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									${" "}
+									{shrinkNumber(
+										multipoolSupplyPriceData?.price?.toNumber() || 0,
+									)}
 									{/* {new BigNumber(currentPortfolio?.stats.currentPrice || 0)
 										.toFixed(4)
 										.toString()} */}
@@ -249,6 +212,7 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
+									{shrinkNumber(multipoolSupplyPriceData?.tvl?.toNumber() || 0)}
 									{/* {new BigNumber(
 										Number(currentPortfolio?.total_supply) *
 										Number(currentPortfolio?.current_price),
@@ -265,11 +229,17 @@ export const MainSection = observer(() => {
 									{t("24HChange")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									{/* <PriceChange
-										value={currentPortfolio?.change_24h || "0"}
-										growing={Number(currentPortfolio?.change_24h) > 0}
+									<PriceChange
+										value={shrinkNumber(
+											multipoolSupplyPriceData?.absolute24hPriceChange?.toNumber() ||
+												0,
+										)}
+										growing={
+											multipoolSupplyPriceData?.absolute24hPriceChange.isPositive() ||
+											false
+										}
 										unit="dollars"
-									/> */}
+									/>
 								</span>
 							</div>
 						</div>
@@ -279,10 +249,16 @@ export const MainSection = observer(() => {
 									{t("24hHigh")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									${" "}
-									{/* {new BigNumber(currentPortfolio?.high_24h || 0)
-										.toFixed(4)
-										.toString()} */}
+									$
+									{multipoolSupplyPriceData?.close?.isLessThan(
+										multipoolSupplyPriceData?.open || 0,
+									)
+										? shrinkNumber(
+												multipoolSupplyPriceData?.open?.toNumber() || 0,
+											)
+										: shrinkNumber(
+												multipoolSupplyPriceData?.close?.toNumber() || 0,
+											)}
 								</span>
 							</div>
 						</div>
@@ -293,9 +269,15 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									${" "}
-									{/* {new BigNumber(currentPortfolio?.low_24h || 0)
-										.toFixed(4)
-										.toString()} */}
+									{multipoolSupplyPriceData?.close?.isLessThan(
+										multipoolSupplyPriceData?.open || 0,
+									)
+										? shrinkNumber(
+												multipoolSupplyPriceData?.close?.toNumber() || 0,
+											)
+										: shrinkNumber(
+												multipoolSupplyPriceData?.open?.toNumber() || 0,
+											)}
 								</span>
 							</div>
 						</div>
@@ -410,6 +392,7 @@ export const MainSection = observer(() => {
 				<div className={cn(currentGraph !== "portfolio" && "pr-[55px] pl-6")}>
 					{currentGraph === "candles" && <CandleChart />}
 					{currentGraph === "linear" && (
+						//@ts-ignore
 						<LinearChart height={443} data={portfolioLinearData} />
 					)}
 					{currentGraph === "portfolio" && <PortfolioTable />}
@@ -587,7 +570,7 @@ export const RightSection = observer(() => {
 		}
 	}, [slippage]);
 
-	const { handleMintBurn } = useMintBurn();
+	// const { handleMintBurn } = useMintBurn();
 
 	return (
 		<div className="h-full bg-black ">
@@ -831,7 +814,7 @@ export const RightSection = observer(() => {
 											-6,
 										)
 								}
-								onClick={handleMintBurn}
+								// onClick={handleMintBurn}
 							>
 								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>
 							</Button>

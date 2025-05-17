@@ -3,16 +3,15 @@ import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import ERC20 from "@/lib/abi/ERC20";
 import { ARBITRUM_TOKENS } from "@/lib/constants";
 import type { ChainId, UniswapPriceData } from "@/lib/types";
-import { useWallets } from "@privy-io/react-auth";
 import BigNumber from "bignumber.js";
 import { runInAction } from "mobx";
 import { useEffect } from "react";
 import type { Address } from "viem";
-import { useChainId, useReadContracts } from "wagmi";
+import { useAccount, useChainId, useReadContracts } from "wagmi";
 
 export const useTokensInformation = () => {
 	const { currentChain } = useAccountStore();
-	const { wallets } = useWallets();
+	const { address } = useAccount();
 	const chainId = useChainId();
 
 	const { data: quantities } = useReadContracts({
@@ -20,7 +19,7 @@ export const useTokensInformation = () => {
 			abi: ERC20,
 			address: token.address as Address,
 			functionName: "balanceOf",
-			args: [wallets[0]?.address],
+			args: [address],
 		})),
 		query: {
 			enabled: !!currentChain?.availableTokens,
@@ -46,7 +45,9 @@ export const useTokensInformation = () => {
 				const resultQuantities = quantities[index]?.result;
 
 				token.quantityOnWallet = resultQuantities
-					? new BigNumber(resultQuantities.toString())
+					? new BigNumber(resultQuantities.toString()).multipliedBy(
+							new BigNumber(10).pow(-(token?.decimals ?? 0)),
+						)
 					: new BigNumber(0);
 			});
 

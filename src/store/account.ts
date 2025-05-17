@@ -1,4 +1,4 @@
-import { arcanumChains } from "@/lib/constants";
+import { chains } from "@/lib/constants";
 import type { BalancesToken, ExtendedChain } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 
@@ -25,7 +25,7 @@ export class AccountStore {
 
 		this.isOpenAssetSelector = false;
 
-		this.currentChain = arcanumChains[0];
+		this.currentChain = chains[0];
 	}
 
 	setIsOpenAssetSelector(value: boolean) {

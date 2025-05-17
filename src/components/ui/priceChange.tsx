@@ -13,7 +13,6 @@ interface PriceChangeProps {
 export const PriceChange: FC<PriceChangeProps> = ({
 	growing,
 	unit = "percents",
-	decimals = 2,
 	value,
 	className,
 }) => {
@@ -29,7 +28,7 @@ export const PriceChange: FC<PriceChangeProps> = ({
 		>
 			<span>
 				{unit === "dollars" && "$"}
-				{Number(value).toFixed(decimals)}
+				{value}
 				{unit === "percents" && "%"}
 			</span>
 			{value !== "0" && (

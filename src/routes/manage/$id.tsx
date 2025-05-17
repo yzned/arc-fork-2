@@ -5,23 +5,18 @@ import { FileInput } from "@/components/ui/file";
 import { Textarea } from "@/components/ui/textArea";
 import { TokenTable } from "@/components/ui/tokenTable";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
-import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
 import Chevron from "@/icons/chevron.svg?react";
 
-import { createFileRoute, useParams, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
-import type { Address } from "viem";
 
 export const Route = createFileRoute("/manage/$id")({
 	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const { id: mpAddress } = useParams({ from: "/manage/$id" });
-	useMultipoolInfo(mpAddress as Address);
-
 	// const {
 	// 	portfolioAssets,
 
@@ -153,7 +148,7 @@ export const AssetSetup = observer(() => {
 				<TokenTable
 					tokens={managingAsssets || []}
 					onStartEdit={(id) => changeTokenState(id || "", "edited")}
-					onDeleteToken={(id) => changeTokenState(id, "deleted")}
+					onDeleteToken={(item) => changeTokenState(item.id, "deleted")}
 					onCancelEditToken={cancelEditToken}
 					onEditToken={(item) => {
 						const shareGrowing =

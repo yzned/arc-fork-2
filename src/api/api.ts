@@ -102,16 +102,37 @@ const api = {
 		queryObj?:
 			| string
 			| URLSearchParams
-			| Record<string, string | number>
+			| Record<string, string | number | (string | number)[]>
 			| [string, string | number][],
 	) {
 		let queryStr = "";
+
 		if (queryObj) {
-			const normalized = new URLSearchParams(
-				Object.entries(queryObj).map(([key, value]) => [key, value.toString()]),
-			);
-			queryStr = `?${normalized.toString()}`;
+			if (typeof queryObj === "string" || queryObj instanceof URLSearchParams) {
+				queryStr = `?${queryObj.toString()}`;
+			} else if (Array.isArray(queryObj)) {
+				const sp = new URLSearchParams();
+				for (const [key, value] of queryObj) {
+					if (Array.isArray(value)) {
+						sp.append(key, JSON.stringify(value));
+					} else {
+						sp.append(key, value.toString());
+					}
+				}
+				queryStr = `?${sp.toString()}`;
+			} else {
+				const sp = new URLSearchParams();
+				for (const [key, val] of Object.entries(queryObj)) {
+					if (Array.isArray(val)) {
+						sp.append(key, JSON.stringify(val));
+					} else {
+						sp.append(key, val.toString());
+					}
+				}
+				queryStr = `?${sp.toString()}`;
+			}
 		}
+
 		return requestWithMsgpack(entrypoint + queryStr);
 	},
 

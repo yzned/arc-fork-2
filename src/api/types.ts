@@ -14,6 +14,8 @@ export enum queryKeys {
 	multipoolsChart = "multipoolChart",
 	tokensList = "tokensList",
 	nativeToken = "nativeToken",
+	porfolioAssets = "porfolioAssets",
+	portfolioPriceData = "portfolioPriceData",
 }
 
 export interface CandleDataRequest {
@@ -25,15 +27,15 @@ export interface CandleDataRequest {
 }
 
 export interface CandleDataRequestStats {
-	n: string
-	s: string
-	l: string
-	h: string
-	c: string
-	o: string
-	t: string
-	cc: CandleDataRequest
-	pc: CandleDataRequest
+	n: string;
+	s: string;
+	l: string;
+	h: string;
+	c: string;
+	o: string;
+	t: string;
+	cc: CandleDataRequest;
+	pc: CandleDataRequest;
 }
 
 export interface CandleDataFormated {
@@ -129,6 +131,7 @@ export interface AvailableChainTokensData {
 	cm?: string; //cmc
 	cg?: string; //coingecko
 	t?: number[]; //tags
+	d?: number;
 }
 
 export interface AvailableChainTokensDataFormated {
@@ -144,4 +147,6 @@ export interface AvailableChainTokensDataFormated {
 	price?: BigNumber;
 	poolAddress?: Address;
 	priceFeedType?: priceFeedType;
+
+	decimals?: number;
 }

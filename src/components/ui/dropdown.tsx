@@ -12,6 +12,7 @@ import {
 } from "react";
 import ChevronIcon from "../../icons/chevron.svg?react";
 import SmallXIcon from "../../icons/smallX.svg?react";
+import { useOnClickOutside } from "usehooks-ts";
 
 export interface DropdownItemType {
 	name?: string;
@@ -34,9 +35,9 @@ export interface DropdownProps<T extends DropdownItemType> {
 }
 
 export interface DropdownItemProps<T extends DropdownItemType> {
-	item: T;
+	item?: T;
 	currentValue?: T;
-	setCurrentValue?: Dispatch<React.SetStateAction<T>>;
+	setCurrentValue?: Dispatch<React.SetStateAction<T | undefined>>;
 	onSelect?: (selectItem: T) => void;
 	setIsOpen: Dispatch<React.SetStateAction<boolean>>;
 }
@@ -81,23 +82,23 @@ export const DropdownItem = <T extends DropdownItemType>({
 			type="button"
 			className={cn(
 				"group flex h-9 w-full cursor-pointer items-center px-3",
-				item.name === currentValue?.name && "bg-fill-brand-primary-700",
-				item.name !== currentValue?.name && "hover:bg-bg-floor-5",
+				item?.name === currentValue?.name && "bg-fill-brand-primary-700",
+				item?.name !== currentValue?.name && "hover:bg-bg-floor-5",
 			)}
 			onClick={() => {
-				if (setCurrentValue) setCurrentValue({ ...item });
+				if (setCurrentValue && item) setCurrentValue({ ...item });
 				setIsOpen(false);
-				if (onSelect) onSelect(item);
+				if (onSelect && item) onSelect(item);
 			}}
 		>
 			<div className="flex w-full items-center justify-between gap-2">
 				<div className="flex items-center gap-2">
-					{item.withCheckbox && (
+					{item?.withCheckbox && (
 						<div className="h-4 w-4 rounded-[2px] bg-white opacity-0 transition-opacity duration-100 group-hover:opacity-100" />
 					)}
 
 					<img
-						src={item.iconLeft || "/icons/empty-token.svg"}
+						src={item?.iconLeft || "/icons/empty-token.svg"}
 						alt="icon1"
 						className="h-4 w-4 overflow-hidden rounded-full"
 					/>
@@ -109,9 +110,9 @@ export const DropdownItem = <T extends DropdownItemType>({
 				</div>
 				<div className="flex items-center gap-2">
 					<span className="text-[12px] text-text-secondary">
-						{item.rightText && item.rightText}
+						{item?.rightText && item.rightText}
 					</span>
-					{item.iconRight && (
+					{item?.iconRight && (
 						<img
 							src={item.iconRight}
 							alt="icon1"
@@ -139,7 +140,7 @@ const DropdownRaw = <T extends DropdownItemType>(
 ) => {
 	const [isOpen, setIsOpen] = useState(false);
 
-	const [currentValue, setCurrentValue] = useState<T>(
+	const [currentValue, setCurrentValue] = useState<T | undefined>(
 		defaultItem || ({ name: "" } as T),
 	);
 
@@ -153,28 +154,28 @@ const DropdownRaw = <T extends DropdownItemType>(
 		}
 	};
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				dropdownRef.current &&
-				!dropdownRef.current.contains(event.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		};
+	const handleClickOutside = () => {
+		setIsOpen(false);
+	};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
+	useOnClickOutside(
+		dropdownRef as React.RefObject<HTMLElement>,
+		handleClickOutside,
+	);
 
 	useEffect(() => {
 		setFilteredItems(items);
+
+		if (
+			currentValue?.name &&
+			!items.some((item) => item.name === currentValue.name)
+		) {
+			setCurrentValue({ name: "" } as T);
+		}
 	}, [items]);
 
 	useEffect(() => {
-		if (items.some((item) => item.name === currentValue.name)) {
+		if (items.some((item) => item.name === currentValue?.name)) {
 			setFilteredItems(items);
 		}
 	}, [currentValue, items]);
@@ -214,21 +215,21 @@ const DropdownRaw = <T extends DropdownItemType>(
 					)}
 				>
 					<img
-						src={currentValue.iconLeft || "/icons/empty-token.svg"}
+						src={currentValue?.iconLeft || "/icons/empty-token.svg"}
 						alt="icon1"
 						className="h-4 w-[22px] overflow-hidden rounded-full"
 					/>
 
 					<input
 						placeholder={placeholder}
-						value={currentValue.name}
+						value={currentValue?.name}
 						onChange={handleInputChange}
 						readOnly={!isInput}
 						className="ml-2 w-full cursor-pointer placeholder:text-text-secondary focus:outline-none"
 					/>
 
 					<div className="flex gap-2 ">
-						{currentValue.name && withXMark && (
+						{currentValue?.name && withXMark && (
 							<button
 								type="button"
 								onClick={(event) => {

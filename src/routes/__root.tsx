@@ -1,8 +1,10 @@
 import { useMediaQuery } from "@uidotdev/usehooks";
 
 import { AppHeader, AppHeaderMobile } from "@/components/header/AppHeader";
-import { useMultipoolsList } from "@/hooks/queries/useMultipoolsList";
+import { ExplorePortfolioProvider } from "@/contexts/ExplorePortfolioContext";
+import { getMultipoolsList } from "@/hooks/queries/useMultipoolsList";
 import { useTokensInformation } from "@/hooks/queries/useTokensInformation";
+import { ExplorePortfolioStore } from "@/store/explore-portfolio";
 import { Outlet, createRootRoute, useRouter } from "@tanstack/react-router";
 import { observer } from "mobx-react-lite";
 import React, { Suspense, useEffect } from "react";
@@ -34,22 +36,30 @@ const ScrollToTop = () => {
 };
 
 export const Route = createRootRoute({
+	loader: async () => {
+		return await getMultipoolsList();
+	},
 	component: observer(() => {
+		const portfolios = Route.useLoaderData();
+
 		const isMobile = useMediaQuery("(max-width: 768px)");
 
 		useTokensInformation();
-		useMultipoolsList();
+
+		const store = new ExplorePortfolioStore(portfolios);
 
 		return (
-			<div className="relative max-w-full bg-bg-floor-0">
-				{isMobile ? <AppHeaderMobile /> : <AppHeader />}
-				<hr />
-				<Outlet />
-				<Suspense>
-					<TanStackRouterDevtools />
-				</Suspense>
-				<ScrollToTop />
-			</div>
+			<ExplorePortfolioProvider store={store}>
+				<div className="relative max-w-full bg-bg-floor-0">
+					{isMobile ? <AppHeaderMobile /> : <AppHeader />}
+					<hr />
+					<Outlet />
+					<Suspense>
+						<TanStackRouterDevtools />
+					</Suspense>
+					<ScrollToTop />
+				</div>
+			</ExplorePortfolioProvider>
 		);
 	}),
 });

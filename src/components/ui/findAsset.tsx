@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { useAccountStore } from "@/contexts/AccountContext";
 import CheckIcon from "@/icons/checkMark.svg?react";
 import ChevronIcon from "@/icons/chevron.svg?react";
@@ -30,16 +30,18 @@ import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { InfoTooltip } from "./tooltips/InformationTooltip";
+import { useOnClickOutside } from "usehooks-ts";
 
 interface FindAssetProps<T, S> {
 	data: T[];
 	filters?: string[];
 	onSelectAsset?: (asset: T | null) => void;
 	className?: string;
-	defaultActiveItem?: T;
+	defaultActiveItem?: T | null;
 	listClassName?: string;
 	additionalActiveItemInfo?: S[];
 	variant?: "default" | "with-oracles";
+	withSearch?: boolean;
 }
 
 interface FindAssetItemProps<
@@ -66,6 +68,7 @@ export function FindAsset<
 	listClassName,
 	defaultActiveItem,
 	variant = "default",
+	withSearch = true,
 }: FindAssetProps<T, S>) {
 	const [selectAsset, setSelectAsset] = useState<T | null>(
 		defaultActiveItem || null,
@@ -103,111 +106,106 @@ export function FindAsset<
 		};
 	}, []);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				filtersRef.current &&
-				!filtersRef.current.contains(event.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		};
+	const handleClickOutside = () => {
+		setIsOpen(false);
+	};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
+	useOnClickOutside(
+		filtersRef as React.RefObject<HTMLElement>,
+		handleClickOutside,
+	);
 
 	return (
 		<div className={cn(className)}>
-			{/*   */}
-			<div
-				data-shadow={hasScrollShadow}
-				className="flex h-[80px] flex-col justify-center px-4 transition-all data-[shadow=false]:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.25)]"
-			>
-				<div className="relative flex items-center">
-					<Input
-						placeholder="Search asset..."
-						type=""
-						className="w-full pl-8 text-text-primary"
-					/>
+			{withSearch && (
+				<div
+					data-shadow={hasScrollShadow}
+					className="flex h-[80px] flex-col justify-center px-4 transition-all data-[shadow=false]:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.25)]"
+				>
+					<div className="relative flex items-center">
+						<Input
+							placeholder="Search asset..."
+							type=""
+							className="w-full pl-8 text-text-primary"
+						/>
 
-					<SearchIcon className="absolute top-[3px] left-2" />
-					{filters?.length && (
-						<div ref={filtersRef}>
-							<button
-								type="button"
-								onClick={() => {
-									setIsOpen(!isOpen);
-								}}
-								className={cn(
-									"relative flex grow cursor-pointer items-center justify-center gap-2 pl-4 text-[14px] text-text-secondary transition-colors",
-									(isOpen || activeFilters.length) && "text-text-primary ",
-								)}
-							>
-								<FilterIcon />
-								<span>Filter</span>
-								{activeFilters.length > 0 && (
-									<div className="absolute top-0 left-6 h-2 w-2 rounded-full bg-fill-brand-primary-700" />
-								)}
-							</button>
-							<div
-								className={`absolute top-9 right-[0px] z-50 w-[250px] overflow-y-scroll transition-all duration-300 ease-in-out ${isOpen ? "max-h-[200px]" : "max-h-0"}`}
-							>
-								<div
+						<SearchIcon className="absolute top-[3px] left-2" />
+						{filters?.length && (
+							<div ref={filtersRef}>
+								<button
+									type="button"
+									onClick={() => {
+										setIsOpen(!isOpen);
+									}}
 									className={cn(
-										"z-10 flex flex-col rounded-[2px] bg-bg-floor-4 text-text-primary",
-										filters.length !== 0 && "py-2",
+										"relative flex grow cursor-pointer items-center justify-center gap-2 pl-4 text-[14px] text-text-secondary transition-colors",
+										(isOpen || activeFilters.length) && "text-text-primary ",
 									)}
 								>
-									{filters.map((item) => (
-										<Checkbox
-											checked={activeFilters.includes(item)}
-											onChange={() => {
-												if (activeFilters.includes(item)) {
-													setActiveFilters(
-														activeFilters.filter(
-															(activeItem) => activeItem !== item,
-														),
-													);
-												} else {
-													setActiveFilters([...activeFilters, item]);
-												}
-											}}
-											label={item}
-											className={cn(
-												"h-9 w-full rounded-[2px] pl-3 transition-colors ",
-												activeFilters.includes(item) &&
-													"bg-fill-brand-primary-700",
-												!activeFilters.includes(item) && "hover:bg-bg-floor-5",
-											)}
-											key={`${item}`}
-										/>
-									))}
+									<FilterIcon />
+									<span>Filter</span>
+									{activeFilters.length > 0 && (
+										<div className="absolute top-0 left-6 h-2 w-2 rounded-full bg-fill-brand-primary-700" />
+									)}
+								</button>
+								<div
+									className={`absolute top-9 right-[0px] z-50 w-[250px] overflow-y-scroll transition-all duration-300 ease-in-out ${isOpen ? "max-h-[200px]" : "max-h-0"}`}
+								>
+									<div
+										className={cn(
+											"z-10 flex flex-col rounded-[2px] bg-bg-floor-4 text-text-primary",
+											filters.length !== 0 && "py-2",
+										)}
+									>
+										{filters.map((item) => (
+											<Checkbox
+												checked={activeFilters.includes(item)}
+												onChange={() => {
+													if (activeFilters.includes(item)) {
+														setActiveFilters(
+															activeFilters.filter(
+																(activeItem) => activeItem !== item,
+															),
+														);
+													} else {
+														setActiveFilters([...activeFilters, item]);
+													}
+												}}
+												label={item}
+												className={cn(
+													"h-9 w-full rounded-[2px] pl-3 transition-colors ",
+													activeFilters.includes(item) &&
+														"bg-fill-brand-primary-700",
+													!activeFilters.includes(item) &&
+														"hover:bg-bg-floor-5",
+												)}
+												key={`${item}`}
+											/>
+										))}
+									</div>
 								</div>
 							</div>
-						</div>
-					)}
+						)}
+					</div>
+					<div className="mt-1 flex flex-wrap gap-1 ">
+						{activeFilters.map((item) => (
+							<Button
+								variant={"tertiary"}
+								className="h-[32px] w-[99px] "
+								key={item}
+								onClick={() => {
+									setActiveFilters(
+										activeFilters.filter((activeItem) => activeItem !== item),
+									);
+								}}
+							>
+								{item}
+								<SmallXIcon className="scale-80 text-text-secondary" />
+							</Button>
+						))}
+					</div>
 				</div>
-				<div className="mt-1 flex flex-wrap gap-1 ">
-					{activeFilters.map((item) => (
-						<Button
-							variant={"tertiary"}
-							className="h-[32px] w-[99px] "
-							key={item}
-							onClick={() => {
-								setActiveFilters(
-									activeFilters.filter((activeItem) => activeItem !== item),
-								);
-							}}
-						>
-							{item}
-							<SmallXIcon className="scale-80 text-text-secondary" />
-						</Button>
-					))}
-				</div>
-			</div>
+			)}
 
 			<div
 				className={cn(
@@ -216,7 +214,7 @@ export function FindAsset<
 				)}
 				ref={scrollContainerRef}
 			>
-				{data.map((item) => (
+				{data?.map((item) => (
 					<FindAssetItem
 						item={item}
 						variant={variant}
@@ -283,7 +281,7 @@ export function FindAssetItem<
 						fee,
 					});
 
-					const bytecode = await client.getCode({
+					const bytecode = await client?.getCode({
 						address: poolAddress as Address,
 					});
 
@@ -335,15 +333,33 @@ export function FindAssetItem<
 
 						const poolsResult = await Promise.all(
 							pools.map(async (pool, index) => {
-								const liquidity = new BigNumber(pool.liquidity.toString());
+								const rawLiquidity = new BigNumber(pool.liquidity.toString());
 
-								const liquidityInToken0 = liquidity
-									.div(
-										new BigNumber(10).pow(
-											currentChain?.nativeCurrency.decimals || 18,
-										),
-									)
-									.multipliedBy(1);
+								const isToken0Native =
+									pool.token0.address === currentChain?.nativeTokenAddress;
+								const isToken1Native =
+									pool.token1.address === currentChain?.nativeTokenAddress;
+
+								let liquidityInNative: BigNumber;
+								let price: BigNumber | undefined;
+
+								if (isToken0Native) {
+									price = new BigNumber(
+										pool.priceOf(pool.token1).toSignificant(18),
+									);
+									liquidityInNative = rawLiquidity
+										.multipliedBy(price)
+										.div(new BigNumber(10).pow(pool.token1.decimals));
+								} else if (isToken1Native) {
+									price = new BigNumber(
+										pool.priceOf(pool.token0).toSignificant(18),
+									);
+									liquidityInNative = rawLiquidity
+										.multipliedBy(price)
+										.div(new BigNumber(10).pow(pool.token0.decimals));
+								} else {
+									liquidityInNative = new BigNumber(0);
+								}
 
 								const poolAddress = Pool.getAddress(
 									pool.token0,
@@ -354,8 +370,9 @@ export function FindAssetItem<
 								return {
 									priceFeedType: "UniswapV3",
 									poolAddress: poolAddress,
-									liquidity: liquidityInToken0.toString() || "0",
+									liquidity: liquidityInNative.toString(),
 									fee: UNI_FEES[index],
+									price: price?.toString(),
 								};
 							}),
 						);
@@ -415,7 +432,10 @@ export function FindAssetItem<
 								className="h-10 transition-colors data-[active=false]:bg-fill-tertiary"
 								data-active={isActive}
 								disabled={isActive ? !selectedOracle : false}
-								onClick={handleAssetSelect}
+								onClick={(e) => {
+									e.stopPropagation();
+									handleAssetSelect();
+								}}
 							>
 								<RoundedCheck className="scale-100" />
 								{isActive && t("useAsset")}
@@ -441,7 +461,7 @@ export function FindAssetItem<
 							</span>
 							<div className="flex flex-col gap-2">
 								{pools?.length === 0 && (
-									<Loader2 className="scale-75 animate-spin" />
+									<Loader2 className="scale-75 animate-spin text-text-primary" />
 								)}
 								{pools?.map((pool) => (
 									<button
@@ -468,7 +488,7 @@ export function FindAssetItem<
 											</div>
 											{selectedOracle === pool?.poolAddress && (
 												<div className="flex h-6 w-6 items-center justify-center rounded-full bg-fill-brand-primary-700">
-													<CheckIcon className="h-[12px] w-[15px]" />
+													<CheckIcon className="h-[12px] w-[15px] text-text-primary" />
 												</div>
 											)}
 										</div>
@@ -484,6 +504,17 @@ export function FindAssetItem<
 													{currentChain?.nativeCurrency.symbol}
 												</span>
 											</div>
+											<div className="flex items-center justify-between text-[12px]">
+												<span className="text-text-secondary">
+													{t("price")}
+												</span>
+												<span className="text-text-primary">
+													{new BigNumber(pool?.price || 0)
+														.toFixed(6)
+														.toString()}{" "}
+													{currentChain?.nativeCurrency.symbol}
+												</span>
+											</div>
 										</div>
 									</button>
 								))}
@@ -494,7 +525,7 @@ export function FindAssetItem<
 							{item.tags?.map((tag) => (
 								<div
 									key={tag}
-									className="w-fit rounded-[4px] bg-fill-secondary px-2 py-[7px]"
+									className="w-fit rounded-[4px] bg-fill-secondary px-2 py-[7px] text-text-primary"
 								>
 									{tag}
 								</div>

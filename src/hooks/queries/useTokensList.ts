@@ -22,6 +22,7 @@ export const useTokensList = () => {
 				logo: token.l,
 				cmc: token.cm,
 				coingecko: token.cg,
+				decimals: token.d ?? 18,
 				tags: token.t?.map((index: number) => TAGS[index]) ?? [],
 			}));
 

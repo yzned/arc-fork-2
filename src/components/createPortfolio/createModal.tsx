@@ -39,10 +39,10 @@ export const CreateModalContent = observer(() => {
 	} = useCreatePortfolioContext();
 
 	const navigate = useNavigate();
+	const { t } = useTranslation(["main"]);
 
 	const { approveMint, isPending, createPortfolio, mint } =
 		useCreatePortfolio();
-	const { t } = useTranslation(["main"]);
 
 	const handleSign = () => {
 		if (currentCreateModalState === "create") {

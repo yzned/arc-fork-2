@@ -1,6 +1,6 @@
 import ERC20 from "@/lib/abi/ERC20";
-import { config } from "@/lib/config";
 import { UNI_FEES } from "@/lib/constants";
+// import { config } from "@/main";
 import { Token } from "@uniswap/sdk-core";
 import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 import { FeeAmount, Pool, computePoolAddress } from "@uniswap/v3-sdk";
@@ -26,6 +26,8 @@ export const getPoolsData = async (
 	addressB: Address,
 	factoryAddress: Address,
 ) => {
+	//@ts-ignore
+
 	const client = getPublicClient(config);
 
 	let poolAddresses: string[] = [];
@@ -141,6 +143,8 @@ export const getPoolsData = async (
 };
 
 export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
+	//@ts-ignore
+
 	const client = getPublicClient(config);
 
 	try {
@@ -152,6 +156,7 @@ export const getDecimals = async ({ addresses }: { addresses?: Address[] }) => {
 					functionName: "decimals",
 				})) ?? [],
 		});
+		//@ts-ignore
 
 		const decimalsResult = decimals.map((item) => {
 			return item.result;
@@ -183,6 +188,7 @@ export const priceInNativeToken = (
 };
 
 export const getSwapCount = async (poolAddress: string): Promise<number> => {
+	//@ts-ignore
 	const client = getPublicClient(config);
 
 	const latestBlock = await client.getBlockNumber();
@@ -220,6 +226,7 @@ export const getSwapCount = async (poolAddress: string): Promise<number> => {
 };
 
 export const isGoodPool = async (poolAddress: string): Promise<boolean> => {
+	//@ts-ignore
 	const client = getPublicClient(config);
 
 	const code = await client.getCode({

@@ -1,7 +1,7 @@
 import ChevronIcon from "@/icons/chevron.svg?react";
 import FallIcon from "@/icons/fall.svg?react";
 import RiseIcon from "@/icons/rise.svg?react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
@@ -17,14 +17,13 @@ import { shorten } from "@/lib/formatNumber";
 import { useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
-import { BottomSheet } from "react-spring-bottom-sheet";
 import { CandleChart } from "../ui/Charts/CandleChart";
 import { LinearChart } from "../ui/Charts/LinearChart";
-import { Toggle } from "../ui/toggle";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
+import { useOnClickOutside } from "usehooks-ts";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
@@ -51,23 +50,18 @@ export const ExploreMobile = observer(() => {
 
 	const { id } = useParams({ from: "/explore/$id" });
 
-	const currentPortfolio = allPortfolios.find((item) => item.address === id);
+	const currentPortfolio = allPortfolios?.find(
+		(item) => item.address?.toLowerCase() === id?.toLowerCase(),
+	);
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				tokenSelectorRef.current &&
-				!tokenSelectorRef.current.contains(event.target as Node)
-			) {
-				setIsOpenTokenSelector(false);
-			}
-		};
+	const handleClickOutside = () => {
+		setIsOpenTokenSelector(false);
+	};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
+	useOnClickOutside(
+		tokenSelectorRef as React.RefObject<HTMLElement>,
+		handleClickOutside,
+	);
 
 	return (
 		<div className="overflow-hidden bg-bg-floor-0 pt-4">
@@ -88,10 +82,10 @@ export const ExploreMobile = observer(() => {
 							/>
 							<div className="flex max-w-[150px] flex-col gap-2">
 								<span className="font-namu text-[24px] text-text-primary leading-[24px]">
-									{/* {currentPortfolio?.symbol} */}
+									{currentPortfolio?.stats.symbol}
 								</span>
 								<span className="truncate font-droid text-[12px] text-text-secondary leading-[12px]">
-									{/* {currentPortfolio?.name} */}
+									{currentPortfolio?.stats.name}
 								</span>
 							</div>
 						</div>
@@ -144,7 +138,7 @@ export const ExploreMobile = observer(() => {
 												logo: allPortfolios[0]?.logo,
 											}
 								}
-								data={allPortfolios.map((item) => {
+								data={allPortfolios?.map((item) => {
 									return {
 										//@ts-ignore
 
@@ -305,6 +299,7 @@ export const ExploreMobile = observer(() => {
 				<div className="mt-4">
 					{currentGraph === "candles" && <CandleChart />}
 					{currentGraph === "linear" && (
+						//@ts-ignore
 						<LinearChart height={443} data={portfolioLinearData} />
 					)}
 				</div>
@@ -418,7 +413,7 @@ export const ExploreMobile = observer(() => {
 					{currentBottomTable === "history" && <HistoryTable />}
 				</div>
 			</div>
-			<BottomSheet
+			{/* <BottomSheet
 				open={isOpenSettingsSheet}
 				onDismiss={() => setIsOpenSettingsSheet(false)}
 			>
@@ -444,7 +439,7 @@ export const ExploreMobile = observer(() => {
 						</span>
 					</div>
 				</div>
-			</BottomSheet>
+			</BottomSheet> */}
 		</div>
 	);
 });

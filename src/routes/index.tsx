@@ -72,7 +72,7 @@ const Index = observer(() => {
 				{t("all")}
 			</span>
 			<div className="block flex flex-col gap-1 px-[14px] md:hidden">
-				{allPortfolios.map((portfolio) => (
+				{allPortfolios?.map((portfolio) => (
 					<AssetCard
 						key={portfolio.address}
 						asset={portfolio}

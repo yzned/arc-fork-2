@@ -1,18 +1,19 @@
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
+import { scan } from "react-scan";
 import "./lib/i18n";
-
+import "@rainbow-me/rainbowkit/styles.css";
 import { TooltipProvider } from "./components/ui/tooltips/Tooltip";
 import { routeTree } from "./routeTree.gen";
-import "react-spring-bottom-sheet/dist/style.css";
-import { PrivyProvider } from "@privy-io/react-auth";
-import { WagmiProvider } from "@privy-io/wagmi";
+import { getDefaultConfig } from "@rainbow-me/rainbowkit";
+import { arbitrum } from "wagmi/chains";
+import type { Config } from "wagmi";
+import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "./components/ui/toast";
 import { AccountStoreProvider } from "./contexts/AccountContext";
-import { ExplorePortfolioProvider } from "./contexts/ExplorePortfolioContext";
-import { config } from "./lib/config";
-import { privyConfig } from "./lib/privyConfig";
+import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import { chains } from "./lib/constants";
 
 const router = createRouter({ routeTree });
 
@@ -31,23 +32,34 @@ const queryClient = new QueryClient({
 
 const rootElement = document.getElementById("root");
 
+// check if its dev build
+if (import.meta.env.MODE === "development") {
+	scan({
+		enabled: true,
+	});
+}
+
+export const config = getDefaultConfig({
+	appName: "ARCANUM",
+	projectId: "1d63d7e43fd1d5ea177bdb4a8939ade4",
+	chains: chains,
+}) as Config;
+
 if (rootElement) {
 	const root = ReactDOM.createRoot(rootElement);
 
 	root.render(
 		<AccountStoreProvider>
-			<ExplorePortfolioProvider>
-				<PrivyProvider appId="cm8q7k9oy0013v3x1kqstk46c" config={privyConfig}>
-					<TooltipProvider delayDuration={50}>
-						<QueryClientProvider client={queryClient}>
-							<WagmiProvider config={config}>
-								<RouterProvider router={router} />
-								<Toaster />
-							</WagmiProvider>
-						</QueryClientProvider>
-					</TooltipProvider>
-				</PrivyProvider>
-			</ExplorePortfolioProvider>
+			<TooltipProvider delayDuration={50}>
+				<QueryClientProvider client={queryClient}>
+					<WagmiProvider config={config}>
+						<RainbowKitProvider initialChain={arbitrum}>
+							<RouterProvider router={router} />
+							<Toaster />
+						</RainbowKitProvider>
+					</WagmiProvider>
+				</QueryClientProvider>
+			</TooltipProvider>
 		</AccountStoreProvider>,
 	);
 }

@@ -1,38 +1,11 @@
-import { createConfig } from "@privy-io/wagmi";
 import ArDB from "ardb";
 import Arweave from "arweave";
-import { http } from "wagmi";
-import { arbitrum, arbitrumSepolia, monadTestnet } from "wagmi/chains";
-import {
-	coinbaseWallet,
-	metaMask,
-	safe,
-	walletConnect,
-} from "wagmi/connectors";
 
-export const arweave = Arweave.init({});
-export const ardb = new ArDB(arweave);
-
-export const config = createConfig({
-	multiInjectedProviderDiscovery: true,
-	chains: [arbitrum, monadTestnet, arbitrumSepolia],
-
-	connectors: [
-		coinbaseWallet(),
-		metaMask(),
-		safe(),
-		walletConnect({ projectId: "b9a8d6b8da0f74e66dd8093ec7bb713a" }),
-	],
-
-	transports: {
-		[arbitrum.id]: http(),
-		[arbitrumSepolia.id]: http(),
-		[monadTestnet.id]: http(),
-	},
+export const arweave = Arweave.init({
+	host: "arweave.net",
+	port: 443,
+	protocol: "https",
+	timeout: 20000,
+	logging: false,
 });
-
-declare module "wagmi" {
-	interface Register {
-		config: typeof config;
-	}
-}
+export const ardb = new ArDB(arweave);

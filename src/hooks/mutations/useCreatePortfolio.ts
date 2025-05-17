@@ -2,8 +2,10 @@ import { useAccountStore } from "@/contexts/AccountContext";
 import { useCreatePortfolio as useCreatePortfolioContext } from "@/contexts/CreatePortfolioContext";
 import ERC20 from "@/lib/abi/ERC20";
 import MultipoolRouter from "@/lib/abi/MultipoolRouter";
+import IUniswapV3PoolABI from "@uniswap/v3-core/artifacts/contracts/interfaces/IUniswapV3Pool.sol/IUniswapV3Pool.json";
 
 import { CreateMultipool } from "@/api/create";
+import { Same } from "@/api/uniswap";
 import MultipoolFactory from "@/lib/abi/MultipoolFactory";
 import type { ChainId } from "@/lib/types";
 import {
@@ -12,7 +14,6 @@ import {
 	getValidAddress,
 	toBase64,
 } from "@/lib/utils";
-import { useWallets } from "@privy-io/react-auth";
 import { useTranslation } from "react-i18next";
 import {
 	type Address,
@@ -23,8 +24,10 @@ import {
 	zeroAddress,
 } from "viem";
 import {
+	useAccount,
 	useChainId,
 	useEstimateGas,
+	usePublicClient,
 	useReadContract,
 	useWriteContract,
 } from "wagmi";
@@ -55,34 +58,27 @@ export const useCreatePortfolio = () => {
 		futureMultipoolAddress,
 	} = useCreatePortfolioContext();
 
-	const { wallets } = useWallets();
+	const { address } = useAccount();
 	const { writeContractAsync, isPending, isError } = useWriteContract();
 	const { t } = useTranslation(["main"]);
 	const { toast } = useToast();
 	const { currentChain } = useAccountStore();
 	const chainId = useChainId();
+	const client = usePublicClient();
 
 	const { data: allowance } = useReadContract({
 		abi: ERC20,
 		address: tokens[0]?.address || zeroAddress,
 		functionName: "allowance",
 		args: [
-			(wallets[0]?.address as Address) || "0x",
+			address || "0x",
 			(currentChain?.routerAddress as Address) || ("0x" as Address),
 		],
 		chainId,
 		query: {
-			enabled: !!wallets[0]?.address && !!tokens[0]?.address,
+			enabled: !!address && !!tokens[0]?.address,
 		},
 	});
-
-	const priceData = tokens?.map((token) =>
-		encodeUniV3PriceData(
-			(token?.poolAddress as Address) || zeroAddress,
-			true,
-			BigInt(0),
-		),
-	);
 
 	const {
 		nonce,
@@ -114,26 +110,26 @@ export const useCreatePortfolio = () => {
 		initialLiquidityAsset: zeroAddress,
 		managementFeeRecepient: getValidAddress(
 			managementFeeRecepient || "",
-			(wallets[0]?.address as Address) || zeroAddress,
+			address || zeroAddress,
 		),
 		oracleAddress: (currentChain?.oracleAddress as Address) || zeroAddress,
-		strategyManager: (wallets[0]?.address as Address) || zeroAddress,
-		priceData,
+		strategyManager: address || zeroAddress,
+
 		nonce: BigInt(nonce),
-		owner: (wallets[0]?.address as Address) || zeroAddress,
+		owner: address || zeroAddress,
 		protocolFeeReceiver: zeroAddress,
 	};
 
 	const { data: createMultipoolGasEstimate } = useEstimateGas({
 		to: currentChain?.routerAddress as Address,
 		value: BigInt(1e6),
-		query: { enabled: !isDisabled && !!wallets[0]?.address },
+		query: { enabled: !isDisabled && !!address },
 		data: encodeFunctionData({
 			abi: MultipoolFactory.abi,
 			functionName: "createMultipool",
-			args: [mpCreationArgs],
+			args: [{ ...mpCreationArgs, priceData: [] }],
 		}),
-		account: (wallets[0]?.address as Address) || zeroAddress,
+		account: address || zeroAddress,
 	});
 
 	const handleError = ({
@@ -154,13 +150,45 @@ export const useCreatePortfolio = () => {
 		try {
 			setFutureMpAddress(multipoolAddress);
 
+			const priceData = await Promise.all(
+				tokens?.map(async (token) => {
+					if (!client) {
+						throw new Error("Client is not defined");
+					}
+					if (!token?.poolAddress || token.poolAddress === zeroAddress) {
+						return encodeUniV3PriceData(zeroAddress, false, BigInt(0));
+					}
+
+					const [token0] = await client.multicall({
+						contracts: [
+							{
+								address: token.poolAddress as Address,
+								abi: IUniswapV3PoolABI.abi,
+								functionName: "token0",
+							},
+						],
+					});
+
+					const isToken0Native = Same(
+						token0.result?.toString() || "",
+						currentChain?.nativeTokenAddress || "",
+					);
+
+					return encodeUniV3PriceData(
+						token.poolAddress as Address,
+						isToken0Native,
+						BigInt(0),
+					);
+				}) || [],
+			);
+
 			const txHash = await writeContractAsync({
 				abi: MultipoolFactory.abi,
 				address: currentChain?.factoryAddress as Address,
 				functionName: "createMultipool",
 				value: BigInt(1e6),
-				args: [mpCreationArgs],
-				account: wallets[0].address as Address,
+				args: [{ ...mpCreationArgs, priceData: priceData }],
+				account: address,
 			});
 
 			if (logo) {
@@ -183,7 +211,14 @@ export const useCreatePortfolio = () => {
 					variant: "success",
 					withTimeline: true,
 				});
-				if (allowance && allowance < Number(initialLiquidityAmount)) {
+				if (
+					allowance &&
+					allowance <
+						parseUnits(
+							initialLiquidityAmount?.toString() || "0",
+							initialLiquidityToken?.decimals ?? 18,
+						)
+				) {
 					setCurrentCreateModalState("approve");
 				} else {
 					setCurrentCreateModalState("mint");
@@ -277,11 +312,14 @@ export const useCreatePortfolio = () => {
 				},
 				assetIn: initialLiquidityToken?.address as Address,
 				assetOut: (futureMultipoolAddress as Address) || zeroAddress,
-				swapAmount: parseUnits(initialLiquidityAmount?.toString() || "0", 18),
+				swapAmount: parseUnits(
+					initialLiquidityAmount?.toString() || "0",
+					initialLiquidityToken?.decimals ?? 18,
+				),
 				isExactInput: true,
 				receiverData: {
-					receiverAddress: (wallets[0]?.address as Address) || zeroAddress,
-					refundAddress: (wallets[0]?.address as Address) || zeroAddress,
+					receiverAddress: address || zeroAddress,
+					refundAddress: address || zeroAddress,
 					refundEthToReceiver: true,
 				},
 				ethValue: BigInt(1e15),
@@ -298,7 +336,10 @@ export const useCreatePortfolio = () => {
 						[
 							initialLiquidityToken?.address as Address,
 							(futureMultipoolAddress as Address) || zeroAddress,
-							parseUnits(initialLiquidityAmount || "0", 18),
+							parseUnits(
+								initialLiquidityAmount || "0",
+								initialLiquidityToken?.decimals ?? 18,
+							),
 						],
 					),
 				},
@@ -358,7 +399,7 @@ export const useCreatePortfolio = () => {
 				swapArgs.callsAfter,
 			],
 			chainId: chainId as ChainId,
-			account: wallets[0]?.address as Address,
+			account: address,
 		});
 
 		if (!isError) {

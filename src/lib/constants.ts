@@ -1,8 +1,14 @@
 import BigNumber from "bignumber.js";
-import { config } from "./config";
 import type { ChainMetadata, ExtendedChain, Token } from "./types";
+import { arbitrum, arbitrumSepolia, monadTestnet } from "wagmi/chains";
+import type { Chain } from "@rainbow-me/rainbowkit";
 
-const chainsMetadata: ChainMetadata[] = [
+export const chains = [arbitrum, arbitrumSepolia, monadTestnet] as [
+	Chain,
+	...Chain[],
+];
+
+export const chainsMetadata: ChainMetadata[] = [
 	{
 		id: 421614,
 		color: "#2D374B",
@@ -15,6 +21,7 @@ const chainsMetadata: ChainMetadata[] = [
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
 		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
+		creationTemplates: [],
 	},
 	{
 		id: 10143,
@@ -27,8 +34,62 @@ const chainsMetadata: ChainMetadata[] = [
 		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
-		routerAddress: "0x500f1A73cB5B06dc8aA4e61888Ad2e461aDf2ceD",
+		routerAddress: "0x213E9D23C795F7E44DabD007176554c6bB2d3fCA",
 		uniswapV3FactoryAddress: "0x961235a9020B05C44DF1026D956D1F4D78014276",
+
+		creationTemplates: [
+			{
+				name: "TEMPLATE 1",
+				description: "ASDJKL",
+				categories: [
+					{
+						name: "Infrastructure",
+						share: 50,
+						tokens: [
+							"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
+							"0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+							"0xcf5a6076cfa32686c0Df13aBaDa2b40dec133F1d",
+						],
+					},
+					{
+						name: "Meme",
+						tokens: [
+							"0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+							"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
+						],
+						share: 25,
+					},
+					{
+						name: "Other",
+						tokens: ["0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714"],
+						share: 25,
+					},
+				],
+			},
+			{
+				name: "TEMPLATE 2",
+				description: "ASDJKL",
+				categories: [
+					{
+						name: "Infrastructure",
+						share: 50,
+						tokens: [
+							"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
+							"0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+						],
+					},
+					{
+						name: "Meme",
+						tokens: [
+							"0x0F0BDEbF0F83cD1EE3974779Bcb7315f9808c714",
+							"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
+						],
+						share: 25,
+					},
+					{ name: "Other", tokens: [], share: 25 },
+				],
+			},
+		],
 	},
 	{
 		id: 42161,
@@ -42,8 +103,23 @@ const chainsMetadata: ChainMetadata[] = [
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
 		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
+
+		creationTemplates: [],
 	},
 ];
+
+export const arcanumChains: ExtendedChain[] = chains.map((chain) => {
+	const metadata = chainsMetadata.find((meta) => meta.id === chain.id);
+
+	if (metadata) {
+		return {
+			...chain,
+			...metadata,
+		};
+	}
+
+	return chain;
+});
 
 export const twoPow96 = new BigNumber(2).pow(96);
 
@@ -57,18 +133,6 @@ export const TAGS = [
 	"Memecoins",
 ];
 
-export const arcanumChains: ExtendedChain[] = config.chains.map((chain) => {
-	const metadata = chainsMetadata.find((meta) => meta.id === chain.id);
-
-	if (metadata) {
-		return {
-			...chain,
-			...metadata,
-		};
-	}
-
-	return chain;
-});
 // {
 // 	logo: "/icons/chains/ethereum.svg",
 // 	name: "Ethereum",

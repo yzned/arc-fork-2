@@ -3,7 +3,11 @@ import type {
 	LinearDataFormated,
 	ShortMultipoolDataFormated,
 } from "@/api/types";
-import type { SetupToken } from "@/lib/types";
+import type {
+	MultipoolSuplyChangelyPriceData,
+	PorfolioAsset,
+	SetupToken,
+} from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 import { v4 as uuidv4 } from "uuid";
 
@@ -29,24 +33,21 @@ export class ExplorePortfolioStore {
 	portfolioCandlesData: CandleDataFormated[];
 	portfolioLinearData: LinearDataFormated[];
 	chartResolution: "60" | "900" | "3600" | "86400";
-	// portfolioAssets?: MultipoolAssetFormated[];
+	portfolioAssets?: PorfolioAsset[];
+
+	multipoolSupplyPriceData?: MultipoolSuplyChangelyPriceData;
 	// shortPortfolioData?: MultipoolInfo;
 
 	rightSectionState: "mint" | "burn" | "settings";
 
-	// selectedAsset: Token = {
-	// 	...this?.portfolioAssets?.[0],
-	// 	address: this?.portfolioAssets?.[0].address as Address,
-	// 	share: this?.portfolioAssets?.[0].share.toString(),
-	// 	price: this?.portfolioAssets?.[0]?.price?.price,
-	// };
+	// selectedAsset: Token = {};
 
 	slippage: string;
 	mintBurnAmount?: string;
 
 	swapNetworkFee?: string;
 
-	constructor() {
+	constructor(portfolios: ShortMultipoolDataFormated[]) {
 		makeAutoObservable(this, {}, { autoBind: true });
 
 		this.rightSectionState = "mint";
@@ -60,6 +61,8 @@ export class ExplorePortfolioStore {
 		this.chartResolution = "60";
 		// this.portfolioAssets = [];
 		this.manageState = "main-info";
+
+		this.allPortfolios = portfolios;
 	}
 
 	// updateManagingAssets() {
@@ -73,6 +76,14 @@ export class ExplorePortfolioStore {
 	// 		share: asset.share?.toString() || "0",
 	// 	}));
 	// }
+
+	setPortfolioAssets(assets: PorfolioAsset[]) {
+		this.portfolioAssets = assets;
+	}
+
+	setMultipoolSupplyPriceData(value: MultipoolSuplyChangelyPriceData) {
+		this.multipoolSupplyPriceData = value;
+	}
 
 	changeTokenState(
 		id: string,
@@ -139,15 +150,6 @@ export class ExplorePortfolioStore {
 		this.manageState = state;
 	};
 
-	// setPortfolioAssets = (assets: MultipoolAssetFormated[]) => {
-	// 	this.portfolioAssets = assets.map((item) => {
-	// 		return {
-	// 			...item,
-	// 			price: item.price,
-	// 		};
-	// 	});
-	// };
-
 	setChartResolution = (resolution: "60" | "900" | "3600" | "86400") => {
 		this.chartResolution = resolution;
 	};
@@ -155,10 +157,6 @@ export class ExplorePortfolioStore {
 	// setShortPortfolioData = (shortData: MultipoolInfo) => {
 	// 	this.shortPortfolioData = shortData;
 	// };
-
-	setAllPortfolios = (portfolios: ShortMultipoolDataFormated[]) => {
-		this.allPortfolios = portfolios;
-	};
 
 	setPorfolioCandles = (portfolioChartData: CandleDataFormated[]) => {
 		this.portfolioCandlesData = portfolioChartData;

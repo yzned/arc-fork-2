@@ -1,12 +1,13 @@
-import { ExplorePortfolioStore } from "@/store/explore-portfolio";
+import type { ExplorePortfolioStore } from "@/store/explore-portfolio";
 import { createContext, useContext, useState } from "react";
 
 interface StoreProviderState {
-	store?: ExplorePortfolioStore;
+	store: ExplorePortfolioStore | undefined;
 	setStore: (store: ExplorePortfolioStore) => void;
 }
 
 interface StoreProviderProps {
+	store: ExplorePortfolioStore;
 	children: React.ReactNode;
 }
 
@@ -16,13 +17,13 @@ const initialState: StoreProviderState = {
 };
 
 const ExplorePortfolioProviderContext = createContext(initialState);
-const _ExplorePortfolio = new ExplorePortfolioStore();
 
 export function ExplorePortfolioProvider({
 	children,
+	store,
 	...props
 }: StoreProviderProps) {
-	const [_store, _setStore] = useState(_ExplorePortfolio);
+	const [_store, _setStore] = useState(store);
 
 	return (
 		<ExplorePortfolioProviderContext.Provider
@@ -42,6 +43,9 @@ export function useExplorePortfolio() {
 	if (context === undefined) {
 		throw new Error("useStoreProvider must be used within a StoreProvider");
 	}
+	if (!context.store) {
+		throw new Error("Store is not initialized");
+	}
 
-	return _ExplorePortfolio;
+	return context.store;
 }

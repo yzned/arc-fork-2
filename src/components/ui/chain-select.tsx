@@ -3,7 +3,6 @@ import { CheckIcon } from "lucide-react";
 import ChevronIcon from "../../icons/chevron.svg?react";
 
 import { useAccountStore } from "@/contexts/AccountContext";
-import { arcanumChains } from "@/lib/constants";
 import type { ChainId } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "@tanstack/react-router";
@@ -11,6 +10,7 @@ import { observer } from "mobx-react-lite";
 import type * as React from "react";
 import { useEffect } from "react";
 import { useChainId, useSwitchChain } from "wagmi";
+import { arcanumChains } from "@/lib/constants";
 
 const Select = observer(
 	({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) => {
@@ -78,7 +78,7 @@ function SelectContent({
 				className={cn(
 					" data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-96 overflow-hidden border border-fill-secondary bg-bg-floor-0 data-[state=closed]:animate-out data-[state=open]:animate-in",
 					position === "popper" &&
-						"data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1",
+					"data-[side=left]:-translate-x-1 data-[side=top]:-translate-y-1 data-[side=right]:translate-x-1",
 					className,
 				)}
 				avoidCollisions={false}
@@ -89,7 +89,7 @@ function SelectContent({
 					className={cn(
 						"p-2",
 						position === "popper" &&
-							"flex h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1 flex-col gap-1",
+						"flex h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1 flex-col gap-1",
 					)}
 				>
 					{children}
@@ -143,7 +143,7 @@ export const ChainSelector = observer(() => {
 
 	useEffect(() => {
 		const newChain =
-			arcanumChains.find(
+			chains.find(
 				(chain) => chain.id.toString() === chainId.toString(),
 			) || chains[0];
 
@@ -155,7 +155,7 @@ export const ChainSelector = observer(() => {
 			value={chainId.toString()}
 			onValueChange={(value) => {
 				const newChain =
-					arcanumChains.find((chain) => chain.id.toString() === value) ||
+					chains.find((chain) => chain.id.toString() === value) ||
 					chains[0];
 
 				switchChain({ chainId: newChain.id as ChainId });

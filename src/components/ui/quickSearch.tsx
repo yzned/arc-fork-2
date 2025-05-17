@@ -9,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useOnClickOutside } from "usehooks-ts";
 
 export interface QuickSearchProps {
 	items: string[];
@@ -93,21 +94,14 @@ export const QuickSearch = forwardRef(
 
 		const quickSearchRef = useRef<HTMLInputElement>(null);
 
-		useEffect(() => {
-			const handleClickOutside = (event: MouseEvent) => {
-				if (
-					quickSearchRef.current &&
-					!quickSearchRef.current.contains(event.target as Node)
-				) {
-					setIsOpen(false);
-				}
-			};
+		const handleClickOutside = () => {
+			setIsOpen(false);
+		};
 
-			document.addEventListener("mousedown", handleClickOutside);
-			return () => {
-				document.removeEventListener("mousedown", handleClickOutside);
-			};
-		}, []);
+		useOnClickOutside(
+			quickSearchRef as React.RefObject<HTMLElement>,
+			handleClickOutside,
+		);
 
 		useEffect(() => {
 			if (items.some((item) => item === currentValue)) {

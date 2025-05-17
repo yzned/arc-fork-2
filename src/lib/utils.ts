@@ -125,3 +125,74 @@ export const getValidAddress = (
 		return fallback;
 	}
 };
+
+function numberToSubscript(num: number) {
+	const subscriptDigits = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"];
+	return num
+		.toString()
+		.split("")
+		.map((c) => {
+			const digit = Number.parseInt(c, 10);
+			return Number.isNaN(digit) ? c : subscriptDigits[digit];
+		})
+		.join("");
+}
+
+export function shrinkNumber(n: number, decimals?: number) {
+	if (n === 0) return "0";
+
+	const absN = Math.abs(n);
+	const sign = n < 0 ? "-" : "";
+
+	// Handle small numbers (absN < 0.01)
+	if (absN < 0.01) {
+		const s = absN.toExponential(50);
+		const [mantissa, expPart] = s.split("e");
+		const exponent = Number.parseInt(expPart, 10);
+
+		let subscriptNum = Math.abs(exponent) - 2;
+		if (subscriptNum < 0) subscriptNum = 0;
+
+		const subscriptStr = numberToSubscript(subscriptNum);
+		const mainDigits = mantissa
+			.replace(".", "")
+			.substring(0, decimals ? decimals + 1 : 4);
+
+		return `${sign}0.0${subscriptStr}${mainDigits}`;
+	}
+
+	// Handle medium numbers (0.01 <= absN < 1000)
+	if (absN < 1000) {
+		const formatted = absN
+			.toFixed(decimals)
+			.replace(/(\.\d*?[1-9])0+$/, "$1") // Remove trailing zeros
+			.replace(/\.$/, ""); // Remove trailing dot
+		return sign + formatted;
+	}
+
+	// Handle large numbers (absN >= 1000)
+	const suffixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+	let steps = 0;
+	let current = absN;
+
+	while (current >= 1000 && steps < suffixes.length - 1) {
+		current /= 1000;
+		steps++;
+	}
+
+	if (current >= 1000) {
+		// Beyond suffixes, use scientific notation
+		const exponent = (steps + 1) * 3;
+		current /= 1000;
+		const sciStr = current.toFixed(decimals).replace(/\.?0+$/, "");
+		return `${sign}${sciStr}e${exponent}`;
+	}
+
+	// Format with specified decimals
+	const formatted = current
+		.toFixed(decimals)
+		.replace(/(\.\d*?[1-9])0+$/, "$1") // Remove trailing zeros
+		.replace(/\.$/, ""); // Remove trailing dot
+
+	return `${sign}${formatted}${suffixes[steps]}`;
+}

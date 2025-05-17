@@ -4,7 +4,7 @@ import type { Address, Chain } from "viem";
 
 export type ChainId = 42161 | 421614 | 10143;
 //after backend will be created change types to correct
-export type Token = {
+export interface Token {
 	name?: string;
 	symbol?: string;
 	address: Address;
@@ -30,9 +30,20 @@ export type Token = {
 	txnLink?: string;
 	priceFeedAddress?: Address;
 	poolAddress?: string;
-};
+}
 
-export type ChainMetadata = {
+export interface Category {
+	name: string;
+	tokens: string[];
+	share: number;
+	selectToken?: AvailableChainTokensDataFormated | null;
+}
+export interface Template {
+	name?: string;
+	description?: string;
+	categories?: Category[];
+}
+export interface ChainMetadata {
 	logo: string;
 	id: number;
 	color: string;
@@ -46,25 +57,27 @@ export type ChainMetadata = {
 	uniswapV3FactoryAddress?: string;
 
 	availableTokens?: AvailableChainTokensDataFormated[];
-};
+	creationTemplates?: Template[];
+}
 
 export type ExtendedChain = Chain & Partial<ChainMetadata>;
 
-export type ShortPoolData = {
+export interface ShortPoolData {
 	priceFeedType?: string;
 	poolAddress: string;
 	liquidity?: string;
 	fee: number;
-};
+	price?: string;
+}
 
-export type BalancesToken = {
+export interface BalancesToken {
 	logo?: string;
 	symbol?: string;
 	quantityOnWallet?: BigNumber;
 	priceFeedAddress?: Address;
 	price?: BigNumber;
 	address?: Address;
-};
+}
 
 export interface UniswapPriceData {
 	0: bigint; // roundId
@@ -96,4 +109,32 @@ export interface SetupToken {
 	share?: string;
 	shareGrowing?: number;
 	poolAddress?: string;
+	decimals?: number;
+}
+
+export interface OnChainResultAssetInformation {
+	collectedCashbacks: bigint;
+	isUsed: boolean;
+	quantity: bigint;
+	targetShare: bigint;
+}
+
+export interface MultipoolSuplyChangelyPriceData {
+	tvl: BigNumber;
+	absolute24hPriceChange: BigNumber;
+	relative24hPriceChange: BigNumber;
+	open?: BigNumber;
+	close?: BigNumber;
+	price?: BigNumber;
+}
+
+export interface PorfolioAsset {
+	image?: string;
+	symbol?: string;
+	address?: Address;
+	assetData?: Omit<OnChainResultAssetInformation, "quantity"> & {
+		quantity: string;
+	};
+	price?: string;
+	decimal?: number;
 }

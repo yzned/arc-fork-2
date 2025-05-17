@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { type FC, useEffect, useRef, useState } from "react";
-import { Input } from "../ui/Input";
+import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 
@@ -12,6 +12,7 @@ import TrashIcon from "../../icons/trash.svg?react";
 import { useTranslation } from "react-i18next";
 import { CopyButton } from "../ui/copyButton";
 
+import { useAccountStore } from "@/contexts/AccountContext";
 import type { SetupToken } from "@/lib/types";
 import type BigNumber from "bignumber.js";
 import type { Address } from "viem";
@@ -22,7 +23,7 @@ export interface TokenTableProps {
 	tokens: SetupToken[];
 	sharePercentsSum: BigNumber;
 	onStartEdit: (id: string) => void;
-	onDeleteToken: (item: string) => void;
+	onDeleteToken: (item: SetupToken) => void;
 	onCancelEditToken: (item: string) => void;
 	onEditToken: (item: SetupToken) => void;
 	onRestoreItem?: (id: string) => void;
@@ -78,6 +79,7 @@ export const TokenTable: FC<TokenTableProps> = observer(
 								/>
 							) : (
 								<EditTableRow
+									tokens={tokens}
 									row={row}
 									key={`${index}-${row.address}`}
 									onCancelEditToken={onCancelEditToken}
@@ -176,138 +178,152 @@ const ReadOnlyTableRow: FC<
 
 const EditTableRow: FC<
 	RowType &
-		Pick<TokenTableProps, "onCancelEditToken" | "onDeleteToken" | "onEditToken">
-> = observer(({ row, onCancelEditToken, onDeleteToken, onEditToken }) => {
-	const { t } = useTranslation(["main"]);
+		Pick<
+			TokenTableProps,
+			"onCancelEditToken" | "onDeleteToken" | "onEditToken" | "tokens"
+		>
+> = observer(
+	({ row, onCancelEditToken, onDeleteToken, onEditToken, tokens }) => {
+		const { t } = useTranslation(["main"]);
 
-	const inputRef = useRef<HTMLInputElement>(null);
-	const [percentOffset, setPercentOffset] = useState(0);
+		const inputRef = useRef<HTMLInputElement>(null);
+		const [percentOffset, setPercentOffset] = useState(0);
 
-	const handleShareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value.replace(",", ".");
+		const handleShareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = e.target.value.replace(",", ".");
 
-		if (Number(value) >= 0 && Number(value) <= 100) {
-			onEditToken({ ...row, share: value.toString() });
-		}
-	};
+			if (Number(value) >= 0 && Number(value) <= 100) {
+				onEditToken({ ...row, share: value.toString() });
+			}
+		};
 
-	useEffect(() => {
-		if (inputRef.current) {
-			const tempSpan = document.createElement("span");
-			tempSpan.style.visibility = "hidden";
-			tempSpan.style.whiteSpace = "pre";
-			tempSpan.style.fontFamily = "droid";
-			tempSpan.style.fontSize = "16px";
-			tempSpan.textContent = row.share?.toString() || "";
+		useEffect(() => {
+			if (inputRef.current) {
+				const tempSpan = document.createElement("span");
+				tempSpan.style.visibility = "hidden";
+				tempSpan.style.whiteSpace = "pre";
+				tempSpan.style.fontFamily = "droid";
+				tempSpan.style.fontSize = "16px";
+				tempSpan.textContent = row.share?.toString() || "";
 
-			document.body.appendChild(tempSpan);
-			const textWidth = tempSpan.getBoundingClientRect().width;
-			document.body.removeChild(tempSpan);
+				document.body.appendChild(tempSpan);
+				const textWidth = tempSpan.getBoundingClientRect().width;
+				document.body.removeChild(tempSpan);
 
-			setPercentOffset(textWidth + 16);
-		}
-	}, [row.share]);
+				setPercentOffset(textWidth + 16);
+			}
+		}, [row.share]);
 
-	const disableConfirm =
-		row.share === undefined ||
-		row.share === "" ||
-		row.share === "0" ||
-		row.symbol === "";
+		const disableConfirm =
+			row.share === undefined ||
+			row.share === "" ||
+			row.share === "0" ||
+			row.symbol === "";
+		const { currentChain } = useAccountStore();
 
-	return (
-		<tr className="w-full">
-			<td>
-				<div className="mt-4 flex h-[106px] bg-fill-primary-800 p-4">
-					<div className="flex w-[80%] gap-6">
-						<div className="w-[50%]">
-							<Label text="Select token" isRequired />
+		const availableTokens =
+			currentChain?.availableTokens?.filter(
+				(availableToken) =>
+					!tokens?.some((token) => token.symbol === availableToken.symbol),
+			) || [];
 
-							<AssetSelector
-								logo={row.logo}
-								symbol={row.symbol}
-								className="w-full"
-								onSelectAsset={(item) =>
-									onEditToken({
-										...row,
-										address: item?.address as Address,
-										id: row.id,
-										logo: item?.logo,
-										name: item?.name || "",
-										symbol: item?.symbol || "",
-										priceFeedType: item?.priceFeedType,
-										poolAddress: item?.poolAddress,
-									})
-								}
-							/>
-						</div>
-						<div className="w-[50%]">
-							<Label text={t("enterShare")} isRequired />
-							<div className="relative text-text-primary">
-								<Input
-									type="number"
-									ref={inputRef}
-									className="mt-[10px] w-full overflow-hidden pr-8 text-text-primary"
-									placeholder={t("enterShare")}
-									value={row.share?.toString()}
-									onKeyDown={(e) => {
-										if (
-											e.key === "-" ||
-											e.key === "+" ||
-											e.key === "E" ||
-											e.key === "e"
-										) {
-											e.preventDefault();
-										}
-									}}
-									onChange={handleShareChange}
+		return (
+			<tr className="w-full">
+				<td>
+					<div className="mt-4 flex h-[106px] bg-fill-primary-800 p-4">
+						<div className="flex w-[80%] gap-6">
+							<div className="w-[50%]">
+								<Label text="Select token" isRequired />
+
+								<AssetSelector
+									logo={row.logo}
+									symbol={row.symbol}
+									assets={availableTokens}
+									className="w-full"
+									onSelectAsset={(item) =>
+										onEditToken({
+											...row,
+											address: item?.address as Address,
+											id: row.id,
+											logo: item?.logo,
+											name: item?.name || "",
+											symbol: item?.symbol || "",
+											priceFeedType: item?.priceFeedType,
+											poolAddress: item?.poolAddress,
+											decimals: item?.decimals,
+										})
+									}
 								/>
-								{row.share && (
-									<span
-										style={{ left: `${percentOffset}px` }}
-										className="pointer-events-none absolute top-[10px] transform"
-									>
-										%
-									</span>
-								)}
+							</div>
+							<div className="w-[50%]">
+								<Label text={t("enterShare")} isRequired />
+								<div className="relative text-text-primary">
+									<Input
+										type="number"
+										ref={inputRef}
+										className="mt-[10px] w-full overflow-hidden pr-8 text-text-primary"
+										placeholder={t("enterShare")}
+										value={row.share?.toString()}
+										onKeyDown={(e) => {
+											if (
+												e.key === "-" ||
+												e.key === "+" ||
+												e.key === "E" ||
+												e.key === "e"
+											) {
+												e.preventDefault();
+											}
+										}}
+										onChange={handleShareChange}
+									/>
+									{row.share && (
+										<span
+											style={{ left: `${percentOffset}px` }}
+											className="pointer-events-none absolute top-[10px] transform"
+										>
+											%
+										</span>
+									)}
+								</div>
+							</div>
+						</div>
+
+						<div className="ml-[48px] flex flex-col items-end gap-[18px]">
+							<button
+								onClick={() => {
+									onDeleteToken(row);
+								}}
+								type="button"
+								className="group flex h-[24px] w-[24px] cursor-pointer items-center justify-center rounded-[2px] border-[1px] border-fill-secondary transition-colors hover:border-fill-tertiary hover:bg-fill-tertiary"
+							>
+								<TrashIcon className="h-[16px] w-[14px] text-text-secondary transition-colors group-hover:text-text-primary" />
+							</button>
+							<div className="flex gap-2">
+								<Button
+									className="w-[116px]"
+									disabled={disableConfirm}
+									onClick={() => {
+										onEditToken({ ...row, creationState: "readed" });
+									}}
+								>
+									<span>{t("confirm")}</span>
+
+									<RoundedCheckIcon className="h-2 w-2 scale-90" />
+								</Button>
+								<Button
+									variant={"tertiary"}
+									className="w-[84px]"
+									onClick={() => {
+										onCancelEditToken(row.id);
+									}}
+								>
+									<span>{t("cancel")}</span>
+								</Button>
 							</div>
 						</div>
 					</div>
-
-					<div className="ml-[48px] flex flex-col items-end gap-[18px]">
-						<button
-							onClick={() => {
-								onDeleteToken(row.id || "");
-							}}
-							type="button"
-							className="group flex h-[24px] w-[24px] cursor-pointer items-center justify-center rounded-[2px] border-[1px] border-fill-secondary transition-colors hover:border-fill-tertiary hover:bg-fill-tertiary"
-						>
-							<TrashIcon className="h-[16px] w-[14px] text-text-secondary transition-colors group-hover:text-text-primary" />
-						</button>
-						<div className="flex gap-2">
-							<Button
-								className="w-[116px]"
-								disabled={disableConfirm}
-								onClick={() => {
-									onEditToken({ ...row, creationState: "readed" });
-								}}
-							>
-								<span>{t("confirm")}</span>
-
-								<RoundedCheckIcon className="h-2 w-2 scale-90" />
-							</Button>
-							<Button
-								variant={"tertiary"}
-								className="w-[84px]"
-								onClick={() => {
-									onCancelEditToken(row.id);
-								}}
-							>
-								<span>{t("cancel")}</span>
-							</Button>
-						</div>
-					</div>
-				</div>
-			</td>
-		</tr>
-	);
-});
+				</td>
+			</tr>
+		);
+	},
+);

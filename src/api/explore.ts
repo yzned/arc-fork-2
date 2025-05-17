@@ -42,12 +42,13 @@ export async function GetMultipoolChartStats(params: {
 	return await api.getMsgpack("/portfolio/stats", params);
 }
 
-// export async function GetMultipoolInfo(params: {
-// 	multipool_address: Address;
-// 	chain_id: number;
-// }): Promise<MultipoolInfo> {
-// 	return await api.get("/portfolio", params);
-// }
+export async function GetMultipoolInfo(params: {
+	multipoolAddresses: Address[];
+}) {
+	return await api.getMsgpack("/portfolio/metadata", {
+		m: params.multipoolAddresses,
+	});
+}
 
 export async function GetTokens({
 	chainId,

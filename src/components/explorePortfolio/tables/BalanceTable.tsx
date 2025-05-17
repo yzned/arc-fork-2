@@ -6,7 +6,7 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SmallXIcon from "@/icons/smallX.svg?react";
 import { useTranslation } from "react-i18next";
-import { Input } from "../../ui/Input";
+import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import { ModalBase } from "../../ui/modalBase";
 // import { AvailableChainTokensDataFormated } from "@/api/types";
@@ -61,7 +61,7 @@ const BalancesTableRow = observer(
 		AvailableChainTokensDataFormated;
 	}) => {
 		const { setIsOpenTransferModal } = useExplorePortfolio();
-
+		const { currentChain } = useAccountStore();
 		const { t } = useTranslation(["main"]);
 
 		return (
@@ -72,7 +72,11 @@ const BalancesTableRow = observer(
 				}}
 			>
 				<td className="flex items-center gap-2 px-3 py-4 text-left">
-					<img src={row.logo} alt="icon1" className="h-4 w-4 overflow-hidden" />
+					<img
+						src={row.logo}
+						alt="icon1"
+						className="h-4 w-4 overflow-hidden rounded-full"
+					/>
 					<span>{row.symbol}</span>
 				</td>
 
@@ -84,7 +88,9 @@ const BalancesTableRow = observer(
 					onClick={(e) => {
 						e.stopPropagation();
 					}}
-					href={`https://arbiscan.io/token/${row.address}`}
+					target="_blank"
+					rel="noopener noreferrer"
+					href={`${currentChain?.blockExplorers?.default.url}/token/${row.address}`}
 					className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
 				>
 					{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}

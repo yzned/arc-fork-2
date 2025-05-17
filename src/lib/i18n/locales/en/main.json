@@ -142,5 +142,10 @@
 	"errorSigning": "Error while signing. Try again",
 	"retrySigning": "Retry signing",
 	"error": "Error",
-	"retry": "Retry"
+	"retry": "Retry",
+	"selected": "Selected",
+	"selectAssetFor": "Select an asset for each template section",
+	"useThisTemplate": "Use this template",
+	"selectAsset": "Select asset",
+	"reset": "Reset"
 }

@@ -1,30 +1,32 @@
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
 import MenuIcon from "@/icons/menu.svg?react";
 import SettingsIcon from "@/icons/settingsGear.svg?react";
-import { arcanumChains } from "@/lib/constants";
 import { APP_LANGUAGES, changeLanguage } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "@tanstack/react-router";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { BottomSheet } from "react-spring-bottom-sheet";
 import { zeroAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
-import ShortLogo from "/public/icons/logos/short.svg?react";
-import DiscordIcon from "/public/icons/socials/discord.svg?react";
-import GitIcon from "/public/icons/socials/github.svg?react";
-import TelegramIcon from "/public/icons/socials/telegram.svg?react";
-import TwitterIcon from "/public/icons/socials/twitter.svg?react";
+import { useAccount } from "wagmi";
+
+import ShortLogo from "@/icons/short.svg?react";
+import DiscordIcon from "@/icons/socials/discord.svg?react";
+import GitIcon from "@/icons/socials/github.svg?react";
+import TelegramIcon from "@/icons/socials/telegram.svg?react";
+import TwitterIcon from "@/icons/socials/twitter.svg?react";
+
 import { ChainSelector, ChainsColors } from "../ui/chain-select";
 import { ConnectivityIndicator } from "../ui/connectivityIndicator";
 import { RadioButton } from "../ui/radiobutton";
 import { ConnectWallet } from "./ConnectWallet";
+import { useOnClickOutside } from "usehooks-ts";
+import { arcanumChains } from "@/lib/constants";
 
 const MOCK_RPC_DATA = [
 	{ rpcName: "RPC_1", connectValue: 50 },
@@ -34,30 +36,22 @@ const MOCK_RPC_DATA = [
 
 export const AppHeader = () => {
 	const [isOpenSettingsSelector, setIsOpenSettingsSelector] = useState(false);
-	const { allPortfolios } = useExplorePortfolio();
 	const location = useLocation();
 
-	const settingsRef = useRef<HTMLDivElement>(null);
+	const settingsRef = useRef<HTMLDivElement | null>(null);
 
 	const { i18n, t } = useTranslation(["main"]);
 
 	const currentPath = location.pathname;
 
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			if (
-				settingsRef.current &&
-				!settingsRef.current.contains(event.target as Node)
-			) {
-				setIsOpenSettingsSelector(false);
-			}
-		};
+	const handleClickOutside = () => {
+		setIsOpenSettingsSelector(false);
+	};
 
-		document.addEventListener("mousedown", handleClickOutside);
-		return () => {
-			document.removeEventListener("mousedown", handleClickOutside);
-		};
-	}, []);
+	useOnClickOutside(
+		settingsRef as React.RefObject<HTMLElement>,
+		handleClickOutside,
+	);
 
 	return (
 		<div className="sticky top-0 z-40 flex h-[72px] justify-between border-fill-secondary border-t border-b bg-bg-floor-0">
@@ -78,7 +72,7 @@ export const AppHeader = () => {
 					</Link>
 					<Link
 						to="/explore/$id"
-						params={{ id: allPortfolios[0]?.address || zeroAddress }}
+						params={{ id: "0x8a3BDf2870CF7931d2d8AC712367d5437D473148" }}
 						className={cn(
 							"font-droid font-normal text-text-tertiary leading-[18.2px] tracking-[0.01em] transition-colors hover:text-text-primary",
 							currentPath.includes("/explore/") && "text-text-primary",
@@ -224,8 +218,7 @@ export const AppHeaderMobile = () => {
 	const location = useLocation();
 	const currentPath = location.pathname;
 
-	const { i18n, t } = useTranslation(["main"]);
-	const currentLanguage = i18n.language;
+	const { t } = useTranslation(["main"]);
 
 	const [isOpenLangSheet, setIsOpenLangSheet] = useState(false);
 	const [isOpenSettingsSheet, setIsOpenSettingsSheet] = useState(false);
@@ -312,7 +305,7 @@ export const AppHeaderMobile = () => {
 						<Link
 							to="/explore/$id"
 							onClick={() => setIsOpenMenu(false)}
-							params={{ id: allPortfolios[0]?.address || zeroAddress }}
+							params={{ id: allPortfolios?.[0]?.address || zeroAddress }}
 							className={cn(
 								" text-text-tertiary transition-colors hover:text-text-primary",
 								currentPath.includes("/explore/") && "text-text-primary",
@@ -376,7 +369,7 @@ export const AppHeaderMobile = () => {
 					</footer>
 				</div>
 			</div>
-			<BottomSheet
+			{/* <BottomSheet
 				open={isOpenLangSheet}
 				onDismiss={() => setIsOpenLangSheet(false)}
 			>
@@ -399,9 +392,9 @@ export const AppHeaderMobile = () => {
 						))}
 					</div>
 				</div>
-			</BottomSheet>
+			</BottomSheet> */}
 
-			<BottomSheet
+			{/* <BottomSheet
 				open={isOpenSettingsSheet}
 				onDismiss={() => setIsOpenSettingsSheet(false)}
 			>
@@ -427,15 +420,14 @@ export const AppHeaderMobile = () => {
 						<Input className="text-text-primary" />
 					</div>
 				</div>
-			</BottomSheet>
+			</BottomSheet> */}
 		</div>
 	);
 };
 
 const SelectChain = observer(() => {
-	const [isOpenChainSelect, setIsOpenChainSelect] = useState(false);
+	const [_, setIsOpenChainSelect] = useState(false);
 
-	const { chains, switchChain } = useSwitchChain();
 	const { chain: currentWagmiChain } = useAccount();
 
 	const { setCurrentChain, currentChain } = useAccountStore();
@@ -484,7 +476,7 @@ const SelectChain = observer(() => {
 				</div>
 				<ChevronIcon className="rotate-90" />
 			</button>
-			<BottomSheet
+			{/* <BottomSheet
 				open={isOpenChainSelect}
 				onDismiss={() => setIsOpenChainSelect(false)}
 			>
@@ -514,7 +506,7 @@ const SelectChain = observer(() => {
 						))}
 					</div>
 				</div>
-			</BottomSheet>
+			</BottomSheet> */}
 		</div>
 	);
 });

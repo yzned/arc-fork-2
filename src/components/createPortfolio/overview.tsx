@@ -20,7 +20,7 @@ import {
 	maxUint256,
 	zeroAddress,
 } from "viem";
-import { useEstimateGas } from "wagmi";
+import { useAccount, useEstimateGas } from "wagmi";
 import { CreateModal } from "./createModal";
 
 export const Overview = observer(({ className }: { className?: string }) => {
@@ -41,10 +41,11 @@ export const Overview = observer(({ className }: { className?: string }) => {
 		setIsOpenCreateModal,
 		logo,
 		setNetworkFee,
+		isDisabled,
 	} = useCreatePortfolioContext();
 
 	const { createMultipoolGasEstimate } = useCreatePortfolio();
-
+	const { address } = useAccount();
 	const { data: approveGasEstimate } = useEstimateGas({
 		to: tokens[0]?.address || zeroAddress,
 
@@ -213,7 +214,7 @@ export const Overview = observer(({ className }: { className?: string }) => {
 					<Button
 						onClick={() => setIsOpenCreateModal(true)}
 						size="L"
-						// disabled={isDisabled}
+						disabled={isDisabled || !address}
 					>
 						{t("create")}
 					</Button>

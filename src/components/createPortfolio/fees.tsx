@@ -2,7 +2,7 @@ import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SettingsIcon from "@/icons/settings.svg?react";
 import TemplatesIcon from "@/icons/templates.svg?react";
 
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 
 import { observer } from "mobx-react-lite";
 

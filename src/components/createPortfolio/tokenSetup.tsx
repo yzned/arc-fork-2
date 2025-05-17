@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { Input } from "../ui/Input";
+import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Dropdown } from "../ui/dropdown";
 import { Label } from "../ui/label";
@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { useAccountStore } from "@/contexts/AccountContext";
 import { type Address, zeroAddress } from "viem";
 import { TokenTable } from "../ui/tokenTable";
+import { TemplatesModal } from "./templates";
 
 export const TokenSetup = observer(() => {
 	const { t } = useTranslation(["main"]);
@@ -40,23 +41,25 @@ export const TokenSetup = observer(() => {
 		deleteToken,
 		cancelEditToken,
 		editToken,
+		setIsOpenTemplateModal,
 	} = useCreatePortfolio();
 
-	const { currentChain } = useAccountStore();
-
-	const liquidityDropdownTokens = currentChain?.availableTokens?.map(
-		({ logo, ...rest }) => ({
+	const liquidityDropdownTokens = tokens
+		.filter((item) => item.name !== "")
+		.map(({ logo, ...rest }) => ({
 			...rest,
 			iconLeft: logo,
-		}),
-	);
+		}));
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setInitialLiqudityAmount(e.target.value);
 	};
 
+	const { currentChain } = useAccountStore();
+
 	return (
 		<div className="flex flex-col gap-10 p-4 ">
+			<TemplatesModal />
 			<p className="font-[600] font-namu text-[24px] text-white uppercase ">
 				{t("tokensSetup")}
 			</p>
@@ -85,86 +88,30 @@ export const TokenSetup = observer(() => {
 					className="h-0 w-full overflow-hidden opacity-0 transition-all data-[opened=true]:h-[160px] data-[opened=true]:opacity-100"
 				>
 					<div className="flex h-full flex-row gap-2">
-						<div
-							data-selected={selectedId}
-							onClick={() => setSelectedId(0)}
-							onKeyUp={(e) => e.key === "Enter" && setSelectedId(0)}
-							className=" flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=0]:border-fill-brand-secondary-500 data-[selected=0]:border-fill-secondary data-[selected=0]:bg-fill-secondary"
-						>
-							<div
-								data-selected={selectedId}
-								className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=0]:text-fill-brand-secondary-500"
-							>
-								{selectedId === 0 && (
-									<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-								)}
-								<span>No fees</span>
-							</div>
-							<div className="font-droid font-normal text-text-secondary text-xs">
-								A balanced ETF blending growth and stability, tailored to
-								reflect your financial goals
-							</div>
-						</div>
-						<div
-							data-selected={selectedId}
-							onClick={() => setSelectedId(1)}
-							onKeyUp={(e) => e.key === "Enter" && setSelectedId(1)}
-							className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=1]:border-fill-brand-secondary-500 data-[selected=1]:border-fill-secondary data-[selected=1]:bg-fill-secondary"
-						>
-							<div
-								data-selected={selectedId}
-								className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=1]:text-fill-brand-secondary-500"
-							>
-								{selectedId === 1 && (
-									<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-								)}
-								<span>No fees</span>
-							</div>
-							<div className="font-droid font-normal text-text-secondary text-xs">
-								A balanced ETF blending growth and stability, tailored to
-								reflect your financial goals
-							</div>
-						</div>
-						<div
-							data-selected={selectedId}
-							onClick={() => setSelectedId(3)}
-							onKeyUp={(e) => e.key === "Enter" && setSelectedId(3)}
-							className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=3]:border-fill-brand-secondary-500 data-[selected=3]:border-fill-secondary data-[selected=3]:bg-fill-secondary"
-						>
-							<div
-								data-selected={selectedId}
-								className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=3]:text-fill-brand-secondary-500"
-							>
-								{selectedId === 3 && (
-									<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-								)}
-								<span>No fees</span>
-							</div>
-							<div className="font-droid font-normal text-text-secondary text-xs">
-								A balanced ETF blending growth and stability, tailored to
-								reflect your financial goals
-							</div>
-						</div>
-						<div
-							data-selected={selectedId}
-							onClick={() => setSelectedId(4)}
-							onKeyUp={(e) => e.key === "Enter" && setSelectedId(4)}
-							className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=4]:border-fill-brand-secondary-500 data-[selected=4]:border-fill-secondary data-[selected=4]:bg-fill-secondary"
-						>
-							<div
-								data-selected={selectedId}
-								className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=4]:text-fill-brand-secondary-500"
-							>
-								{selectedId === 4 && (
-									<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-								)}
-								<span>No fees</span>
-							</div>
-							<div className="font-droid font-normal text-text-secondary text-xs">
-								A balanced ETF blending growth and stability, tailored to
-								reflect your financial goals
-							</div>
-						</div>
+						{currentChain?.creationTemplates?.map((item, index) => {
+							return (
+								<div
+									key={item.name}
+									data-selected={selectedId}
+									onClick={() => setIsOpenTemplateModal(true, index)}
+									onKeyUp={(e) => e.key === "Enter" && setSelectedId(0)}
+									className=" flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=0]:border-fill-brand-secondary-500 data-[selected=0]:border-fill-secondary data-[selected=0]:bg-fill-secondary"
+								>
+									<div
+										data-selected={selectedId}
+										className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=0]:text-fill-brand-secondary-500"
+									>
+										{selectedId === 0 && (
+											<RoundedCheckIcon className="text-fill-brand-secondary-500" />
+										)}
+										<span>{item.name}</span>
+									</div>
+									<div className="font-droid font-normal text-text-secondary text-xs">
+										{item.description}
+									</div>
+								</div>
+							);
+						})}
 					</div>
 				</div>
 			</div>
@@ -172,7 +119,7 @@ export const TokenSetup = observer(() => {
 			<div className="flex w-[793px] flex-col">
 				<div className="mb-8 flex gap-4">
 					<div>
-						<Label className="" text="Initial liquidity token" isRequired />
+						<Label className="" text={t("initialLiquidityToken")} isRequired />
 						<Dropdown
 							items={liquidityDropdownTokens || []}
 							defaultItem={liquidityDropdownTokens?.find(
@@ -184,12 +131,17 @@ export const TokenSetup = observer(() => {
 								setInitialLiquidityToken({
 									address: (item.address || zeroAddress) as Address,
 									symbol: item.symbol || "",
+									decimals: item.decimals,
 								});
 							}}
 						/>
 					</div>
 					<div>
-						<Label className="" text={t("amount")} isRequired />
+						<Label
+							disabled={tokens.length === 0}
+							text={t("amount")}
+							isRequired
+						/>
 						<div className="mt-[13px] flex">
 							<Input
 								type="number"
@@ -212,14 +164,16 @@ export const TokenSetup = observer(() => {
 								onMouseLeave={() => setIsHovered(false)}
 								onChange={(e) => handleAmountChange(e)}
 								value={initialLiquidityAmount}
+								disabled={tokens.length === 0}
 								style={{
 									MozAppearance: "textfield",
 									appearance: "textfield",
 								}}
 							/>
 							<span
+								data-disabled={tokens.length === 0}
 								className={cn(
-									"whitespace-nowrap border-b-[1px] pr-2 text-[12px] text-text-secondary transition-colors",
+									"whitespace-nowrap border-b-[1px] pr-2 text-[12px] text-text-secondary transition-colors data-[disabled=true]:text-text-quinary",
 									isFocused
 										? "border-b-fill-brand-primary-700"
 										: isHovered
@@ -240,8 +194,11 @@ export const TokenSetup = observer(() => {
 					onStartEdit={(id) => {
 						startEditToken(id || "");
 					}}
-					onDeleteToken={(id) => {
-						deleteToken(id);
+					onDeleteToken={(item) => {
+						deleteToken(item.id);
+						if (item.address === initialLiquidityToken?.address) {
+							setInitialLiquidityToken();
+						}
 					}}
 					onCancelEditToken={(id) => {
 						cancelEditToken(id);

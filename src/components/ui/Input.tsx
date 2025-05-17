@@ -30,8 +30,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 				)}
 				<input
 					type={type}
+					data-disabled={props.disabled}
 					className={cn(
-						"flex h-[29px] w-full border-0 border-fill-secondary border-b bg-transparent pb-2 pl-2 font-droid text-base text-text-primary transition-colors placeholder:text-text-secondary hover:border-b-fill-quaternary focus:border-b-fill-brand-primary-700 focus:placeholder:opacity-0 disabled:cursor-not-allowed disabled:border-b-fill-secondary disabled:text-text-quartinary data-[invalid=true]:border-b-negative-primary",
+						"flex h-[29px] w-full border-0 border-fill-secondary border-b bg-transparent pb-2 pl-2 font-droid text-base text-text-primary transition-colors placeholder:text-text-secondary hover:border-b-fill-quaternary focus:border-b-fill-brand-primary-700 focus:placeholder:opacity-0 disabled:cursor-not-allowed disabled:border-b-fill-secondary disabled:text-text-quartinary data-[invalid=true]:border-b-negative-primary data-[disabled=true]:placeholder:text-text-quinary",
 						className,
 					)}
 					ref={ref}

@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 
 import Chevron from "@/icons/chevron.svg?react";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";

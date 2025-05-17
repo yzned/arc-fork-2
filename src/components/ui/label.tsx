@@ -7,6 +7,7 @@ export interface LabelProps {
 	iconLeft?: ReactNode;
 	iconRight?: ReactNode;
 	isRequired?: boolean;
+	disabled?: boolean;
 }
 export const Label: FC<LabelProps> = ({
 	className,
@@ -14,11 +15,13 @@ export const Label: FC<LabelProps> = ({
 	iconLeft,
 	iconRight,
 	isRequired,
+	disabled,
 }) => {
 	return (
 		<div
+			data-disabled={disabled}
 			className={cn(
-				"flex gap-2 font-droid text-[12px] text-text-primary",
+				"flex gap-2 font-droid text-[12px] text-text-primary data-[disabled=true]:text-text-quinary",
 				className,
 			)}
 		>

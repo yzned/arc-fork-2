@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file";
 import { Separator } from "@/components/ui/separator";
@@ -17,7 +17,6 @@ import {
 import { Fees } from "@/components/createPortfolio/fees";
 import { Overview } from "@/components/createPortfolio/overview";
 import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
-import { useTokensList } from "@/hooks/queries/useTokensList";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import { ARBITRUM_SEPOLIA_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
 import type { TokenPriceData, UniswapPriceData } from "@/lib/types";
@@ -30,8 +29,6 @@ export const Route = createFileRoute("/create")({
 });
 
 function RouteComponent() {
-	useTokensList();
-
 	const { data: prices } = useReadContracts({
 		contracts: ARBITRUM_TOKENS.map((item) => ({
 			abi: ChainLinkPriceFeed,

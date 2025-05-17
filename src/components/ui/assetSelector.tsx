@@ -15,7 +15,9 @@ export const AssetSelector = observer(
 		symbol,
 		onSelectAsset,
 		className,
+		assets,
 	}: {
+		assets: AvailableChainTokensDataFormated[];
 		logo?: string;
 		symbol?: string;
 		className?: string;
@@ -31,7 +33,10 @@ export const AssetSelector = observer(
 					onClose={() => setIsOpenAssetSelector(false)}
 					className="h-[calc(100svh-40px)] w-[462px] rounded-[8px] "
 				>
-					<AssetSelectorModalContent onSelectAsset={onSelectAsset} />
+					<AssetSelectorModalContent
+						onSelectAsset={onSelectAsset}
+						assets={assets}
+					/>
 				</ModalBase>
 
 				<button
@@ -66,12 +71,14 @@ export const AssetSelector = observer(
 export const AssetSelectorModalContent = observer(
 	({
 		onSelectAsset,
+		assets,
 	}: {
 		onSelectAsset?: (item: AvailableChainTokensDataFormated | null) => void;
+		assets: AvailableChainTokensDataFormated[];
 	}) => {
 		const { t } = useTranslation(["main"]);
 
-		const { setIsOpenAssetSelector, currentChain } = useAccountStore();
+		const { setIsOpenAssetSelector } = useAccountStore();
 
 		return (
 			<div className="flex h-full flex-col overflow-hidden">
@@ -103,8 +110,7 @@ export const AssetSelectorModalContent = observer(
 
 				<FindAsset
 					variant="with-oracles"
-					// defaultActiveItem={currentChain?.availableTokens?.[0] || {}}
-					data={currentChain?.availableTokens || []}
+					data={assets}
 					className="h-[70%] w-full "
 					onSelectAsset={(item) => {
 						if (onSelectAsset) onSelectAsset(item);

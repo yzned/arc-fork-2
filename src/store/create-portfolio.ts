@@ -13,7 +13,11 @@ export class CreatePortfolioStore {
 
 	///tokensSetup
 	prices: TokenPriceData[];
-	initialLiquidityToken?: { address: Address; symbol: string };
+	initialLiquidityToken?: {
+		address: Address;
+		symbol: string;
+		decimals?: number;
+	};
 	initialLiquidityAmount?: string;
 	tokens: SetupToken[] = [];
 
@@ -36,12 +40,15 @@ export class CreatePortfolioStore {
 	errorStepInCreation: number;
 	futureMultipoolAddress?: string;
 
+	isOpenTemplateModal: { isOpen: boolean; id: number };
+
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
 		this.prices = [];
 		this.isOpenCreateModal = false;
 		this.currentCreateModalState = "create";
 		this.errorStepInCreation = 0;
+		this.isOpenTemplateModal = { isOpen: false, id: 1 };
 	}
 
 	get sharePercentsSum() {
@@ -94,6 +101,11 @@ export class CreatePortfolioStore {
 
 		return 0;
 	}
+
+	setIsOpenTemplateModal(isOpen: boolean, id: number) {
+		this.isOpenTemplateModal = { isOpen, id };
+	}
+
 	setFutureMpAddress(address: string) {
 		this.futureMultipoolAddress = address;
 	}
@@ -173,7 +185,11 @@ export class CreatePortfolioStore {
 		this.logo = logo;
 	}
 
-	setInitialLiquidityToken(value: { address: Address; symbol: string }) {
+	setInitialLiquidityToken(value?: {
+		address: Address;
+		symbol: string;
+		decimals?: number;
+	}) {
 		this.initialLiquidityToken = value;
 	}
 
@@ -183,6 +199,10 @@ export class CreatePortfolioStore {
 		)?.price;
 
 		return currentPrice;
+	}
+
+	deleteAllTokens() {
+		this.tokens = [];
 	}
 
 	deleteToken(id: string) {
@@ -205,6 +225,7 @@ export class CreatePortfolioStore {
 		creationState,
 		priceFeedType,
 		poolAddress,
+		decimals,
 	}: SetupToken) {
 		this.tokens = this.tokens.map((token) =>
 			token.id === id
@@ -218,6 +239,7 @@ export class CreatePortfolioStore {
 						symbol,
 						poolAddress,
 						priceFeedType,
+						decimals,
 					}
 				: token,
 		);
@@ -234,9 +256,9 @@ export class CreatePortfolioStore {
 		}
 	}
 
-	addNewToken() {
+	addNewToken(id?: string) {
 		this.tokens.push({
-			id: uuidv4(),
+			id: id ? id : uuidv4(),
 			name: "",
 			creationState: "new",
 			symbol: "",
