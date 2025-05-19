@@ -120,15 +120,8 @@ export const useMultipoolInfo = () => {
 						]),
 					});
 
-					const combinedAssets = assetsAddresses[0]
+					const rawAssets = assetsAddresses[0]
 						.map((address, index) => {
-							const image = currentChain?.availableTokens?.find(
-								(item) => item.address === address,
-							)?.logo;
-							const symbol = currentChain?.availableTokens?.find(
-								(item) => item.address === address,
-							)?.symbol;
-
 							const baseIndex = index * 3;
 
 							if (
@@ -140,35 +133,78 @@ export const useMultipoolInfo = () => {
 								return null;
 							}
 
-							const assetData = results?.[baseIndex]
+							const assetData = results[baseIndex]
 								.result as unknown as OnChainResultAssetInformation;
 
 							const price = new BigNumber(
-								BigInt(results?.[baseIndex + 1].result || 0).toString(),
-							)
-								.div(twoPow96)
-								.toString();
+								BigInt(results[baseIndex + 1].result || 0).toString(),
+							).div(twoPow96);
+							const quantity = new BigNumber(assetData.quantity.toString()).div(
+								twoPow96,
+							);
+							const decimal = results[baseIndex + 2].result || 18;
 
-							const quantity = new BigNumber(assetData.quantity.toString())
-								.div(twoPow96)
-								.toString();
-							const decimal = results?.[baseIndex + 2].result || 18;
+							const image = currentChain?.availableTokens?.find(
+								(t) => t.address === address,
+							)?.logo;
+							const symbol = currentChain?.availableTokens?.find(
+								(t) => t.address === address,
+							)?.symbol;
+
+							const value = quantity.multipliedBy(price);
+
+							const targetShare = new BigNumber(
+								assetData?.targetShare?.toString(),
+							)
+								.div(100)
+								.toNumber();
 
 							return {
 								image,
 								symbol,
 								address,
-								assetData: { ...assetData, quantity },
+								assetData: {
+									...assetData,
+									targetShare,
+								},
 								price,
+								quantity,
+								value,
 								decimal: Number(decimal),
 							};
 						})
-						.filter(
-							(a) => a !== null && a.assetData.targetShare !== BigInt(0),
-						) as PorfolioAsset[];
+						.filter((a) => a !== null && a.assetData.targetShare !== 0) as {
+						image?: string;
+						symbol?: string;
+						address: string;
+						assetData: OnChainResultAssetInformation;
+						price: BigNumber;
+						quantity: BigNumber;
+						value: BigNumber;
+						decimal: number;
+					}[];
+
+					const totalValue = rawAssets.reduce(
+						(acc, a) => acc.plus(a.value),
+						new BigNumber(0),
+					);
+
+					const combinedAssets: PorfolioAsset[] = rawAssets.map((asset) => ({
+						image: asset.image,
+						symbol: asset.symbol,
+						address: asset.address as Address,
+						price: asset.price.toString(),
+						decimal: asset.decimal,
+						assetData: {
+							...asset.assetData,
+							quantity: asset.quantity.toString(),
+						},
+						currentShare: totalValue.isZero()
+							? "0"
+							: asset.value.dividedBy(totalValue).toString(),
+					}));
 
 					setPortfolioAssets(combinedAssets);
-
 					return combinedAssets;
 				}
 			} catch (error) {

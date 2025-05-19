@@ -116,7 +116,7 @@ export interface OnChainResultAssetInformation {
 	collectedCashbacks: bigint;
 	isUsed: boolean;
 	quantity: bigint;
-	targetShare: bigint;
+	targetShare: bigint | number;
 }
 
 export interface MultipoolSuplyChangelyPriceData {
@@ -137,4 +137,5 @@ export interface PorfolioAsset {
 	};
 	price?: string;
 	decimal?: number;
+	currentShare: string;
 }

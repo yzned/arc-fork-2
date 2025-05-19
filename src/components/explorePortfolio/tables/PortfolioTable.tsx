@@ -98,7 +98,7 @@ const PortfolioTableRow = observer(
 				</td>
 
 				<td className="px-3 py-4 text-right">
-					{Number(row.assetData?.targetShare)}
+					{Number(row.currentShare).toFixed(4)}
 				</td>
 
 				<td className="px-4 py-4 text-right text-fill-brand-secondary-500">

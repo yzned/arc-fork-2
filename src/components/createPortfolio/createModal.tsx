@@ -157,6 +157,7 @@ const SignStepItem = observer(
 	}) => {
 		const { t } = useTranslation(["main"]);
 		const { currentChain } = useAccountStore();
+
 		const { setErrorStepInCreation } = useCreatePortfolioContext();
 		const [countdown, setCountdown] = useState<number | null>(null);
 
