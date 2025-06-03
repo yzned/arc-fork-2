@@ -3,23 +3,36 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { AppHeader, AppHeaderMobile } from "@/components/header/AppHeader";
 import { ExplorePortfolioProvider } from "@/contexts/ExplorePortfolioContext";
 import { getMultipoolsList } from "@/hooks/queries/useMultipoolsList";
-import { useTokensInformation } from "@/hooks/queries/useTokensInformation";
 import { ExplorePortfolioStore } from "@/store/explore-portfolio";
-import { Outlet, createRootRoute, useRouter } from "@tanstack/react-router";
-import { observer } from "mobx-react-lite";
+import {
+	Outlet,
+	createRootRouteWithContext,
+	useRouter,
+} from "@tanstack/react-router";
 import React, { Suspense, useEffect } from "react";
+import type { PublicClient } from "viem";
 
 const TanStackRouterDevtools =
 	process.env.NODE_ENV === "production"
 		? () => null // Render nothing in production
 		: React.lazy(() =>
 				// Lazy load in development
-				import("@tanstack/router-devtools").then((res) => ({
+				import("@tanstack/react-router-devtools").then((res) => ({
 					default: res.TanStackRouterDevtools,
 					// For Embedded Mode
 					// default: res.TanStackRouterDevtoolsPanel
 				})),
 			);
+
+declare global {
+	interface BigInt {
+		toJSON(): number;
+	}
+}
+
+BigInt.prototype.toJSON = function () {
+	return Number(this);
+};
 
 const ScrollToTop = () => {
 	const router = useRouter();
@@ -35,16 +48,17 @@ const ScrollToTop = () => {
 	return null;
 };
 
-export const Route = createRootRoute({
-	loader: async () => {
-		return await getMultipoolsList();
+interface ArcanumContext {
+	publicClient: PublicClient;
+}
+
+export const Route = createRootRouteWithContext<ArcanumContext>()({
+	loader: async ({ context }) => {
+		return await getMultipoolsList(context.publicClient);
 	},
-	component: observer(() => {
+	component: () => {
 		const portfolios = Route.useLoaderData();
-
 		const isMobile = useMediaQuery("(max-width: 768px)");
-
-		useTokensInformation();
 
 		const store = new ExplorePortfolioStore(portfolios);
 
@@ -61,7 +75,7 @@ export const Route = createRootRoute({
 				</div>
 			</ExplorePortfolioProvider>
 		);
-	}),
+	},
 });
 
 // import { computePoolAddress } from "@uniswap/v3-sdk";

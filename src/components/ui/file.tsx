@@ -19,6 +19,7 @@ function FileInput({
 	onSelect,
 	onDelete,
 	defaultItem,
+	disabled,
 }: {
 	className?: string;
 	label: string;
@@ -26,6 +27,7 @@ function FileInput({
 	onSelect?: (file?: File) => void;
 	onDelete?: () => void;
 	defaultItem?: File | null;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["main"]);
 	const [fileSelected, setFileSelected] = useState<File | null>(
@@ -56,10 +58,11 @@ function FileInput({
 
 	return (
 		<div
+			data-disabled={disabled}
 			data-invalid={uploadData.value}
 			className={clsx(
 				className,
-				"group flex flex-row overflow-hidden text-text-secondary hover:text-fill-brand-secondary-500",
+				"group group flex flex-row overflow-hidden text-text-secondary hover:text-fill-brand-secondary-500 data-[disabled=true]:pointer-events-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:text-text-secondary data-[invalid=true]:text-negative-primary",
 			)}
 		>
 			<label className="flex w-full cursor-pointer flex-col overflow-hidden font-droid text-base text-current">
@@ -71,7 +74,7 @@ function FileInput({
 				</span>
 				<span
 					data-visible={fileSelected !== null}
-					className="mb-2 flex flex-row items-end gap-2 text-nowrap px-2 data-[visible=false]:justify-between "
+					className="mb-2 flex flex-row items-end gap-2 text-nowrap px-2 data-[visible=false]:justify-between group-data-[disabled]:opacity-50"
 				>
 					{uploadData.format === "jpg" && (
 						<JpgIcon className="min-w-4 fill-text-primary group-data-[invalid=true]:fill-text-quartinary" />
@@ -105,6 +108,7 @@ function FileInput({
 					type="file"
 					className="hidden"
 					accept="image/jpg, image/png"
+					disabled={disabled}
 					onChange={(e) => {
 						e.preventDefault();
 						const file = e.target.files?.[0];

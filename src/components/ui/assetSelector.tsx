@@ -1,8 +1,8 @@
 import type { AvailableChainTokensDataFormated } from "@/api/types";
-import { useAccountStore } from "@/contexts/AccountContext";
 import SmallXIcon from "@/icons/smallX.svg?react";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useTranslation } from "react-i18next";
 import SearchAssetIcon from "../../icons/searchAsset.svg?react";
 import { Button } from "./button";
@@ -16,33 +16,36 @@ export const AssetSelector = observer(
 		onSelectAsset,
 		className,
 		assets,
+		rowId,
 	}: {
 		assets: AvailableChainTokensDataFormated[];
 		logo?: string;
 		symbol?: string;
 		className?: string;
 		onSelectAsset: (item: AvailableChainTokensDataFormated | null) => void;
+		rowId?: string;
 	}) => {
-		const { isOpenAssetSelector, setIsOpenAssetSelector } = useAccountStore();
 		const { t } = useTranslation(["main"]);
+		const [isOpen, setIsOpen] = useState(false);
 
 		return (
 			<div>
 				<ModalBase
-					isOpen={isOpenAssetSelector}
-					onClose={() => setIsOpenAssetSelector(false)}
+					isOpen={isOpen}
+					onClose={() => setIsOpen(false)}
 					className="h-[calc(100svh-40px)] w-[462px] rounded-[8px] "
 				>
 					<AssetSelectorModalContent
+						setIsOpen={setIsOpen}
 						onSelectAsset={onSelectAsset}
 						assets={assets}
 					/>
 				</ModalBase>
-
+				<p className="text-text-brand-secondary">{rowId}</p>
 				<button
 					type="button"
 					onClick={() => {
-						setIsOpenAssetSelector(true);
+						setIsOpen(true);
 					}}
 					className={cn(
 						"mt-[1px] flex w-[248px] justify-between border-fill-secondary border-b py-2",
@@ -72,13 +75,13 @@ export const AssetSelectorModalContent = observer(
 	({
 		onSelectAsset,
 		assets,
+		setIsOpen,
 	}: {
 		onSelectAsset?: (item: AvailableChainTokensDataFormated | null) => void;
 		assets: AvailableChainTokensDataFormated[];
+		setIsOpen: Dispatch<SetStateAction<boolean>>;
 	}) => {
 		const { t } = useTranslation(["main"]);
-
-		const { setIsOpenAssetSelector } = useAccountStore();
 
 		return (
 			<div className="flex h-full flex-col overflow-hidden">
@@ -90,7 +93,7 @@ export const AssetSelectorModalContent = observer(
 						variant={"tertiary"}
 						className="absolute right-4 h-[32px] w-[66px]"
 						onClick={() => {
-							setIsOpenAssetSelector(false);
+							setIsOpen(false);
 						}}
 					>
 						<SmallXIcon
@@ -114,7 +117,7 @@ export const AssetSelectorModalContent = observer(
 					className="h-[70%] w-full "
 					onSelectAsset={(item) => {
 						if (onSelectAsset) onSelectAsset(item);
-						setIsOpenAssetSelector(false);
+						setIsOpen(false);
 					}}
 					listClassName="px-2"
 					filters={["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6", "Tag7"]}

@@ -45,19 +45,34 @@ export interface Template {
 }
 export interface ChainMetadata {
 	logo: string;
+	name: string;
 	id: number;
 	color: string;
-	nativeTokenAddress: string;
+	nativeTokenAddress: Address;
 	traderAddress?: string;
-	mpImplAddress?: string;
-	oracleAddress?: string;
-	factoryAddress?: string;
-	factoryImplAddress?: string;
-	routerAddress?: string;
+	mpImplAddress: string;
+	oracleAddress: string;
+	factoryAddress: Address;
+	factoryImplAddress: string;
+	routerAddress: Address;
 	uniswapV3FactoryAddress?: string;
+	uniswapQuoterAddress: Address;
 
 	availableTokens?: AvailableChainTokensDataFormated[];
 	creationTemplates?: Template[];
+
+	blockExplorers?: {
+		[key: string]: {
+			name: string;
+			url: string;
+		};
+	};
+
+	nativeCurrency: {
+		name: string;
+		symbol: string;
+		decimals: number;
+	};
 }
 
 export type ExtendedChain = Chain & Partial<ChainMetadata>;
@@ -98,14 +113,10 @@ export interface SetupToken {
 	symbol: string;
 	address?: Address;
 	logo?: string;
-	priceFeedType?:
-		| "UniswapV3"
-		| "UniswapV2"
-		| "Chainlink"
-		| "FixedPrice"
-		| "RedStone";
+	priceFeedType?: string;
 
 	creationState?: "new" | "edited" | "readed" | "deleted";
+	targetShare?: string;
 	share?: string;
 	shareGrowing?: number;
 	poolAddress?: string;
@@ -131,11 +142,14 @@ export interface MultipoolSuplyChangelyPriceData {
 export interface PorfolioAsset {
 	image?: string;
 	symbol?: string;
-	address?: Address;
-	assetData?: Omit<OnChainResultAssetInformation, "quantity"> & {
-		quantity: string;
-	};
+	address: Address;
+	quantity: string;
 	price?: string;
 	decimal?: number;
 	currentShare: string;
+	priceFeedData?: string;
+	targetShare: number;
+	poolAddress?: string;
 }
+
+export type AssetData = [boolean, bigint, bigint, bigint];

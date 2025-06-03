@@ -15,7 +15,12 @@ export enum queryKeys {
 	tokensList = "tokensList",
 	nativeToken = "nativeToken",
 	porfolioAssets = "porfolioAssets",
+
 	portfolioPriceData = "portfolioPriceData",
+
+	positions = "positions",
+	positionsHistory = "positionsHistory",
+	portfolioFees = "portfolioFees",
 }
 
 export interface CandleDataRequest {
@@ -88,7 +93,7 @@ export interface ShortMultipoolData {
 	};
 }
 export interface ShortMultipoolDataFormated {
-	address?: string;
+	address: Address;
 	stats: {
 		currentPrice?: number;
 		currentCandle?: number;
@@ -100,10 +105,11 @@ export interface ShortMultipoolDataFormated {
 		totalSuply?: string;
 	};
 
-	tvl?: string;
-	absolutePriceChange?: string;
-	relativePriceChange?: string;
+	tvl?: BigNumber;
+	absolutePriceChange?: BigNumber;
+	relativePriceChange?: BigNumber;
 	logo?: string;
+	decimals: number;
 }
 
 export interface OnchainMultipoolAssetInfo {
@@ -137,7 +143,7 @@ export interface AvailableChainTokensData {
 export interface AvailableChainTokensDataFormated {
 	name?: string; //name
 	symbol?: string; //symbol
-	address?: string; //address
+	address: Address; //address
 	logo?: string; //logo
 	cmc?: string; //cmc
 	coingecko?: string; //coingecko
@@ -148,5 +154,27 @@ export interface AvailableChainTokensDataFormated {
 	poolAddress?: Address;
 	priceFeedType?: priceFeedType;
 
-	decimals?: number;
+	decimals: number;
 }
+
+export type PositionsResponse = {
+	m: string;
+	q: string;
+	p: string;
+	l: string;
+	o: number;
+}[];
+
+export type PositionHistoryResponce = {
+	multipool: string;
+	q: string;
+	p: string;
+	o: number;
+	c: number;
+}[];
+
+export type Metadata = {
+	l: string;
+	m: string;
+	d: string;
+};

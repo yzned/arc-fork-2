@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import GlobeIcon from "@/icons/globe.svg?react";
@@ -13,7 +12,6 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { zeroAddress } from "viem";
-import { useAccount } from "wagmi";
 
 import ShortLogo from "@/icons/short.svg?react";
 import DiscordIcon from "@/icons/socials/discord.svg?react";
@@ -21,12 +19,12 @@ import GitIcon from "@/icons/socials/github.svg?react";
 import TelegramIcon from "@/icons/socials/telegram.svg?react";
 import TwitterIcon from "@/icons/socials/twitter.svg?react";
 
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
+import { useOnClickOutside } from "usehooks-ts";
 import { ChainSelector, ChainsColors } from "../ui/chain-select";
 import { ConnectivityIndicator } from "../ui/connectivityIndicator";
 import { RadioButton } from "../ui/radiobutton";
 import { ConnectWallet } from "./ConnectWallet";
-import { useOnClickOutside } from "usehooks-ts";
-import { arcanumChains } from "@/lib/constants";
 
 const MOCK_RPC_DATA = [
 	{ rpcName: "RPC_1", connectValue: 50 },
@@ -427,23 +425,13 @@ export const AppHeaderMobile = () => {
 
 const SelectChain = observer(() => {
 	const [_, setIsOpenChainSelect] = useState(false);
-
-	const { chain: currentWagmiChain } = useAccount();
-
-	const { setCurrentChain, currentChain } = useAccountStore();
-
-	useEffect(() => {
-		const newChain =
-			arcanumChains.find((_chain) => _chain.id === currentWagmiChain?.id) ||
-			arcanumChains[0];
-		setCurrentChain(newChain);
-	}, [currentWagmiChain]);
+	const { chain } = useMetadataChain();
 
 	return (
 		<div className="flex grow">
 			<button
 				type="button"
-				data-chain={currentWagmiChain?.id}
+				data-chain={chain}
 				onClick={() => setIsOpenChainSelect(true)}
 				className={cn(
 					"group flex h-[60px] w-full items-center justify-between gap-2 whitespace-nowrap rounded-[4px] bg-transparent pr-6 pl-8 text-text-primary outline-none transition-colors ",
@@ -469,9 +457,9 @@ const SelectChain = observer(() => {
 				style={ChainsColors}
 			>
 				<div className="flex flex-row items-center gap-2">
-					<img src={currentChain?.logo} alt={`${currentChain?.name} logo`} />
+					<img src={chain?.logo} alt={`${chain?.name} logo`} />
 					<span className="font-droid font-normal text-sm tracking-[0.01em]">
-						{currentChain?.name}
+						{chain?.name}
 					</span>
 				</div>
 				<ChevronIcon className="rotate-90" />

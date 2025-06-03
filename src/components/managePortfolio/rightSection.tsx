@@ -1,74 +1,76 @@
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useCurrentPortfolio } from "@/hooks/use-current-portfolio";
+import { useManagePortfolio } from "@/hooks/use-manage-portfolio";
+import { formatAddress, shrinkNumber } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import { PriceChange } from "../ui/priceChange";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
+import { useAccount } from "wagmi";
 
 export const RightSection = observer(() => {
 	const { t } = useTranslation(["main"]);
 
-	const { managingAsssets, manageState } = useExplorePortfolio();
+	const currentPortfolio = useCurrentPortfolio();
 
-	const { currentChain } = useAccountStore();
+	if (!currentPortfolio.address) {
+		throw new Error("Portfolio not found");
+	}
+	const { changeFees, changeShares, currentNetworkFee } = useManagePortfolio();
+	// const { data: multipoolData, isLoading: isLoadingMultipoolData } = useReadContract({
+	// 	address: currentPortfolio.address as Address,
+	// 	abi: multipoolABI,
+	// 	functionName: ""
+	// })
+	// })
 
+	const {
+		manageState,
+		managementFee,
+		managementFeeRecepient,
+		multipoolSupplyPriceData,
+	} = useExplorePortfolio();
+
+	const { address } = useAccount();
+	const { chain } = useMetadataChain();
 	return (
 		<div className="sticky top-[72px] flex h-[calc(100svh-72px)] flex-col justify-between bg-bg-floor-2">
 			<div className="p-4">
 				<div className="flex flex-row items-center gap-4">
 					<Avatar className="size-10">
-						<AvatarImage src="https://avatars.githubusercontent.com/u/14010287?v=4" />
+						<AvatarImage
+							src={currentPortfolio.logo ?? "/icons/empty-token.svg"}
+						/>
 						<AvatarFallback>U</AvatarFallback>
 					</Avatar>
 					<div className="flex flex-col gap-2">
-						{/* <span className="font-namu font-semibold text-sm text-text-primary uppercase leading-[12px] tracking-[0.015em]">
-							{shortPortfolioData?.name
-								? shortPortfolioData?.name
+						<span className="font-namu font-semibold text-sm text-text-primary uppercase leading-[12px] tracking-[0.015em]">
+							{currentPortfolio.stats.name
+								? currentPortfolio.stats.name
 								: t("portfolioName")}
-						</span> */}
-						{/* <span className="font-namu font-semibold text-sm text-text-tertiary uppercase leading-[12px] tracking-[0.015em]">
-							{shortPortfolioData?.symbol
-								? shortPortfolioData?.symbol
+						</span>
+						<span className="font-namu font-semibold text-sm text-text-tertiary uppercase leading-[12px] tracking-[0.015em]">
+							{currentPortfolio.stats.symbol
+								? currentPortfolio.stats.symbol
 								: t("symbol")}
-						</span> */}
+						</span>
 					</div>
 				</div>
 
 				<div className="mt-8 flex flex-col gap-4 border-fill-secondary border-b pb-4 text-[12px]">
 					<div className="flex justify-between">
 						<span className="text-text-secondary">{t("initialLiquidity")}</span>
-						<span className="text-text-primary">{1}</span>
-					</div>
-					<div className="flex justify-between">
-						<span className="text-text-secondary">{t("tokens")}</span>
-						<div className="ml-auto flex items-center gap-2 text-text-secondary">
-							<span className="text-text-primary">
-								{
-									managingAsssets?.filter(
-										(item) => item.creationState === "readed",
-									).length
-								}
-							</span>
-							<div className="flex gap-0.5">
-								{managingAsssets
-									?.filter((item) => item.creationState === "readed")
-									.slice(0, 5)
-									.map((item) => (
-										<img
-											alt="no-logo"
-											src={item.logo || "/icons/empty-token.svg"}
-											className="h-4 w-4"
-											key={item.address}
-										/>
-									))}
-							</div>
-						</div>
+						<span className="text-text-primary">
+							{shrinkNumber(multipoolSupplyPriceData?.tvl.toNumber())}{" "}
+							{chain.nativeCurrency.symbol}
+						</span>
 					</div>
 					<div className="flex justify-between">
 						<span className="text-text-secondary">{t("managementFee")}</span>
 						<span className="text-text-primary">
-							{/* {shortPortfolioData?.cache.management_fee} */}
+							{managementFee} {chain.nativeCurrency.symbol}
 						</span>
 					</div>
 					<div className="flex justify-between">
@@ -76,7 +78,7 @@ export const RightSection = observer(() => {
 							{t("managementFeeReceiver")}
 						</span>
 						<span className="text-text-primary">
-							{/* {formatAddress(shortPortfolioData?.cache.management_fee_receiver)} */}
+							{formatAddress(managementFeeRecepient)}
 						</span>
 					</div>
 				</div>
@@ -85,27 +87,28 @@ export const RightSection = observer(() => {
 					<div className="mb-4 flex justify-between">
 						<span className="text-text-secondary">{t("price")}</span>
 						<span className="text-text-primary">
-							{/* {shortPortfolioData?.current_price} */}
+							{/* {currentPortfolio.stats.currentPrice} ETH */}
 						</span>
 					</div>
 					<div className="flex flex-col gap-2">
 						<div className="flex justify-between">
 							<span className="text-text-secondary">- {t("perDay")}</span>
 							<span className="text-text-primary">
-								<PriceChange value="10" growing decimals={0} />
-							</span>
-						</div>
-						<div className="flex justify-between">
-							<span className="text-text-secondary">- {t("perDay")}</span>
-							<span className="text-text-primary">
-								<PriceChange value="10" growing decimals={0} />
-							</span>
-						</div>
-
-						<div className="flex justify-between">
-							<span className="text-text-secondary">- {t("perDay")}</span>
-							<span className="text-text-primary">
-								<PriceChange value="10" growing decimals={0} />
+								<PriceChange
+									value={
+										currentPortfolio.relativePriceChange?.isEqualTo(0)
+											? "0"
+											: shrinkNumber(
+													currentPortfolio.relativePriceChange?.toString() ||
+														"0",
+													4,
+												)
+									}
+									growing={
+										!currentPortfolio.relativePriceChange?.isLessThan(0) ||
+										false
+									}
+								/>
 							</span>
 						</div>
 					</div>
@@ -114,7 +117,7 @@ export const RightSection = observer(() => {
 			<div className="flex flex-col gap-6 border-fill-secondary border-t p-4">
 				<div className="flex flex-col gap-4">
 					<p className="font-600 font-namu text-[24px] text-text-primary uppercase leading-[24px]">
-						{manageState === "main-info" && t("mainInfo")}
+						{/* {manageState === "main-info" && t("mainInfo")} */}
 						{manageState === "asset-setup" && t("assetSetup")}
 						{manageState === "fees" && t("fees")}
 					</p>
@@ -125,30 +128,24 @@ export const RightSection = observer(() => {
 					</div>
 				</div>
 
-				<div className="grid w-full grid-cols-2 grid-rows-3 gap-y-4 text-text-secondary text-xs tracking-[0.01em]">
-					<span> {t("youPay")}</span>
-					<span className="ml-auto">
-						<span className="text-text-primary">
-							0 {currentChain?.nativeCurrency.symbol}
-						</span>{" "}
-					</span>
-					<span>{t("youReceive")}</span>
-					<span className="ml-auto">
-						<span className="text-text-primary">
-							0 {currentChain?.nativeCurrency.symbol}
-						</span>{" "}
-					</span>
+				<div className="grid w-full grid-cols-2 grid-rows-1 gap-y-4 text-text-secondary text-xs tracking-[0.01em]">
 					<span>{t("networkFee")}</span>
 					<span className="ml-auto">
 						<span className="text-text-primary">
-							0 {currentChain?.nativeCurrency.symbol}
+							{shrinkNumber(currentNetworkFee)} {chain.nativeCurrency.symbol}
 						</span>{" "}
 					</span>
 				</div>
 
 				<Button
+					disabled={managementFeeRecepient !== address}
 					onClick={() => {
-						console.log("save");
+						if (manageState === "asset-setup") {
+							changeShares();
+						}
+						if (manageState === "fees") {
+							changeFees();
+						}
 					}}
 					size="L"
 				>

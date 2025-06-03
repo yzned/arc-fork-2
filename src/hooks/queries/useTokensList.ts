@@ -1,37 +1,61 @@
 import { GetTokens } from "@/api/explore";
-import { queryKeys } from "@/api/types";
-import { useAccountStore } from "@/contexts/AccountContext";
+import { type AvailableChainTokensDataFormated, queryKeys } from "@/api/types";
+import ERC20 from "@/lib/abi/ERC20";
 import { TAGS } from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import { useChainId } from "wagmi";
+import type { Address } from "viem";
+import { useAccount, useChainId, usePublicClient } from "wagmi";
+import { useNativeToken } from "./useNativeToken";
+import BigNumber from "bignumber.js";
 
 export const useTokensList = () => {
-	const { currentChain, setCurrentChain } = useAccountStore();
 	const chainId = useChainId();
 
+	// native token
+	const nativeToken = useNativeToken();
+	const { address } = useAccount();
+	const client = usePublicClient();
 	return useQuery({
-		enabled: !!currentChain?.id,
-		queryKey: [queryKeys.tokensList, currentChain?.id, chainId],
+		queryKey: [queryKeys.tokensList, chainId],
+		refetchInterval: 1000 * 60,
 		queryFn: async () => {
-			const rowData = await GetTokens({ chainId: currentChain?.id as number });
+			const rowData = await GetTokens({ chainId: chainId });
 
-			const parsedData = rowData.map((token) => ({
-				name: token.n,
-				symbol: token.s,
-				address: token.a,
-				logo: token.l,
-				cmc: token.cm,
-				coingecko: token.cg,
-				decimals: token.d ?? 18,
-				tags: token.t?.map((index: number) => TAGS[index]) ?? [],
-			}));
+			const quantitiesOnWallet = await client?.multicall({
+				contracts: rowData?.map((token) => ({
+					abi: ERC20,
+					address: token.a as Address,
+					functionName: "balanceOf",
+					args: [address],
+					chainId,
+				})),
+			});
 
-			if (currentChain?.id) {
-				setCurrentChain({
-					...currentChain,
-					availableTokens: parsedData,
-				});
-			}
+			const parsedData: AvailableChainTokensDataFormated[] = rowData.map(
+				(token, index) => {
+					const resultQuantities = quantitiesOnWallet?.[index]?.result;
+
+					const quantityOnWallet = resultQuantities
+						? new BigNumber(resultQuantities.toString()).multipliedBy(
+								new BigNumber(10).pow(-(token?.d ?? 18)),
+							)
+						: new BigNumber(0);
+
+					return {
+						name: token.n,
+						symbol: token.s,
+						address: token.a as Address,
+						logo: token.l,
+						cmc: token.cm,
+						coingecko: token.cg,
+						decimals: token.d ?? 18,
+						tags: token.t?.map((index: number) => TAGS[index]) ?? [],
+						quantityOnWallet: quantityOnWallet,
+					};
+				},
+			);
+
+			parsedData.unshift(nativeToken);
 
 			return parsedData;
 		},

@@ -1,15 +1,17 @@
 import BigNumber from "bignumber.js";
-import type { ChainMetadata, ExtendedChain, Token } from "./types";
-import { arbitrum, arbitrumSepolia, monadTestnet } from "wagmi/chains";
-import type { Chain } from "@rainbow-me/rainbowkit";
+import type { ChainMetadata, Token } from "./types";
 
-export const chains = [arbitrum, arbitrumSepolia, monadTestnet] as [
-	Chain,
-	...Chain[],
-];
+export const PRICE_FEEDS = ["", "", "UniswapV3"];
+
+// 0.000001 - base fee
+// 0.000002 - all others
+// 0.00005 - deviation limit tick (as before)
+
+export const feesCoefficients = [0.000001, 0.000002, 0.00005];
 
 export const chainsMetadata: ChainMetadata[] = [
 	{
+		name: "Arbitrum Sepolia",
 		id: 421614,
 		color: "#2D374B",
 		logo: "/icons/chains/arbitrum.svg",
@@ -22,8 +24,25 @@ export const chainsMetadata: ChainMetadata[] = [
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
 		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
 		creationTemplates: [],
+
+		uniswapV3FactoryAddress: "0x961235a9020B05C44DF1026D956D1F4D78014276",
+		uniswapQuoterAddress: "0x7de51022d70a725b508085468052e25e22b5c4c9",
+
+		blockExplorers: {
+			default: {
+				name: "Arbitrum Sepolia Explorer",
+				url: "https://sepolia-explorer.arbitrum.io/",
+			},
+		},
+
+		nativeCurrency: {
+			name: "Ether",
+			symbol: "ETH",
+			decimals: 18,
+		},
 	},
 	{
+		name: "Monad Testnet",
 		id: 10143,
 		color: "#836EF9",
 		logo: "/icons/chains/monad.svg",
@@ -33,9 +52,24 @@ export const chainsMetadata: ChainMetadata[] = [
 		mpImplAddress: "0x14090b42338e02C786cDd6F29Bb83553FDe8f084",
 		oracleAddress: "0x97CD13624bB12D4Ec39469b140f529459d5d369d",
 		factoryAddress: "0x7eFe6656d08f2d6689Ed8ca8b5A3DEA0efaa769f",
-		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
-		routerAddress: "0x213E9D23C795F7E44DabD007176554c6bB2d3fCA",
+		factoryImplAddress: "0x06a34AE8174349606D22a00d6eE6aCea448772e4",
+		routerAddress: "0xFcAe79Fd886a4D40aea47cf3EcA89fDE65B97A79",
+
 		uniswapV3FactoryAddress: "0x961235a9020B05C44DF1026D956D1F4D78014276",
+		uniswapQuoterAddress: "0x1BA215c17565dE7b0Cb7eCaB971bcF540c24a862",
+
+		blockExplorers: {
+			default: {
+				name: "Monad Testnet Explorer",
+				url: "https://testnet.monadexplorer.com/",
+			},
+		},
+
+		nativeCurrency: {
+			name: "Monad",
+			symbol: "MON",
+			decimals: 18,
+		},
 
 		creationTemplates: [
 			{
@@ -92,6 +126,7 @@ export const chainsMetadata: ChainMetadata[] = [
 		],
 	},
 	{
+		name: "Arbitrum",
 		id: 42161,
 		color: "#2D374B",
 		logo: "/icons/chains/arbitrum.svg",
@@ -104,22 +139,25 @@ export const chainsMetadata: ChainMetadata[] = [
 		factoryImplAddress: "0x3F8fFaB5e44E49B191aeD313a41497A99e2F075c",
 		routerAddress: "0xF48BCEfbb755F658E7766Aff961885B0B9052628",
 
+		uniswapV3FactoryAddress: "0x961235a9020B05C44DF1026D956D1F4D78014276",
+		uniswapQuoterAddress: "0x3972c00f7ed4885e145823eb7c655375d275a1c5",
+
 		creationTemplates: [],
+
+		blockExplorers: {
+			default: {
+				name: "Arbitrum Explorer",
+				url: "https://arbiscan.io/",
+			},
+		},
+
+		nativeCurrency: {
+			name: "Ether",
+			symbol: "ETH",
+			decimals: 18,
+		},
 	},
-];
-
-export const arcanumChains: ExtendedChain[] = chains.map((chain) => {
-	const metadata = chainsMetadata.find((meta) => meta.id === chain.id);
-
-	if (metadata) {
-		return {
-			...chain,
-			...metadata,
-		};
-	}
-
-	return chain;
-});
+] as const;
 
 export const twoPow96 = new BigNumber(2).pow(96);
 
@@ -355,3 +393,42 @@ export const ARBITRUM_TOKENS: Token[] = [
 		chainId: ARBITRUM_CHAIN_ID,
 	},
 ] as const;
+
+export const FEES_TEMPLATES = [
+	{
+		name: "FIRST",
+		description: "DESC",
+		managementFee: "1",
+		baseFee: "1",
+		deviationLimit: "1",
+		deviationFee: "1",
+		cashbackFeeShare: "1",
+	},
+	{
+		name: "SECOND",
+		description: "DESC2",
+		managementFee: "10",
+		baseFee: "50",
+		deviationLimit: "5",
+		deviationFee: "1",
+		cashbackFeeShare: "10",
+	},
+	{
+		name: "third",
+		description: "DESC3",
+		managementFee: "10",
+		baseFee: "50",
+		deviationLimit: "5",
+		deviationFee: "1",
+		cashbackFeeShare: "10",
+	},
+	{
+		name: "fourth",
+		description: "DESC4",
+		managementFee: "10",
+		baseFee: "50",
+		deviationLimit: "5",
+		deviationFee: "1",
+		cashbackFeeShare: "10",
+	},
+];

@@ -1,6 +1,6 @@
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileInput } from "@/components/ui/file";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textArea";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
@@ -17,18 +17,21 @@ import {
 import { Fees } from "@/components/createPortfolio/fees";
 import { Overview } from "@/components/createPortfolio/overview";
 import { TokenSetup } from "@/components/createPortfolio/tokenSetup";
+import { useTokensList } from "@/hooks/queries/useTokensList";
 import ChainLinkPriceFeed from "@/lib/abi/ChainLinkPriceFeed";
 import { ARBITRUM_SEPOLIA_CHAIN_ID, ARBITRUM_TOKENS } from "@/lib/constants";
 import type { TokenPriceData, UniswapPriceData } from "@/lib/types";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { useReadContracts } from "wagmi";
+import { useAccount, useReadContracts } from "wagmi";
 
 export const Route = createFileRoute("/create")({
 	component: RouteComponent,
 });
 
 function RouteComponent() {
+	useTokensList();
+
 	const { data: prices } = useReadContracts({
 		contracts: ARBITRUM_TOKENS.map((item) => ({
 			abi: ChainLinkPriceFeed,
@@ -141,7 +144,13 @@ const MainInfo = observer(({ className }: { className?: string }) => {
 		setDescription,
 		setLogo,
 		logo,
+		setManagementFeeRecipient,
 	} = useCreatePortfolio();
+	const { address } = useAccount();
+
+	useEffect(() => {
+		if (address) setManagementFeeRecipient(address);
+	}, [address]);
 
 	return (
 		<div className={clsx(className, "flex flex-col gap-8 px-6")}>

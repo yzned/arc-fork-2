@@ -1,6 +1,7 @@
 import type { AvailableChainTokensDataFormated } from "@/api/types";
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
+import { useTokensList } from "@/hooks/queries/useTokensList";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
 import CheckIcon from "@/icons/checkMark.svg?react";
 import Chevron from "@/icons/chevron.svg?react";
 import ResetIcon from "@/icons/refresh.svg?react";
@@ -46,15 +47,16 @@ export const TemplateModalContent = observer(() => {
 	const { setIsOpenTemplateModal, isOpenTemplateModal } = useCreatePortfolio();
 	const { t } = useTranslation(["main"]);
 	const { addNewToken, editToken, deleteAllTokens } = useCreatePortfolio();
-	const { currentChain } = useAccountStore();
+	const { chain } = useMetadataChain();
+	const { data: chainsTokens } = useTokensList();
 
-	const openedTemplate = currentChain?.creationTemplates?.find(
+	const openedTemplate = chain?.creationTemplates?.find(
 		(_, index) => index === isOpenTemplateModal.id,
 	);
 
 	const firstActiveItem = (item: Category) => {
 		const lsData = localStorage.getItem(
-			`${currentChain?.id}-${isOpenTemplateModal.id}-${item?.name}`,
+			`${chain?.id}-${isOpenTemplateModal.id}-${item?.name}`,
 		);
 		return !lsData;
 	};
@@ -64,7 +66,7 @@ export const TemplateModalContent = observer(() => {
 
 		return openedTemplate.categories.reduce<string[]>((acc, category) => {
 			const lsData = localStorage.getItem(
-				`${currentChain?.id}-${isOpenTemplateModal.id}-${category.name}`,
+				`${chain?.id}-${isOpenTemplateModal.id}-${category.name}`,
 			);
 
 			if (lsData) {
@@ -84,21 +86,21 @@ export const TemplateModalContent = observer(() => {
 	const handleReset = useCallback(
 		(category: Category) => {
 			localStorage.removeItem(
-				`${currentChain?.id}-${isOpenTemplateModal.id}-${category.name}`,
+				`${chain?.id}-${isOpenTemplateModal.id}-${category.name}`,
 			);
 			setAddedToken(null);
 			setTemplateTokens((prev) =>
 				prev.filter((addr) => addr !== category.selectToken?.address),
 			);
 		},
-		[currentChain?.id, isOpenTemplateModal.id],
+		[chain?.id, isOpenTemplateModal.id],
 	);
 
 	const handleSaveCategory = (
 		item: AvailableChainTokensDataFormated | null,
 	) => {
 		localStorage.setItem(
-			`${currentChain?.id}-${isOpenTemplateModal.id}-${focusedCategory?.name}`,
+			`${chain?.id}-${isOpenTemplateModal.id}-${focusedCategory?.name}`,
 			JSON.stringify({ ...item, categoryName: focusedCategory?.name }),
 		);
 
@@ -111,7 +113,7 @@ export const TemplateModalContent = observer(() => {
 		const ls_tokens = openedTemplate?.categories
 			?.map((item) => {
 				const lsData = localStorage.getItem(
-					`${currentChain?.id}-${isOpenTemplateModal.id}-${item?.name}`,
+					`${chain?.id}-${isOpenTemplateModal.id}-${item?.name}`,
 				);
 				return lsData ? (JSON.parse(lsData) as SetupTokenExtended) : null;
 			})
@@ -158,7 +160,7 @@ export const TemplateModalContent = observer(() => {
 		const selectedTokens = (openedTemplate?.categories || []).reduce<string[]>(
 			(acc, category) => {
 				const lsData = localStorage.getItem(
-					`${currentChain?.id}-${isOpenTemplateModal.id}-${category.name}`,
+					`${chain?.id}-${isOpenTemplateModal.id}-${category.name}`,
 				);
 				if (lsData) {
 					const token = JSON.parse(lsData) as AvailableChainTokensDataFormated;
@@ -171,7 +173,7 @@ export const TemplateModalContent = observer(() => {
 			[],
 		);
 		return (
-			currentChain?.availableTokens?.filter((token) => {
+			chainsTokens?.filter((token) => {
 				const isInCategory = focusedCategory?.tokens?.includes(
 					token.address || zeroAddress,
 				);
@@ -180,7 +182,7 @@ export const TemplateModalContent = observer(() => {
 			}) || []
 		);
 	}, [
-		currentChain,
+		chain,
 		focusedCategory,
 		isOpenTemplateModal.id,
 		openedTemplate?.categories,
@@ -192,7 +194,7 @@ export const TemplateModalContent = observer(() => {
 		const tokens = openedTemplate.categories.reduce<string[]>(
 			(acc, category) => {
 				const lsData = localStorage.getItem(
-					`${currentChain?.id}-${isOpenTemplateModal.id}-${category.name}`,
+					`${chain?.id}-${isOpenTemplateModal.id}-${category.name}`,
 				);
 
 				if (lsData) {
@@ -210,7 +212,7 @@ export const TemplateModalContent = observer(() => {
 		setTemplateTokens(tokens);
 	}, [
 		openedTemplate?.categories,
-		currentChain?.id,
+		chain?.id,
 		isOpenTemplateModal.id,
 		addedToken,
 		handleReset,
@@ -294,11 +296,11 @@ const TemplateItem: FC<TemplateItemType> = ({
 }) => {
 	const { t } = useTranslation(["main"]);
 
-	const { currentChain } = useAccountStore();
+	const { chain } = useMetadataChain();
 	const { isOpenTemplateModal } = useCreatePortfolio();
 
 	const lsData = localStorage.getItem(
-		`${currentChain?.id}-${isOpenTemplateModal.id}-${category?.name}`,
+		`${chain?.id}-${isOpenTemplateModal.id}-${category?.name}`,
 	);
 
 	const lsItem = lsData

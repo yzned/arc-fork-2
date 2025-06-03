@@ -38,12 +38,15 @@ import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import BigNumber from "bignumber.js";
 import { useTranslation } from "react-i18next";
 
-import { useAccountStore } from "@/contexts/AccountContext";
-import { shorten } from "@/lib/formatNumber";
-import { type Address, parseUnits } from "viem";
+import { BalanceSpan } from "@/components/explorePortfolio/balance";
+import { MinimalReceive } from "@/components/explorePortfolio/minimal-receive";
+import { MintButton } from "@/components/explorePortfolio/mint-button";
 import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
-import { useOnClickOutside } from "usehooks-ts";
 import { useTokensList } from "@/hooks/queries/useTokensList";
+import { useGetPrice } from "@/hooks/use-get-price";
+import { useOnClickOutside } from "usehooks-ts";
+import type { Address } from "viem";
+import { useAccount, useBalance } from "wagmi";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -92,9 +95,11 @@ export const MainSection = observer(() => {
 		portfolioLinearData,
 		allPortfolios,
 		multipoolSupplyPriceData,
+		managementFeeRecepient,
 	} = useExplorePortfolio();
 
-	const { currentChain } = useAccountStore();
+	const { address } = useAccount();
+	const { data } = useBalance();
 
 	const { id } = useParams({ from: "/explore/$id" });
 
@@ -113,6 +118,8 @@ export const MainSection = observer(() => {
 	);
 
 	const navigate = useNavigate();
+
+	const { price } = useGetPrice();
 
 	return (
 		<div className="overflow-hidden bg-bg-floor-1">
@@ -144,7 +151,7 @@ export const MainSection = observer(() => {
 						<div className="flex items-center gap-4">
 							<img
 								src={currentPortfolio?.logo || "/icons/empty-token.svg"}
-								className="h-8 w-8"
+								className="h-8 w-8 rounded-full overflow-hidden"
 								alt="no-logo"
 							/>
 							<div className="flex max-w-[150px] flex-col gap-2">
@@ -164,7 +171,7 @@ export const MainSection = observer(() => {
 							)}
 						/>
 					</button>
-					<div className="absolute top-full right-0 left-0 z-40 w-[516px] overflow-hidden border-fill-secondary border-r-[1px] border-b-[1px] bg-fill-primary-900">
+					<div className="absolute top-full right-0 left-0 z-30 w-[516px] overflow-hidden border-fill-secondary border-r-[1px] border-b-[1px] bg-fill-primary-900">
 						<div
 							className={cn(
 								"transition-all duration-300 ",
@@ -174,16 +181,23 @@ export const MainSection = observer(() => {
 							<FindAsset
 								//@ts-ignore
 								defaultActiveItem={currentPortfolio}
-								data={allPortfolios?.map((item) => {
+								data={allPortfolios.map((item) => {
 									return {
 										address: item.address as Address,
 										price: new BigNumber(item.stats.currentPrice || 0),
 										symbol: item.stats.symbol,
 										name: item.stats.name,
 										logo: item.logo,
+										decimals: item.decimals,
 									};
 								})}
-								className="h-[540px] w-full border-fill-secondary border-t px-4 pt-6"
+								onSelectAsset={(asset) => {
+									navigate({
+										to: "/explore/$id",
+										params: { id: asset?.address || "" },
+									});
+								}}
+								className="h-[510px] w-full border-fill-secondary border-t px-4 pt-6"
 							/>
 						</div>
 					</div>
@@ -197,11 +211,8 @@ export const MainSection = observer(() => {
 								</span>
 								<span className="text-[14px] text-text-secondary">
 									{shrinkNumber(
-										multipoolSupplyPriceData?.price?.toNumber() || 0,
+										(multipoolSupplyPriceData?.price?.toNumber() || 0) * price,
 									)}
-									{/* {new BigNumber(currentPortfolio?.stats.currentPrice || 0)
-										.toFixed(4)
-										.toString()} */}
 								</span>
 							</div>
 						</div>
@@ -211,15 +222,9 @@ export const MainSection = observer(() => {
 									{t("tvl")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									${" "}
-									{shrinkNumber(multipoolSupplyPriceData?.tvl?.toNumber() || 0)}
-									{/* {new BigNumber(
-										Number(currentPortfolio?.total_supply) *
-										Number(currentPortfolio?.current_price),
-									)
-										.multipliedBy(10 ** -8)
-										.toFixed(4)
-										.toString()} */}
+									{shrinkNumber(
+										(multipoolSupplyPriceData?.tvl?.toNumber() || 0) * price,
+									)}
 								</span>
 							</div>
 						</div>
@@ -249,7 +254,7 @@ export const MainSection = observer(() => {
 									{t("24hHigh")}
 								</span>
 								<span className="text-[14px] text-text-secondary">
-									$
+									${" "}
 									{multipoolSupplyPriceData?.close?.isLessThan(
 										multipoolSupplyPriceData?.open || 0,
 									)
@@ -284,10 +289,11 @@ export const MainSection = observer(() => {
 					</div>
 					<Button
 						variant={"tertiary"}
+						data-visible={address === managementFeeRecepient}
 						onClick={() => {
 							navigate({ to: "/manage/$id", params: { id: id } });
 						}}
-						className="h-[40px] w-[193px] text-[14px]"
+						className="h-[40px] w-[193px] text-[14px] data-[visible=false]:hidden"
 					>
 						<span> {t("managePortfolio")}</span>
 						<EditIcon className="scale-90" />
@@ -378,13 +384,6 @@ export const MainSection = observer(() => {
 							>
 								{t("1d")}
 							</Button>
-							{/* <Button
-								className="w-fit bg-transparent"
-								size="M"
-								variant="selector"
-							>
-								{t("1w")}
-							</Button> */}
 						</div>
 					)}
 				</div>
@@ -405,7 +404,7 @@ export const MainSection = observer(() => {
 			</div>
 
 			<div>
-				<div className=" flex items-center gap-8 p-6">
+				<div className="flex items-center gap-8 p-6">
 					<div className="flex gap-1">
 						<Button
 							variant={"tab"}
@@ -424,15 +423,6 @@ export const MainSection = observer(() => {
 						>
 							<span>{t("positions")}</span>
 						</Button>
-
-						<Button
-							variant={"tab"}
-							data-active={currentBottomTable === "history"}
-							className="h-10 w-[128px]"
-							onClick={() => setCurrentBottomTable("history")}
-						>
-							<span>{t("history")}</span>
-						</Button>
 					</div>
 				</div>
 
@@ -447,7 +437,7 @@ export const MainSection = observer(() => {
 								<PriceChange growing value="23.23" />
 								<div className="flex items-center gap-1 text-[14px]">
 									<span className="text-text-primary">
-										0.54 {currentChain?.nativeCurrency.symbol}{" "}
+										0.54 {data?.symbol}{" "}
 									</span>
 									<span className="text-text-secondary">($37,623)</span>
 								</div>
@@ -496,41 +486,51 @@ export const MainSection = observer(() => {
 });
 
 export const RightSection = observer(() => {
-	const [percentOffset, setPercentOffset] = useState(0);
+	const [percentOffset, setPercentOffset] = useState(50);
 
 	const { t } = useTranslation(["main"]);
 
 	const {
 		setIsOpenAssetModal,
-		// selectedAsset,
+		selectedAsset,
 		rightSectionState,
-		changeRightPanelState,
+		setRightPanelState,
 		setSlippage,
-		slippage,
-		// allPortfolios,
-		// portfolioAssets,
-		mintBurnAmount,
+
+		rawMintBurnAmount,
+		setRawMintBurnAmount,
+
 		setMintBurnAmount,
-		swapNetworkFee,
 	} = useExplorePortfolio();
 
-	const { currentChain } = useAccountStore();
-	// const selectedAssetData = portfolioAssets?.find(
-	// 	(item) => item.address === selectedAsset.address,
+	const [slippageValue, setSlippageValue] = useState("0.5");
+
+	// const { data: balance } = useReadContract({
+	// 	abi: ERC20,
+	// 	address: id as Address,
+	// 	functionName: "balanceOf",
+	// 	args: [walletAddress || zeroAddress],
+	// 	query: {
+	// 		enabled: !!walletAddress,
+	// 	},
+	// });
+
+	// const selectedAssetData = chainsTokens?.find(
+	// 	(item) => item.address === selectedAsset?.address,
 	// );
+
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		let value = e.target.value.replace(",", ".");
+		const value = e.target.value;
+		setRawMintBurnAmount(value);
+		setMintBurnAmount("0");
 
-		if (value.startsWith("0") && value.length > 1 && !value.startsWith("0.")) {
-			value = value.replace(/^0+/, "");
-		}
+		// Regex for decimal numbers (up to 2 decimal places)
+		const decimalRegex = /^\d*\.?\d{0,18}$/;
 
-		if (/^\d*\.?\d*$/.test(value)) {
-			const numericValue = value === "" ? "" : value;
-
-			setMintBurnAmount(numericValue);
+		if (value === "" || decimalRegex.test(value)) {
+			setMintBurnAmount(value);
 		}
 	};
 
@@ -545,13 +545,10 @@ export const RightSection = observer(() => {
 			const numericValue = value === "" ? "" : value;
 
 			if (Number(numericValue) >= 0 && Number(numericValue) <= 100) {
-				setSlippage(numericValue);
+				setSlippageValue(numericValue);
 			}
 		}
 	};
-
-	// const { id } = useParams({ from: "/explore/$id" });
-	// const currentPortfolio = allPortfolios.find((item) => item.multipool === id);
 
 	useEffect(() => {
 		if (inputRef.current) {
@@ -560,7 +557,7 @@ export const RightSection = observer(() => {
 			tempSpan.style.whiteSpace = "pre";
 			tempSpan.style.fontFamily = "namu";
 			tempSpan.style.fontSize = "24px";
-			tempSpan.textContent = slippage || "";
+			tempSpan.textContent = slippageValue || "";
 
 			document.body.appendChild(tempSpan);
 			const textWidth = tempSpan.getBoundingClientRect().width;
@@ -568,9 +565,7 @@ export const RightSection = observer(() => {
 
 			setPercentOffset(textWidth + 16);
 		}
-	}, [slippage]);
-
-	// const { handleMintBurn } = useMintBurn();
+	}, [slippageValue]);
 
 	return (
 		<div className="h-full bg-black ">
@@ -582,7 +577,7 @@ export const RightSection = observer(() => {
 								className="ml-2 flex h-[32px] w-[91px] items-center gap-2 text-[14px] text-base text-fill-brand-secondary-500"
 								type="button"
 								onClick={() => {
-									changeRightPanelState("mint");
+									setRightPanelState("mint");
 								}}
 								variant={"ghost"}
 							>
@@ -603,9 +598,10 @@ export const RightSection = observer(() => {
 										<Button
 											variant={"selector"}
 											className="h-8 w-[68px] text-[14px] text-text-primary"
-											data-active={slippage === "0.1"}
+											data-active={slippageValue === "0.1"}
 											onClick={() => {
 												setSlippage("0.1");
+												setSlippageValue("0.1");
 											}}
 										>
 											0.1%
@@ -613,9 +609,10 @@ export const RightSection = observer(() => {
 										<Button
 											variant={"selector"}
 											className="h-8 w-[68px] text-[14px] text-text-primary"
-											data-active={slippage === "0.5"}
+											data-active={slippageValue === "0.5"}
 											onClick={() => {
 												setSlippage("0.5");
+												setSlippageValue("0.5");
 											}}
 										>
 											0.5%
@@ -623,9 +620,10 @@ export const RightSection = observer(() => {
 										<Button
 											variant={"selector"}
 											className="h-8 w-[68px] text-[14px] text-text-primary"
-											data-active={slippage === "1"}
+											data-active={slippageValue === "1"}
 											onClick={() => {
 												setSlippage("1");
+												setSlippageValue("1");
 											}}
 										>
 											1%
@@ -634,12 +632,13 @@ export const RightSection = observer(() => {
 											variant={"selector"}
 											className="h-8 w-[68px] text-[14px] text-text-primary"
 											data-active={
-												slippage !== "0.1" &&
-												slippage !== "0.5" &&
-												slippage !== "1"
+												slippageValue !== "0.1" &&
+												slippageValue !== "0.5" &&
+												slippageValue !== "1"
 											}
 											onClick={() => {
 												setSlippage("0");
+												setSlippageValue("0");
 											}}
 										>
 											{t("custom")}
@@ -651,12 +650,12 @@ export const RightSection = observer(() => {
 									<Input
 										ref={inputRef}
 										onChange={(e) => handleSlippageChange(e)}
-										value={slippage}
+										value={slippageValue}
 										className=" h-[50px] font-namu text-[24px] text-white placeholder:font-droid placeholder:text-[14px]"
 										placeholder={t("enterSlippage")}
 										type=""
 									/>
-									{slippage && (
+									{slippageValue && (
 										<span
 											style={{ left: `${percentOffset}px` }}
 											className="pointer-events-none absolute top-[3px] transform"
@@ -668,7 +667,13 @@ export const RightSection = observer(() => {
 							</div>
 						</div>
 						<div className="px-4">
-							<Button className="mt-4 h-10 w-full">
+							<Button
+								className="mt-4 h-10 w-full"
+								onClick={() => {
+									setSlippage(slippageValue);
+									setRightPanelState("mint");
+								}}
+							>
 								<span> {t("apply")}</span>
 							</Button>
 						</div>
@@ -681,7 +686,7 @@ export const RightSection = observer(() => {
 									variant={"tab"}
 									data-active={rightSectionState === "mint"}
 									onClick={() => {
-										changeRightPanelState("mint");
+										setRightPanelState("mint");
 									}}
 									className="h-10 w-[102px]"
 								>
@@ -694,7 +699,7 @@ export const RightSection = observer(() => {
 									className="h-10 w-[102px]"
 									data-active={rightSectionState === "burn"}
 									onClick={() => {
-										changeRightPanelState("burn");
+										setRightPanelState("burn");
 									}}
 								>
 									<FireIcon className="mb-[2px] scale-85" />
@@ -709,7 +714,7 @@ export const RightSection = observer(() => {
 									variant={"ghost"}
 									className="h-10 w-10"
 									onClick={() => {
-										changeRightPanelState("settings");
+										setRightPanelState("settings");
 									}}
 								>
 									<SettingsIcon className="scale-120 text-text-primary" />
@@ -720,7 +725,7 @@ export const RightSection = observer(() => {
 							<div className="flex w-full items-center justify-between">
 								<span className="font-droid text-[12px] text-text-secondary leading-[12px]">
 									{rightSectionState === "mint" ? t("mint") : t("burn")}{" "}
-									{t("from")}
+									{rightSectionState === "mint" ? t("from") : t("to")}
 								</span>
 
 								<Button
@@ -729,12 +734,12 @@ export const RightSection = observer(() => {
 									onClick={() => setIsOpenAssetModal(true)}
 								>
 									<div className="flex items-center gap-2">
-										{/* <img
-											src={selectedAsset.logo || "/icons/empty-token.svg"}
+										<img
+											src={selectedAsset?.logo || "/icons/empty-token.svg"}
 											alt="no icon"
-											className="h-6 w-6"
+											className="h-6 w-6 overflow-hidden rounded-full"
 										/>
-										<span>{selectedAsset?.symbol || "-"}</span> */}
+										<span>{selectedAsset?.symbol || "-"}</span>
 									</div>
 									<ChevronIcon className="h-4 w-4 rotate-90 scale-90" />
 								</Button>
@@ -744,80 +749,18 @@ export const RightSection = observer(() => {
 								<Input
 									onChange={(e) => handleAmountChange(e)}
 									type="token"
-									value={mintBurnAmount}
+									value={rawMintBurnAmount}
 									placeholder={t("enterAmount")}
 									className="h-[40px] font-[600] font-namu text-[24px] text-white placeholder:font-droid placeholder:text-[14px]"
 								/>
 								<div className="flex w-full justify-between text-text-secondary">
-									{/* Balance 999999989999899.8750 */}
-									{/* <span className="font-droid text-[12px]">
-										~${" "}
-										{new BigNumber(
-											selectedAssetData?.walletBalance?.toString() || "0",
-										)
-											.multipliedBy(
-												new BigNumber(10)
-													.pow(-(nativeToken?.decimals || 0))
-													.multipliedBy(
-														new BigNumber(selectedAsset?.price || 0),
-													),
-											)
-											.toString()}
-									</span> */}
-									<span className="font-droid text-[12px]">
-										{t("balance")}{" "}
-										{/* {shorten(
-											new BigNumber(
-												selectedAssetData?.walletBalance?.toString() || "0",
-											).multipliedBy(new BigNumber(10).pow(-6)),
-										)} */}
-									</span>
+									<BalanceSpan />
 								</div>
 							</div>
 						</div>
 						<div>
-							<div className="flex flex-col gap-2 text-[12px]">
-								<div className="flex w-full items-center justify-between leading-[14px]">
-									<span className="font-droid text-text-secondary">
-										{t("tokensReceive")}
-									</span>
-									<span className="">
-										0 {currentChain?.nativeCurrency.symbol}{" "}
-									</span>
-								</div>
-								<div className="flex w-full items-center justify-between leading-[14px]">
-									<span className="font-droid text-text-secondary">
-										{t("transactionFee")}
-									</span>
-									<span className="">
-										{shorten(new BigNumber(swapNetworkFee || 0))}{" "}
-										{currentChain?.nativeCurrency.symbol}{" "}
-									</span>
-								</div>
-								<div className="flex w-full items-center justify-between leading-[14px]">
-									<span className="font-droid text-text-secondary">
-										{t("minimumReceive")}
-									</span>
-									<span className="">
-										0 {currentChain?.nativeCurrency.symbol}{" "}
-									</span>
-								</div>
-							</div>
-							<Button
-								className="mt-4 h-10 w-full"
-								disabled={
-									parseUnits(mintBurnAmount?.toString() || "0", 6) === 0n ||
-									parseUnits(mintBurnAmount?.toString() || "0", 6) >
-										parseUnits(
-											//@ts-ignore
-											selectedAssetData?.walletBalance?.toString() || "0",
-											-6,
-										)
-								}
-								// onClick={handleMintBurn}
-							>
-								<span> {rightSectionState === "mint" ? "Mint" : "Burn"}</span>
-							</Button>
+							<MinimalReceive />
+							<MintButton />
 						</div>
 					</div>
 				)}
@@ -841,11 +784,15 @@ export const RightSection = observer(() => {
 export const AssetsModalContent = observer(() => {
 	const {
 		setIsOpenAssetModal,
-		// setSelectedAsset,
+		setSelectedAsset,
 		// portfolioAssets,
-		// selectedAsset,
+		selectedAsset,
 	} = useExplorePortfolio();
+
+	const { data: chainsTokens } = useTokensList();
 	const { t } = useTranslation(["main"]);
+
+	console.log("chainsTokens", chainsTokens);
 
 	return (
 		<div className="relative flex h-full flex-col overflow-y-scroll">
@@ -874,34 +821,9 @@ export const AssetsModalContent = observer(() => {
 			</span>
 			<FindAsset
 				className="mt-6 h-[400px] px-4"
-				defaultActiveItem={
-					{
-						// address:
-						// 	selectedAsset?.address ||
-						// 	(portfolioAssets?.[0]?.address as Address),
-						// chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
-						// logo: selectedAsset?.logo || "/icons/empty-token.svg",
-						// name: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
-						// symbol: selectedAsset?.symbol || portfolioAssets?.[0]?.symbol,
-						// price: new BigNumber(
-						// 	selectedAsset?.price || portfolioAssets?.[0]?.price?.price || 0,
-						// ).toString(),
-					}
-				}
-				data={
-					[]
-					// portfolioAssets?.map((item) => {
-					// 	return {
-					// 		address: item.address as Address,
-					// 		chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
-					// 		logo: "/icons/empty-token.svg",
-					// 		name: item.symbol,
-					// 		symbol: item.symbol,
-					// 		price: new BigNumber(item?.price?.price || 0).toString(),
-					// 	};
-					// }) ?? []
-				}
-				// onSelectAsset={setSelectedAsset}
+				data={chainsTokens || []}
+				onSelectAsset={(asset) => setSelectedAsset(asset ?? undefined)}
+				defaultActiveItem={selectedAsset}
 				filters={["Tag1", "Tag2", "Tag3", "Tag4", "Tag5", "Tag6", "Tag7"]}
 			/>
 		</div>

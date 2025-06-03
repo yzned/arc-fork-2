@@ -1,8 +1,9 @@
 import type { ShortMultipoolDataFormated } from "@/api/types";
+import { useGetPrice } from "@/hooks/use-get-price";
 import LinkIcon from "@/icons/link.svg?react";
 import LinkToPageIcon from "@/icons/linkToPage.svg?react";
 import { shorten } from "@/lib/formatNumber";
-import { cn } from "@/lib/utils";
+import { cn, shrinkNumber } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { useMediaQuery } from "@uidotdev/usehooks";
 import BigNumber from "bignumber.js";
@@ -24,7 +25,7 @@ export const AssetCard: FC<AssetCardProps> = ({
 }) => {
 	const { t } = useTranslation(["main"]);
 	const isMobile = useMediaQuery("(max-width: 768px)");
-
+	const { price } = useGetPrice();
 	return (
 		<div
 			className={cn(
@@ -42,8 +43,8 @@ export const AssetCard: FC<AssetCardProps> = ({
 				<div className="flex justify-between">
 					<div className="flex gap-2">
 						<img
-							className="h-8 w-8 overflow-hidden rounded-[2px] md:h-9 md:w-9"
-							src={"/icons/empty-token.svg"}
+							className="h-8 w-8 overflow-hidden rounded-full md:h-9 md:w-9"
+							src={asset.logo ? asset.logo : "/icons/empty-token.svg"}
 							alt="no-logo"
 						/>
 						<div className="flex flex-col ">
@@ -56,14 +57,10 @@ export const AssetCard: FC<AssetCardProps> = ({
 						</div>
 					</div>
 
-					<Link
-						to="/explore/$id"
-						params={{ id: asset.address || zeroAddress }}
-						className="flex items-center gap-2 text-[12px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
-					>
+					<div className="flex items-center gap-2 text-[12px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary">
 						{t("address")}
 						<LinkIcon />
-					</Link>
+					</div>
 				</div>
 				<div className="flex flex-col gap-1">
 					<div className="flex h-[59px] gap-1">
@@ -75,8 +72,13 @@ export const AssetCard: FC<AssetCardProps> = ({
 								{t("price")}
 							</span>
 							<span className="text-[14px] text-text-primary">
-								${" "}
-								{shorten(new BigNumber(asset?.stats?.currentPrice || 0), true)}
+								$
+								{shorten(
+									new BigNumber(asset?.stats?.currentPrice || 0).multipliedBy(
+										price,
+									),
+									true,
+								)}
 							</span>
 						</div>
 						<div
@@ -84,37 +86,31 @@ export const AssetCard: FC<AssetCardProps> = ({
 							className="flex w-full flex-col justify-center rounded-[4px] bg-bg-floor-1 py-3 pl-2 transition-colors group-hover:bg-bg-floor-3 data-[variant=special]:bg-bg-floor-2"
 						>
 							<span className="text-[12px] text-text-secondary">
-								{t("tvl")}{" "}
+								{t("tvl")}
 							</span>
 							<span className="text-[14px] text-text-primary">
-								{/* ${shorten(BigNumber(asset.tvl || 0))} */}
+								${shrinkNumber((asset.tvl?.toNumber() || 0) * price)}
 							</span>
 						</div>
 
-						<Link
-							to="/explore/$id"
-							params={{ id: asset.address || zeroAddress }}
-							className="flex w-full items-center justify-center rounded-[4px] bg-fill-brand-primary-700 md:hidden"
-						>
+						<div className="flex w-full items-center justify-center rounded-[4px] bg-fill-brand-primary-700 md:hidden">
 							<LinkToPageIcon className="text-text-primary" />
-						</Link>
+						</div>
 					</div>
 					<div
 						data-variant={variant}
 						className="flex h-[32px] w-full items-center justify-between rounded-[4px] bg-bg-floor-1 px-2 py-2 text-[12px] transition-colors group-hover:bg-bg-floor-3 data-[variant=special]:bg-bg-floor-2"
 					>
 						<span className="text-text-secondary ">{t("24HChange")}</span>
-						<div className="flex items-center gap-2">
-							<span className="text-text-primary ">
-								{shorten(
-									new BigNumber(asset?.absolutePriceChange || 0),
-									true,
-								)}{" "}
-							</span>
+						<div className="flex items-center gap-2 text-text-primary">
+							{shrinkNumber(Number(asset?.absolutePriceChange || 0) * price)}
 							<PriceChange
-								value={asset?.relativePriceChange || "0"}
-								growing={Number(asset?.relativePriceChange) > 0}
-								className="text-[12px]"
+								value={shrinkNumber(
+									asset?.relativePriceChange?.toNumber() || 0,
+									4,
+								)}
+								growing={asset?.relativePriceChange?.isPositive() || false}
+								unit="percents"
 							/>
 						</div>
 					</div>

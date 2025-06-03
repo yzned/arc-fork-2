@@ -1,8 +1,8 @@
-import { cn } from "@/lib/utils";
+import { cn, shrinkNumber } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { type FC, useEffect, useRef, useState } from "react";
-import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 import EditIcon from "../../icons/edit.svg?react";
@@ -12,7 +12,7 @@ import TrashIcon from "../../icons/trash.svg?react";
 import { useTranslation } from "react-i18next";
 import { CopyButton } from "../ui/copyButton";
 
-import { useAccountStore } from "@/contexts/AccountContext";
+import { useTokensList } from "@/hooks/queries/useTokensList";
 import type { SetupToken } from "@/lib/types";
 import type BigNumber from "bignumber.js";
 import type { Address } from "viem";
@@ -24,7 +24,7 @@ export interface TokenTableProps {
 	sharePercentsSum: BigNumber;
 	onStartEdit: (id: string) => void;
 	onDeleteToken: (item: SetupToken) => void;
-	onCancelEditToken: (item: string) => void;
+	onCancelEditToken: (item: SetupToken) => void;
 	onEditToken: (item: SetupToken) => void;
 	onRestoreItem?: (id: string) => void;
 }
@@ -53,27 +53,27 @@ export const TokenTable: FC<TokenTableProps> = observer(
 						}}
 					>
 						<tr className="contents bg-fill-primary-800 text-text-secondary">
-							<th className=" px-4 py-3 text-left">{t("token")}</th>
+							<th className="px-4 py-3 text-left">{t("token")}</th>
 							<th className="px-4 py-3 text-left ">{t("address")}</th>
-							<th className=" px-4 py-3 text-left">{t("priceFeedType")}</th>
+							<th className="px-4 py-3 text-left">{t("priceFeedType")}</th>
 							<th
 								className={cn(
-									" px-4 py-3 text-left",
+									"px-4 py-3 text-left",
 									sharePercentsSum.toNumber() > 100 && "text-negative-primary",
 								)}
 							>
-								{t("share")} ({sharePercentsSum.toString()}%)
+								{t("targetShare")} ({sharePercentsSum.toNumber()}%)
 							</th>
 						</tr>
 					</thead>
 
 					<tbody className="text-white">
-						{tokens.map((row, index) =>
+						{tokens.map((row) =>
 							row.creationState === "readed" ||
 							row.creationState === "deleted" ? (
 								<ReadOnlyTableRow
 									row={row}
-									key={`${index}-${row.address}`}
+									key={row.id}
 									onStartEdit={onStartEdit}
 									onRestoreItem={onRestoreItem}
 								/>
@@ -81,7 +81,7 @@ export const TokenTable: FC<TokenTableProps> = observer(
 								<EditTableRow
 									tokens={tokens}
 									row={row}
-									key={`${index}-${row.address}`}
+									key={row.id}
 									onCancelEditToken={onCancelEditToken}
 									onEditToken={onEditToken}
 									onDeleteToken={onDeleteToken}
@@ -117,7 +117,7 @@ const ReadOnlyTableRow: FC<
 					<img
 						src={row.logo || "/icons/empty-token.svg"}
 						alt="icon1"
-						className="h-4 w-4 overflow-hidden rounded-full"
+						className="h-5 w-5 overflow-hidden rounded-xs"
 					/>
 					<span>{row.symbol}</span>
 				</div>
@@ -136,23 +136,28 @@ const ReadOnlyTableRow: FC<
 			>
 				{row.priceFeedType}
 			</td>
-			<td className="flex items-center justify-between border-b border-b-fill-primary-700 py-4 pr-4 pl-4 text-left">
+			<td
+				data-state={row.creationState}
+				className="flex items-center justify-between border-b border-b-fill-primary-700 data-[state=deleted]:border-[#1D1B23] pr-4 pl-4 text-left"
+			>
 				<span
 					data-state={row.creationState}
 					className="flex gap-2 data-[state=deleted]:opacity-30"
 				>
-					{row?.share?.toString()} %
-					{row.shareGrowing && (
-						<PriceChange
-							growing={row.shareGrowing > 0}
-							value={row.shareGrowing.toString()}
-							decimals={0}
-						/>
-					)}
+					{shrinkNumber(row.share, 4)} %
+					{row.shareGrowing !== undefined &&
+						Number(row.shareGrowing) !== 0 &&
+						!Number.isNaN(Number(row.shareGrowing)) && (
+							<PriceChange
+								growing={row.shareGrowing > 0}
+								value={row.shareGrowing.toString()}
+							/>
+						)}
 				</span>
 				{row.creationState === "deleted" && (
 					<Button
 						variant={"tertiary"}
+						className="opacity-100"
 						onClick={() => {
 							if (onRestoreItem) onRestoreItem(row.id);
 						}}
@@ -185,15 +190,16 @@ const EditTableRow: FC<
 > = observer(
 	({ row, onCancelEditToken, onDeleteToken, onEditToken, tokens }) => {
 		const { t } = useTranslation(["main"]);
-
 		const inputRef = useRef<HTMLInputElement>(null);
 		const [percentOffset, setPercentOffset] = useState(0);
+
+		const [currentShare, setCurrentShare] = useState(row.share);
 
 		const handleShareChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.target.value.replace(",", ".");
 
 			if (Number(value) >= 0 && Number(value) <= 100) {
-				onEditToken({ ...row, share: value.toString() });
+				setCurrentShare(value.toString());
 			}
 		};
 
@@ -204,7 +210,7 @@ const EditTableRow: FC<
 				tempSpan.style.whiteSpace = "pre";
 				tempSpan.style.fontFamily = "droid";
 				tempSpan.style.fontSize = "16px";
-				tempSpan.textContent = row.share?.toString() || "";
+				tempSpan.textContent = currentShare?.toString() || "";
 
 				document.body.appendChild(tempSpan);
 				const textWidth = tempSpan.getBoundingClientRect().width;
@@ -212,17 +218,17 @@ const EditTableRow: FC<
 
 				setPercentOffset(textWidth + 16);
 			}
-		}, [row.share]);
+		}, [currentShare]);
 
 		const disableConfirm =
-			row.share === undefined ||
-			row.share === "" ||
-			row.share === "0" ||
+			currentShare === undefined ||
+			currentShare === "" ||
+			currentShare === "0" ||
 			row.symbol === "";
-		const { currentChain } = useAccountStore();
+		const { data: chainsTokens } = useTokensList();
 
 		const availableTokens =
-			currentChain?.availableTokens?.filter(
+			chainsTokens?.filter(
 				(availableToken) =>
 					!tokens?.some((token) => token.symbol === availableToken.symbol),
 			) || [];
@@ -240,9 +246,8 @@ const EditTableRow: FC<
 									symbol={row.symbol}
 									assets={availableTokens}
 									className="w-full"
-									onSelectAsset={(item) =>
+									onSelectAsset={(item) => {
 										onEditToken({
-											...row,
 											address: item?.address as Address,
 											id: row.id,
 											logo: item?.logo,
@@ -251,8 +256,8 @@ const EditTableRow: FC<
 											priceFeedType: item?.priceFeedType,
 											poolAddress: item?.poolAddress,
 											decimals: item?.decimals,
-										})
-									}
+										});
+									}}
 								/>
 							</div>
 							<div className="w-[50%]">
@@ -263,7 +268,7 @@ const EditTableRow: FC<
 										ref={inputRef}
 										className="mt-[10px] w-full overflow-hidden pr-8 text-text-primary"
 										placeholder={t("enterShare")}
-										value={row.share?.toString()}
+										value={currentShare?.toString()}
 										onKeyDown={(e) => {
 											if (
 												e.key === "-" ||
@@ -276,7 +281,7 @@ const EditTableRow: FC<
 										}}
 										onChange={handleShareChange}
 									/>
-									{row.share && (
+									{currentShare && (
 										<span
 											style={{ left: `${percentOffset}px` }}
 											className="pointer-events-none absolute top-[10px] transform"
@@ -303,7 +308,11 @@ const EditTableRow: FC<
 									className="w-[116px]"
 									disabled={disableConfirm}
 									onClick={() => {
-										onEditToken({ ...row, creationState: "readed" });
+										onEditToken({
+											...row,
+											share: currentShare,
+											creationState: "readed",
+										});
 									}}
 								>
 									<span>{t("confirm")}</span>
@@ -314,7 +323,7 @@ const EditTableRow: FC<
 									variant={"tertiary"}
 									className="w-[84px]"
 									onClick={() => {
-										onCancelEditToken(row.id);
+										onCancelEditToken(row);
 									}}
 								>
 									<span>{t("cancel")}</span>

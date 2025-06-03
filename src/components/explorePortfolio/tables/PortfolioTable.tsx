@@ -1,16 +1,16 @@
 import { observer } from "mobx-react-lite";
 
-import { useTranslation } from "react-i18next";
-import { InfoTooltip } from "../../ui/tooltips/InformationTooltip";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
 import type { PorfolioAsset } from "@/lib/types";
 import { shrinkNumber } from "@/lib/utils";
-import { useAccountStore } from "@/contexts/AccountContext";
+import { useTranslation } from "react-i18next";
+import { InfoTooltip } from "../../ui/tooltips/InformationTooltip";
 
 export const PortfolioTable = observer(() => {
 	const { t } = useTranslation(["main"]);
 	const { portfolioAssets } = useExplorePortfolio();
-	console.log("portfolioAssets: ", portfolioAssets);
+
 	return (
 		<div className="max-h-[590px] w-full overflow-auto">
 			<table className="w-full border-collapse ">
@@ -65,7 +65,7 @@ const PortfolioTableRow = observer(
 	}: {
 		row: PorfolioAsset;
 	}) => {
-		const { currentChain } = useAccountStore();
+		const { chain } = useMetadataChain();
 
 		return (
 			<tr
@@ -85,37 +85,53 @@ const PortfolioTableRow = observer(
 					<span className="w-[0px]">{row?.symbol || "-"} </span>
 				</td>
 
-				<td className="px-4 py-3 items-center flex">
-					{shrinkNumber(Number(row.assetData?.quantity))}
+				<td className="flex items-center px-4 py-3">
+					{shrinkNumber(row.quantity, 4)}
 				</td>
 
 				<td className="py-4 pr-2 text-right">
-					{shrinkNumber(Number(row.price), 4)}
+					{shrinkNumber(
+						Number(row.price) * Number.parseFloat(row.price || "0"),
+						4,
+					)}
 				</td>
 
 				<td className="px-3 py-4 text-right">
-					{Number(row.assetData?.targetShare)}
+					{shrinkNumber(Number(row?.targetShare), 2)}
 				</td>
 
 				<td className="px-3 py-4 text-right">
-					{Number(row.currentShare).toFixed(4)}
+					{Number(row.currentShare).toFixed(2)}
 				</td>
 
 				<td className="px-4 py-4 text-right text-fill-brand-secondary-500">
-					{/* {row.priceFeedType} */}
+					{row.priceFeedData}
 				</td>
 
-				<a
+				<div
 					onClick={(e) => {
 						e.stopPropagation();
+						window.open(
+							`${chain?.blockExplorers?.default.url}/token/${row.address}`,
+							"_blank",
+							"noopener,noreferrer",
+						);
 					}}
-					target="_blank"
-					rel="noopener noreferrer"
-					href={`${currentChain?.blockExplorers?.default.url}/token/${row.address}`}
-					className="flex items-center gap-2 py-4 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
+					className="flex cursor-pointer items-center gap-2 py-4 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
+					onKeyPress={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.stopPropagation();
+							window.open(
+								`${chain?.blockExplorers?.default.url}/token/${row.address}`,
+								"_blank",
+								"noopener,noreferrer",
+							);
+						}
+					}}
+					aria-label={`Open token address ${row.address} in block explorer`}
 				>
 					{`${row.address?.slice(0, 5)}...${row.address?.slice(-4)}`}
-				</a>
+				</div>
 			</tr>
 		);
 	},

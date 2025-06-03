@@ -1,20 +1,21 @@
 // import type { BalancesToken } from "@/lib/types";
 import { observer } from "mobx-react-lite";
 
-import { useAccountStore } from "@/contexts/AccountContext";
+import type { AvailableChainTokensDataFormated } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useTokensList } from "@/hooks/queries/useTokensList";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
 import RoundedCheckIcon from "@/icons/roundedCheck.svg?react";
 import SmallXIcon from "@/icons/smallX.svg?react";
 import { useTranslation } from "react-i18next";
-import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
 import { ModalBase } from "../../ui/modalBase";
-// import { AvailableChainTokensDataFormated } from "@/api/types";
 
 export const BalancesTable = observer(() => {
 	const { isOpenTransferModal, setIsOpenTransferModal } = useExplorePortfolio();
 
-	const { currentChain } = useAccountStore();
+	const { data: chainsTokens } = useTokensList();
 	const { t } = useTranslation(["main"]);
 
 	return (
@@ -44,7 +45,7 @@ export const BalancesTable = observer(() => {
 				</thead>
 
 				<tbody className="w-full text-white ">
-					{currentChain?.availableTokens?.map((row, index) => (
+					{chainsTokens?.map((row, index) => (
 						<BalancesTableRow row={row} key={`${index}-${row.address}`} />
 					))}
 				</tbody>
@@ -57,11 +58,10 @@ const BalancesTableRow = observer(
 	({
 		row,
 	}: {
-		row: //@ts-ignore
-		AvailableChainTokensDataFormated;
+		row: AvailableChainTokensDataFormated;
 	}) => {
 		const { setIsOpenTransferModal } = useExplorePortfolio();
-		const { currentChain } = useAccountStore();
+		const { chain } = useMetadataChain();
 		const { t } = useTranslation(["main"]);
 
 		return (
@@ -84,17 +84,31 @@ const BalancesTableRow = observer(
 
 				<td className="py-4 pr-2 text-right">{row.price?.toFixed(4)}</td>
 
-				<a
-					onClick={(e) => {
-						e.stopPropagation();
-					}}
-					target="_blank"
-					rel="noopener noreferrer"
-					href={`${currentChain?.blockExplorers?.default.url}/token/${row.address}`}
-					className="flex items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
-				>
-					{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}
-				</a>
+				<td>
+					<div
+						onClick={(e) => {
+							e.stopPropagation();
+							window.open(
+								`${chain?.blockExplorers?.default.url}/token/${row.address}`,
+								"_blank",
+								"noopener,noreferrer",
+							);
+						}}
+						className="flex cursor-pointer items-center gap-2 py-4 pl-5 text-[14px] text-fill-brand-secondary-500 transition-colors hover:text-text-brand-primary"
+						onKeyPress={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.stopPropagation();
+								window.open(
+									`${chain?.blockExplorers?.default.url}/token/${row.address}`,
+									"_blank",
+									"noopener,noreferrer",
+								);
+							}
+						}}
+					>
+						{`${row?.address?.slice(0, 5)}...${row?.address?.slice(-4)}`}
+					</div>
+				</td>
 
 				<td className=" flex items-center justify-center">
 					<Button

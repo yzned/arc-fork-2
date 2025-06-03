@@ -3,19 +3,22 @@ import ReactDOM from "react-dom/client";
 import { scan } from "react-scan";
 import "./lib/i18n";
 import "@rainbow-me/rainbowkit/styles.css";
-import { TooltipProvider } from "./components/ui/tooltips/Tooltip";
-import { routeTree } from "./routeTree.gen";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
-import { arbitrum } from "wagmi/chains";
-import type { Config } from "wagmi";
-import { WagmiProvider } from "wagmi";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "./components/ui/toast";
-import { AccountStoreProvider } from "./contexts/AccountContext";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { chains } from "./lib/constants";
-
-const router = createRouter({ routeTree });
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import type { Config } from "wagmi";
+import { WagmiProvider, usePublicClient } from "wagmi";
+import {
+	type Chain,
+	arbitrum,
+	arbitrumSepolia,
+	monadTestnet,
+} from "wagmi/chains";
+import { Toaster } from "./components/ui/toast";
+import { TooltipProvider } from "./components/ui/tooltips/Tooltip";
+import { AccountStoreProvider } from "./contexts/AccountContext";
+import { routeTree } from "./routeTree.gen";
 
 declare module "@tanstack/react-router" {
 	interface Register {
@@ -42,24 +45,56 @@ if (import.meta.env.MODE === "development") {
 export const config = getDefaultConfig({
 	appName: "ARCANUM",
 	projectId: "1d63d7e43fd1d5ea177bdb4a8939ade4",
-	chains: chains,
+	chains: [arbitrum, arbitrumSepolia, monadTestnet] as [Chain, ...Chain[]],
 }) as Config;
 
-if (rootElement) {
-	const root = ReactDOM.createRoot(rootElement);
+const router = createRouter({
+	routeTree,
+	context: {
+		// biome-ignore lint/style/noNonNullAssertion: i dont care
+		publicClient: undefined!,
+	},
+});
 
-	root.render(
+function Contexts({
+	children,
+}: { children: React.ReactNode | React.ReactNode[] }) {
+	return (
 		<AccountStoreProvider>
 			<TooltipProvider delayDuration={50}>
 				<QueryClientProvider client={queryClient}>
 					<WagmiProvider config={config}>
-						<RainbowKitProvider initialChain={arbitrum}>
-							<RouterProvider router={router} />
-							<Toaster />
+						<RainbowKitProvider initialChain={monadTestnet}>
+							{children}
 						</RainbowKitProvider>
 					</WagmiProvider>
 				</QueryClientProvider>
 			</TooltipProvider>
-		</AccountStoreProvider>,
+		</AccountStoreProvider>
 	);
 }
+
+function Root() {
+	const publicClient = usePublicClient();
+
+	return (
+		<>
+			<RouterProvider
+				router={router}
+				context={{ publicClient: publicClient }}
+			/>
+			<ReactQueryDevtools initialIsOpen={true} />
+			<Toaster />
+		</>
+	);
+}
+
+if (!rootElement) {
+	throw new Error("Root element not found");
+}
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+	<Contexts>
+		<Root />
+	</Contexts>,
+);

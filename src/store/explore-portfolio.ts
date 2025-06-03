@@ -1,4 +1,5 @@
 import type {
+	AvailableChainTokensDataFormated,
 	CandleDataFormated,
 	LinearDataFormated,
 	ShortMultipoolDataFormated,
@@ -10,18 +11,11 @@ import type {
 } from "@/lib/types";
 import { makeAutoObservable } from "mobx";
 import { v4 as uuidv4 } from "uuid";
-
-// export interface MultipoolAssetFormated extends Omit<MultipoolAsset, "price"> {
-// 	price?: {
-// 		price?: string;
-// 		timestamp?: number;
-// 	};
-// 	walletBalance?: bigint;
-// }
+import type { Address } from "viem";
 
 export class ExplorePortfolioStore {
-	///for manage
-	manageState: "main-info" | "asset-setup" | "fees";
+	// "main-info" |
+	manageState: "asset-setup" | "fees";
 	managingAsssets?: SetupToken[];
 
 	isOpenAssetModal: boolean;
@@ -36,16 +30,26 @@ export class ExplorePortfolioStore {
 	portfolioAssets?: PorfolioAsset[];
 
 	multipoolSupplyPriceData?: MultipoolSuplyChangelyPriceData;
-	// shortPortfolioData?: MultipoolInfo;
 
 	rightSectionState: "mint" | "burn" | "settings";
 
-	// selectedAsset: Token = {};
+	selectedAsset: AvailableChainTokensDataFormated | undefined;
 
 	slippage: string;
 	mintBurnAmount?: string;
+	rawMintBurnAmount?: string;
 
 	swapNetworkFee?: string;
+
+	selectedFeeTemplate?: number;
+
+	baseFee?: string;
+	deviationLimit?: string;
+	deviationFee?: string;
+	cashbackFeeShare?: string;
+	initialSharePrice?: string;
+	managementFee?: string;
+	managementFeeRecepient?: string;
 
 	constructor(portfolios: ShortMultipoolDataFormated[]) {
 		makeAutoObservable(this, {}, { autoBind: true });
@@ -53,29 +57,65 @@ export class ExplorePortfolioStore {
 		this.rightSectionState = "mint";
 		this.isOpenAssetModal = false;
 		this.isOpenTransferModal = false;
-		this.slippage = "";
+		this.slippage = "0.5";
 		this.isOpenPnlSettingsModal = false;
-		this.allPortfolios = [];
 		this.portfolioCandlesData = [];
 		this.portfolioLinearData = [];
 		this.chartResolution = "60";
-		// this.portfolioAssets = [];
-		this.manageState = "main-info";
-
+		this.manageState = "asset-setup";
 		this.allPortfolios = portfolios;
+		this.selectedAsset = undefined;
 	}
 
-	// updateManagingAssets() {
-	// 	this.managingAsssets = this.portfolioAssets?.map((asset) => ({
-	// 		id: asset.address,
-	// 		name: asset.symbol || "Unknown",
-	// 		symbol: asset.symbol || "",
-	// 		address: asset.address as Address,
-	// 		priceFeedType: "UniswapV3",
-	// 		creationState: "readed",
-	// 		share: asset.share?.toString() || "0",
-	// 	}));
-	// }
+	updateManagingAssets() {
+		if (!this.portfolioAssets) {
+			this.managingAsssets = [];
+			return;
+		}
+		this.managingAsssets = this.portfolioAssets.map((asset) => ({
+			id: uuidv4(),
+			name: asset.symbol || "Unknown",
+			symbol: asset.symbol || "",
+			address: asset.address as Address,
+			priceFeedType: "UniswapV3",
+			creationState: "readed",
+			share: asset.targetShare.toString() || "0",
+			targetShare: asset.targetShare.toString() || "0",
+			logo: asset.image,
+		}));
+	}
+
+	setSelectedFeeTemplate(id: number) {
+		this.selectedFeeTemplate = id;
+	}
+
+	setInitialPrice(value: string) {
+		this.initialSharePrice = value;
+	}
+
+	setManagementFee(value: string) {
+		this.managementFee = value;
+	}
+
+	setManagementFeeRecipient(value: string) {
+		this.managementFeeRecepient = value;
+	}
+
+	setBaseFee(value: string) {
+		this.baseFee = value;
+	}
+
+	setDeviationLimit(value: string) {
+		this.deviationLimit = value;
+	}
+
+	setDeviationFee(value: string) {
+		this.deviationFee = value;
+	}
+
+	setCashbackFeeShare(value: string) {
+		this.cashbackFeeShare = value;
+	}
 
 	setPortfolioAssets(assets: PorfolioAsset[]) {
 		this.portfolioAssets = assets;
@@ -85,18 +125,34 @@ export class ExplorePortfolioStore {
 		this.multipoolSupplyPriceData = value;
 	}
 
+	setManagingAssets(newAssets: SetupToken[]) {
+		this.managingAsssets = newAssets;
+	}
+
 	changeTokenState(
 		id: string,
 		state?: "readed" | "new" | "edited" | "deleted",
 	) {
-		this.managingAsssets = this.managingAsssets?.map((token) =>
-			token.id === id ? { ...token, creationState: state } : token,
+		this.managingAsssets = this.managingAsssets?.map((token) => {
+			if (token.id === id) {
+				if (state === "deleted") {
+					return { ...token, creationState: state, share: "0" };
+				}
+
+				return { ...token, creationState: state };
+			}
+			return token;
+		});
+	}
+
+	deleteToken(id: string) {
+		this.managingAsssets = this.managingAsssets?.filter(
+			(token) => token.id !== id,
 		);
 	}
 
 	editToken({
 		id,
-		share,
 		address,
 		name,
 		symbol,
@@ -104,19 +160,24 @@ export class ExplorePortfolioStore {
 		creationState,
 		priceFeedType,
 		shareGrowing,
+		poolAddress,
+		share,
+		targetShare,
 	}: SetupToken) {
 		this.managingAsssets = this.managingAsssets?.map((token) =>
 			token.id === id
 				? {
 						...token,
 						creationState,
-						share,
 						address,
+						share,
 						logo,
 						name,
 						symbol,
 						priceFeedType,
+						poolAddress,
 						shareGrowing,
+						targetShare,
 					}
 				: token,
 		);
@@ -139,6 +200,7 @@ export class ExplorePortfolioStore {
 			name: "",
 			creationState: "new",
 			symbol: "",
+			shareGrowing: 0,
 		});
 	}
 
@@ -146,17 +208,13 @@ export class ExplorePortfolioStore {
 		this.swapNetworkFee = fee;
 	}
 
-	setManageState = (state: "main-info" | "asset-setup" | "fees") => {
+	setManageState = (state: "asset-setup" | "fees") => {
 		this.manageState = state;
 	};
 
 	setChartResolution = (resolution: "60" | "900" | "3600" | "86400") => {
 		this.chartResolution = resolution;
 	};
-
-	// setShortPortfolioData = (shortData: MultipoolInfo) => {
-	// 	this.shortPortfolioData = shortData;
-	// };
 
 	setPorfolioCandles = (portfolioChartData: CandleDataFormated[]) => {
 		this.portfolioCandlesData = portfolioChartData;
@@ -170,11 +228,11 @@ export class ExplorePortfolioStore {
 		this.isOpenAssetModal = value;
 	};
 
-	// setSelectedAsset = (asset: Token) => {
-	// 	this.selectedAsset = asset;
-	// };
+	setSelectedAsset = (asset: AvailableChainTokensDataFormated | undefined) => {
+		this.selectedAsset = asset;
+	};
 
-	changeRightPanelState = (value: "mint" | "burn" | "settings") => {
+	setRightPanelState = (value: "mint" | "burn" | "settings") => {
 		this.rightSectionState = value;
 	};
 
@@ -184,6 +242,10 @@ export class ExplorePortfolioStore {
 
 	setMintBurnAmount = (value: string) => {
 		this.mintBurnAmount = value;
+	};
+
+	setRawMintBurnAmount = (value: string) => {
+		this.rawMintBurnAmount = value;
 	};
 
 	setIsOpenTransferModal = (value: boolean) => {

@@ -10,20 +10,19 @@ import Chevron from "@/icons/chevron.svg?react";
 
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
 
+import { FEES_TEMPLATES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useAccount } from "wagmi";
 
 export const Fees = observer(({ className }: { className?: string }) => {
 	const [opened, setOpened] = useState(true);
-	const [selectedId, setSelectedId] = useState(100);
-	const [advOpen, setAdvOpen] = useState(false);
 
 	const { t } = useTranslation(["main"]);
+	const { address } = useAccount();
 
 	const {
-		initialSharePrice,
-		setInitialPrice,
 		managementFee,
 		setManagementFee,
 		managementFeeRecepient,
@@ -36,6 +35,8 @@ export const Fees = observer(({ className }: { className?: string }) => {
 		setDeviationFee,
 		cashbackFeeShare,
 		setCashbackFeeShare,
+		selectedFeeTemplate,
+		setSelectedFeeTemplate,
 	} = useCreatePortfolio();
 
 	const handleChange = (
@@ -49,10 +50,30 @@ export const Fees = observer(({ className }: { className?: string }) => {
 		e: React.ChangeEvent<HTMLInputElement>,
 		setter: (value: string) => void,
 	) => {
-		const value = e.target.value.replace(",", ".");
+		let value = e.target.value.replace(",", ".");
 
-		if (Number(value) >= 0 && Number(value) <= 100) {
-			setter(e.target.value);
+		value = value.replace(/[^\d.]/g, "");
+
+		if (value.includes(".")) {
+			const [integerPart, decimalPart] = value.split(".");
+
+			const trimmedDecimal = decimalPart.slice(0, 6);
+			value = `${integerPart}.${trimmedDecimal}`;
+
+			if (decimalPart === "") {
+				value = `${integerPart}.`;
+			}
+		}
+
+		const numericValue = Number.parseFloat(value);
+		if (
+			!Number.isNaN(numericValue) &&
+			numericValue >= 1 &&
+			numericValue <= 100
+		) {
+			setter(value);
+		} else if (value === "" || value === ".") {
+			setter(value);
 		}
 	};
 
@@ -82,92 +103,45 @@ export const Fees = observer(({ className }: { className?: string }) => {
 				className="h-0 w-full overflow-hidden opacity-0 transition-all data-[opened=true]:h-[160px] data-[opened=true]:opacity-100"
 			>
 				<div className="flex h-full flex-row gap-2">
-					<div
-						data-selected={selectedId}
-						onClick={() => setSelectedId(0)}
-						onKeyUp={(e) => e.key === "Enter" && setSelectedId(0)}
-						className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=0]:border-fill-brand-secondary-500 data-[selected=0]:border-fill-secondary data-[selected=0]:bg-fill-secondary"
-					>
-						<div
-							data-selected={selectedId}
-							className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=0]:text-fill-brand-secondary-500"
-						>
-							{selectedId === 0 && (
-								<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-							)}
-							<span>No fees</span>
-						</div>
-						<div className="font-droid font-normal text-text-secondary text-xs">
-							A balanced ETF blending growth and stability, tailored to reflect
-							your financial goals
-						</div>
-					</div>
-					<div
-						data-selected={selectedId}
-						onClick={() => setSelectedId(1)}
-						onKeyUp={(e) => e.key === "Enter" && setSelectedId(1)}
-						className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=1]:border-fill-brand-secondary-500 data-[selected=1]:border-fill-secondary data-[selected=1]:bg-fill-secondary"
-					>
-						<div
-							data-selected={selectedId}
-							className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=1]:text-fill-brand-secondary-500"
-						>
-							{selectedId === 1 && (
-								<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-							)}
-							<span>No fees</span>
-						</div>
-						<div className="font-droid font-normal text-text-secondary text-xs">
-							A balanced ETF blending growth and stability, tailored to reflect
-							your financial goals
-						</div>
-					</div>
-					<div
-						data-selected={selectedId}
-						onClick={() => setSelectedId(3)}
-						onKeyUp={(e) => e.key === "Enter" && setSelectedId(3)}
-						className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=3]:border-fill-brand-secondary-500 data-[selected=3]:border-fill-secondary data-[selected=3]:bg-fill-secondary"
-					>
-						<div
-							data-selected={selectedId}
-							className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=3]:text-fill-brand-secondary-500"
-						>
-							{selectedId === 3 && (
-								<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-							)}
-							<span>No fees</span>
-						</div>
-						<div className="font-droid font-normal text-text-secondary text-xs">
-							A balanced ETF blending growth and stability, tailored to reflect
-							your financial goals
-						</div>
-					</div>
-					<div
-						data-selected={selectedId}
-						onClick={() => setSelectedId(4)}
-						onKeyUp={(e) => e.key === "Enter" && setSelectedId(4)}
-						className="flex h-full w-full cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=4]:border-fill-brand-secondary-500 data-[selected=4]:border-fill-secondary data-[selected=4]:bg-fill-secondary"
-					>
-						<div
-							data-selected={selectedId}
-							className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=4]:text-fill-brand-secondary-500"
-						>
-							{selectedId === 4 && (
-								<RoundedCheckIcon className="text-fill-brand-secondary-500" />
-							)}
-							<span>No fees</span>
-						</div>
-						<div className="font-droid font-normal text-text-secondary text-xs">
-							A balanced ETF blending growth and stability, tailored to reflect
-							your financial goals
-						</div>
-					</div>
+					{FEES_TEMPLATES.map((item, index) => {
+						return (
+							<button
+								type="button"
+								key={item.name}
+								data-selected={selectedFeeTemplate === index}
+								onClick={() => {
+									setSelectedFeeTemplate(index);
+									setBaseFee(item.baseFee);
+									setManagementFee(item.managementFee);
+									setDeviationLimit(item.deviationFee);
+									setCashbackFeeShare(item.cashbackFeeShare);
+									setDeviationFee(item.deviationFee);
+								}}
+								className="flex h-full w-full max-w-[260px] cursor-pointer flex-col gap-3 rounded-[8px] border-[1px] border-fill-primary-800 bg-[position:right_20.4px_top_16px] bg-no-repeat p-4 transition-all hover:bg-fill-secondary data-[selected=true]:border-fill-brand-secondary-500 data-[selected=true]:border-fill-secondary data-[selected=true]:bg-fill-secondary"
+							>
+								<div
+									data-selected={selectedFeeTemplate === index}
+									className="flex items-center gap-2 font-droid font-normal text-sm text-text-primary data-[selected=true]:text-fill-brand-secondary-500"
+								>
+									<RoundedCheckIcon
+										data-selected={selectedFeeTemplate === index}
+										className="text-fill-brand-secondary-500 data-[selected=false]:hidden"
+									/>
+
+									<span>{item.name}</span>
+								</div>
+								<div className="font-droid font-normal text-text-secondary text-xs">
+									{item.description}
+								</div>
+							</button>
+						);
+					})}
 				</div>
 			</div>
 
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-row gap-6">
-					<Input
+					{/* <Input
 						type="number"
 						label={t("initialPrice")}
 						required={true}
@@ -188,7 +162,7 @@ export const Fees = observer(({ className }: { className?: string }) => {
 							handleChange(e, setInitialPrice);
 						}}
 						value={initialSharePrice?.toString()}
-					/>
+					/> */}
 					<Input
 						type="number"
 						label={t("managementFee")}
@@ -231,26 +205,15 @@ export const Fees = observer(({ className }: { className?: string }) => {
 						handleChange(e, setManagementFeeRecipient);
 					}}
 					value={managementFeeRecepient}
+					defaultValue={address}
 				/>
-				<div
-					data-adv={advOpen}
-					className="group flex h-[56px] w-[793px] flex-col gap-4 overflow-clip rounded-xs bg-fill-primary-800 p-4 transition-all data-[adv=true]:h-[210px]"
-					onKeyUp={(e) => e.key === "Enter" && setAdvOpen(!advOpen)}
-				>
-					<button
-						type="button"
-						onClick={() => setAdvOpen(!advOpen)}
-						className="flex cursor-pointer flex-row gap-2"
-					>
+				<div className="group flex h-[210px] h-[56px] w-[793px] flex-col gap-4 overflow-clip rounded-xs bg-fill-primary-800 p-4 transition-all">
+					<div className="flex cursor-pointer flex-row gap-2">
 						<SettingsIcon className="size-6 text-text-primary" />
 						<span className="font-droid font-normal text-base text-text-primary">
 							{t("advancedSettings")}
 						</span>
-						<Chevron
-							className="size-6 p-1 transition-all group-data-[adv=true]:rotate-180"
-							fill="#EAEAEA"
-						/>
-					</button>
+					</div>
 					<div className="grid grid-cols-2 grid-rows-2 gap-6">
 						<Input
 							type="number"

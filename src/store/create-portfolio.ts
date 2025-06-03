@@ -41,6 +41,7 @@ export class CreatePortfolioStore {
 	futureMultipoolAddress?: string;
 
 	isOpenTemplateModal: { isOpen: boolean; id: number };
+	selectedFeeTemplate?: number;
 
 	constructor() {
 		makeAutoObservable(this, {}, { autoBind: true });
@@ -66,13 +67,14 @@ export class CreatePortfolioStore {
 			!this.symbol ||
 			!this.description ||
 			!this.logo ||
-			!this.initialSharePrice ||
 			!this.managementFee ||
 			!this.managementFeeRecepient ||
 			!this.baseFee ||
 			!this.deviationLimit ||
 			!this.deviationFee ||
 			!this.cashbackFeeShare ||
+			!this.initialLiquidityToken ||
+			!this.initialLiquidityAmount ||
 			this.tokens.length === 0 ||
 			this.tokens.some((token) => !token.address || !token.share)
 		);
@@ -100,6 +102,10 @@ export class CreatePortfolioStore {
 		}
 
 		return 0;
+	}
+
+	setSelectedFeeTemplate(id: number) {
+		this.selectedFeeTemplate = id;
 	}
 
 	setIsOpenTemplateModal(isOpen: boolean, id: number) {

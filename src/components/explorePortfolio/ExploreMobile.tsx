@@ -6,7 +6,6 @@ import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
-import { FindAsset } from "../ui/findAsset";
 import { PriceChange } from "../ui/priceChange";
 
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
@@ -17,13 +16,13 @@ import { shorten } from "@/lib/formatNumber";
 import { useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
 import { observer } from "mobx-react-lite";
+import { useOnClickOutside } from "usehooks-ts";
 import { CandleChart } from "../ui/Charts/CandleChart";
 import { LinearChart } from "../ui/Charts/LinearChart";
 import { BalancesTable } from "./tables/BalanceTable";
 import { HistoryTable } from "./tables/HistoryTable";
 import { PortfolioTable } from "./tables/PortfolioTable";
 import { PositionsTable } from "./tables/PositionsTable";
-import { useOnClickOutside } from "usehooks-ts";
 
 export const ExploreMobile = observer(() => {
 	const tokenSelectorRef = useRef<HTMLDivElement>(null);
@@ -104,7 +103,7 @@ export const ExploreMobile = observer(() => {
 								isOpenTokenSelector ? "h-[70svh]" : "h-0",
 							)}
 						>
-							<FindAsset
+							{/* <FindAsset
 								defaultActiveItem={
 									currentPortfolio
 										? {
@@ -158,7 +157,7 @@ export const ExploreMobile = observer(() => {
 									};
 								})}
 								className="h-[60svh] w-full bg-floor-2 px-4 pt-6"
-							/>
+							/> */}
 						</div>
 					</div>
 				</div>
@@ -167,7 +166,7 @@ export const ExploreMobile = observer(() => {
 						${shorten(new BigNumber(currentPortfolio?.stats.currentPrice || 0))}
 					</span>
 					<span className="text-center text-[14px] text-text-secondary">
-						{t("tvl")} {currentPortfolio?.tvl}
+						{/* {t("tvl")} {currentPortfolio?.tvl} */}
 					</span>
 				</div>
 				<div className="flex flex-col gap-1">
@@ -393,15 +392,6 @@ export const ExploreMobile = observer(() => {
 								onClick={() => setCurrentBottomTable("positions")}
 							>
 								<span>{t("positions")}</span>
-							</Button>
-
-							<Button
-								variant={"tab"}
-								data-active={currentBottomTable === "history"}
-								className="h-10 w-full"
-								onClick={() => setCurrentBottomTable("history")}
-							>
-								<span>{t("history")}</span>
 							</Button>
 						</div>
 					</div>

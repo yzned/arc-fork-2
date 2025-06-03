@@ -48,11 +48,9 @@ export const Toggle = ({
 				className,
 			)}
 		>
-			<button
-				type="button"
-				role="switch"
+			<span
 				aria-checked={isChecked}
-				disabled={disabled}
+				aria-disabled={disabled}
 				className={cn(
 					"relative inline-flex items-center rounded-full transition-colors focus:outline-none",
 					sizeClasses,
@@ -71,7 +69,7 @@ export const Toggle = ({
 						disabled && "bg-fill-quinary",
 					)}
 				/>
-			</button>
+			</span>
 			{label && <span className="ml-2 font-droid text-[16px]">{label}</span>}
 		</button>
 	);

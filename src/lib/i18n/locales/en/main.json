@@ -69,7 +69,7 @@
 	"portfolioName": "portfolio name",
 	"symbol": "Symbol",
 	"tokenSetup": "Token setup",
-	"initialLiquidity": "Initial liquidity",
+	"initialLiquidity": "TVL",
 	"tokens": "Tokens",
 	"fees": "Fees",
 	"initialPrice": "Initial price",
@@ -127,6 +127,7 @@
 	"perMonth": "Per month",
 	"save": "Save",
 	"from": "from",
+	"to": "to",
 
 	"useAsset": "Use asset",
 	"signTransactions": "sign transactions",
@@ -147,5 +148,7 @@
 	"selectAssetFor": "Select an asset for each template section",
 	"useThisTemplate": "Use this template",
 	"selectAsset": "Select asset",
-	"reset": "Reset"
+	"reset": "Reset",
+	"manageAssets": "Manage assets",
+	"manageFees": "Manage fees"
 }

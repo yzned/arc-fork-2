@@ -1,6 +1,6 @@
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useCreatePortfolio as useCreatePortfolioContext } from "@/contexts/CreatePortfolioContext";
-import { useCreatePortfolio } from "@/hooks/mutations/useCreatePortfolio";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
+import { useCreatePortfolio } from "@/hooks/useCreatePortfolio";
 import CheckIcon from "@/icons/checkMark.svg?react";
 import LinkIcon from "@/icons/link.svg?react";
 import SmallXIcon from "@/icons/smallX.svg?react";
@@ -156,8 +156,7 @@ const SignStepItem = observer(
 		isError: boolean;
 	}) => {
 		const { t } = useTranslation(["main"]);
-		const { currentChain } = useAccountStore();
-
+		const { chain } = useMetadataChain();
 		const { setErrorStepInCreation } = useCreatePortfolioContext();
 		const [countdown, setCountdown] = useState<number | null>(null);
 
@@ -222,14 +221,27 @@ const SignStepItem = observer(
 					</div>
 				</div>
 				{txHash && (
-					<a
-						className="flex h-10 w-[74px] items-center justify-center gap-2 rounded-[4px] bg-bg-floor-0 text-text-secondary transition-colors hover:text-fill-brand-secondary-500 "
-						href={`${currentChain?.blockExplorers?.default.url}/tx/${txHash}`}
-						target="_blank"
-						rel="noopener noreferrer"
+					<div
+						className="flex h-10 w-[74px] cursor-pointer items-center justify-center gap-2 rounded-[4px] bg-bg-floor-0 text-text-secondary transition-colors hover:text-fill-brand-secondary-500"
+						onClick={() => {
+							window.open(
+								`${chain?.blockExplorers?.default.url}/tx/${txHash}`,
+								"_blank",
+								"noopener,noreferrer",
+							);
+						}}
+						onKeyPress={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								window.open(
+									`${chain?.blockExplorers?.default.url}/tx/${txHash}`,
+									"_blank",
+									"noopener,noreferrer",
+								);
+							}
+						}}
 					>
 						<span>TXN</span> <LinkIcon className="mb-[2px]" />{" "}
-					</a>
+					</div>
 				)}
 			</div>
 		);

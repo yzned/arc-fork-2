@@ -4,28 +4,17 @@ import { Separator } from "@/components/ui/separator";
 import clsx from "clsx";
 import { observer } from "mobx-react-lite";
 
-import { useAccountStore } from "@/contexts/AccountContext";
 import { useCreatePortfolio as useCreatePortfolioContext } from "@/contexts/CreatePortfolioContext";
-import { useCreatePortfolio } from "@/hooks/mutations/useCreatePortfolio";
-import ERC20 from "@/lib/abi/ERC20";
-import { shorten } from "@/lib/formatNumber";
-import { formatAddress, toBase64 } from "@/lib/utils";
+import { formatAddress, shrinkNumber, toBase64 } from "@/lib/utils";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-	type Address,
-	encodeFunctionData,
-	formatUnits,
-	maxUint256,
-	zeroAddress,
-} from "viem";
-import { useAccount, useEstimateGas } from "wagmi";
+
+import { useAccount, useBalance } from "wagmi";
 import { CreateModal } from "./createModal";
 
 export const Overview = observer(({ className }: { className?: string }) => {
 	const { t } = useTranslation(["main"]);
-	const { currentChain } = useAccountStore();
 
 	const {
 		tokens,
@@ -40,42 +29,23 @@ export const Overview = observer(({ className }: { className?: string }) => {
 		networkFee,
 		setIsOpenCreateModal,
 		logo,
-		setNetworkFee,
 		isDisabled,
 	} = useCreatePortfolioContext();
 
-	const { createMultipoolGasEstimate } = useCreatePortfolio();
+	const { data } = useBalance();
 	const { address } = useAccount();
-	const { data: approveGasEstimate } = useEstimateGas({
-		to: tokens[0]?.address || zeroAddress,
 
-		query: {
-			enabled: !!tokens[0]?.address,
-		},
+	// const totalGasWei = gasPrice
+	// 	? BigInt(
+	// 			((approveGasEstimate || 0n) +
+	// 				(BigInt(createMultipoolGasEstimate) || 0n)) *
+	// 				gasPrice,
+	// 		)
+	// 	: 0n;
 
-		data: encodeFunctionData({
-			abi: ERC20,
-			functionName: "approve",
-			args: [
-				(currentChain?.routerAddress as Address) || zeroAddress,
-				BigInt(maxUint256),
-			],
-		}),
-	});
-
-	const totalGasWei =
-		(approveGasEstimate || 0n) + (createMultipoolGasEstimate || 0n);
-
-	const currentNetworkFee = formatUnits(
-		totalGasWei,
-		currentChain?.nativeCurrency?.decimals || 18,
-	);
+	// const currentNetworkFee = formatUnits(totalGasWei, data?.decimals || 18);
 
 	const [logoBase64, setLogoBase64] = useState<string>();
-
-	useEffect(() => {
-		setNetworkFee(currentNetworkFee);
-	}, [currentNetworkFee]);
 
 	useEffect(() => {
 		async function convertLogoToBase() {
@@ -89,7 +59,7 @@ export const Overview = observer(({ className }: { className?: string }) => {
 		}
 		convertLogoToBase();
 	}, [logo]);
-
+	const { address: walletAddress } = useAccount();
 	return (
 		<div className="h-full bg-bg-floor-2">
 			<CreateModal />
@@ -172,7 +142,11 @@ export const Overview = observer(({ className }: { className?: string }) => {
 								{t("managementFeeReceiver")}
 							</span>
 							<span className="ml-auto text-text-secondary">
-								{formatAddress(managementFeeRecepient)}
+								{formatAddress(
+									managementFeeRecepient
+										? managementFeeRecepient
+										: walletAddress,
+								)}
 							</span>
 						</div>
 					</div>
@@ -198,15 +172,13 @@ export const Overview = observer(({ className }: { className?: string }) => {
 							</span>
 							<span>{t("youReceive")}</span>
 							<span className="ml-auto">
-								<span className="text-text-primary">
-									0 {currentChain?.nativeCurrency.symbol}
-								</span>{" "}
+								<span className="text-text-primary">0 {data?.symbol}</span>{" "}
 							</span>
 							<span>{t("networkFee")}</span>
 							<span className="ml-auto">
 								<span className="whitespace-nowrap text-text-primary">
-									{shorten(new BigNumber(networkFee || 0))}{" "}
-									{currentChain?.nativeCurrency.symbol}
+									{shrinkNumber(new BigNumber(networkFee || 0).toNumber())}{" "}
+									{data?.symbol}
 								</span>
 							</span>
 						</div>

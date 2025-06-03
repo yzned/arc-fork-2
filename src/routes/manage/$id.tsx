@@ -5,7 +5,12 @@ import { FileInput } from "@/components/ui/file";
 import { Textarea } from "@/components/ui/textArea";
 import { TokenTable } from "@/components/ui/tokenTable";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
+import { useMultipoolInfo } from "@/hooks/queries/useMultipoolInfo";
+import { useTokensList } from "@/hooks/queries/useTokensList";
+import { useGetPrice } from "@/hooks/use-get-price";
 import Chevron from "@/icons/chevron.svg?react";
+import PlusRoundedIcon from "@/icons/plus-rounded.svg?react";
+import { shrinkNumber } from "@/lib/utils";
 
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
@@ -17,32 +22,23 @@ export const Route = createFileRoute("/manage/$id")({
 });
 
 function RouteComponent() {
-	// const {
-	// 	portfolioAssets,
-
-	// 	updateManagingAssets,
-	// } = useExplorePortfolio();
-
-	// useEffect(() => {
-	// 	updateManagingAssets();
-	// }, [portfolioAssets]);
-
 	return (
-		<>
-			<div className="grid grid-cols-[1fr_329px] ">
-				<MainSection />
-				<RightSection />
-			</div>
-		</>
+		<div className="grid grid-cols-[1fr_329px] ">
+			<MainSection />
+			<RightSection />
+		</div>
 	);
 }
 
 export const MainSection = observer(() => {
+	useMultipoolInfo();
+	useTokensList();
+
+	const { manageState, setManageState } = useExplorePortfolio();
+
 	const router = useRouter();
 
 	const { t } = useTranslation(["main"]);
-
-	const { manageState, setManageState } = useExplorePortfolio();
 
 	return (
 		<div className="h-full overflow-hidden bg-bg-floor-1 pb-4">
@@ -58,14 +54,14 @@ export const MainSection = observer(() => {
 				</Button>
 
 				<div className="flex gap-1">
-					<Button
+					{/* <Button
 						variant={"tab"}
 						data-active={manageState === "main-info"}
 						className="h-10 "
 						onClick={() => setManageState("main-info")}
 					>
 						<span>{t("mainInfo")}</span>
-					</Button>
+					</Button> */}
 					<Button
 						variant={"tab"}
 						data-active={manageState === "asset-setup"}
@@ -94,7 +90,7 @@ export const MainSection = observer(() => {
 					///////// .- .-. -.-. .- -. ..- --`.repeat(9)}
 			</span>
 
-			{manageState === "main-info" && <MainInfo />}
+			{/* {manageState === "main-info" && <MainInfo />} */}
 			{manageState === "asset-setup" && <AssetSetup />}
 			{manageState === "fees" && <Fees />}
 		</div>
@@ -103,8 +99,6 @@ export const MainSection = observer(() => {
 
 export const MainInfo = observer(() => {
 	const { t } = useTranslation(["main"]);
-
-	// const { shortPortfolioData } = useExplorePortfolio();
 
 	return (
 		<div className="mt-[56px] flex flex-col gap-8 pl-6">
@@ -116,6 +110,7 @@ export const MainInfo = observer(() => {
 					console.log("item: ", item);
 					// setLogo(item);
 				}}
+				disabled={true}
 			/>
 
 			<Textarea
@@ -123,11 +118,7 @@ export const MainInfo = observer(() => {
 				label={t("description")}
 				description={t("upTo100Characters")}
 				className="max-w-[793px]"
-				// defaultValue={shortPortfolioData?.description}
-				// onChange={(e) => {
-				// 	setDescription(e.target.value);
-				// }}
-				// value={description}
+				disabled={true}
 			/>
 		</div>
 	);
@@ -136,28 +127,37 @@ export const MainInfo = observer(() => {
 export const AssetSetup = observer(() => {
 	const {
 		managingAsssets,
+		portfolioAssets,
 		changeTokenState,
-		cancelEditToken,
 		editToken,
-		// portfolioAssets,
+		addNewToken,
+		deleteToken,
 	} = useExplorePortfolio();
 
+	const { t } = useTranslation(["main"]);
+	const { price } = useGetPrice();
+
 	return (
-		<div className="mt-[56px] flex w-full gap-20 pl-6">
+		<div className="mt-[56px] flex w-full gap-20 pl-6 font-droid">
 			<div className="w-[600px]">
 				<TokenTable
 					tokens={managingAsssets || []}
 					onStartEdit={(id) => changeTokenState(id || "", "edited")}
 					onDeleteToken={(item) => changeTokenState(item.id, "deleted")}
-					onCancelEditToken={cancelEditToken}
+					onCancelEditToken={(item) => {
+						if (item.creationState === "new" || !item.share || !item.address) {
+							deleteToken(item.id);
+						} else {
+							changeTokenState(item.id, "readed");
+						}
+					}}
 					onEditToken={(item) => {
-						const shareGrowing =
-							Number(item.share) -
-							Number(
-								managingAsssets?.find((asset) => item.address === asset.address)
-									?.share,
-							);
-						editToken({ ...item, shareGrowing });
+						const shareGrowing = Number(item.share) - Number(item.targetShare);
+
+						editToken({
+							...item,
+							shareGrowing,
+						});
 					}}
 					onRestoreItem={(id) => changeTokenState(id, "readed")}
 					sharePercentsSum={
@@ -169,6 +169,19 @@ export const AssetSetup = observer(() => {
 						)
 					}
 				/>
+
+				<Button
+					variant={"secondary"}
+					onClick={() => {
+						addNewToken();
+					}}
+					className="group mt-4 w-fit"
+				>
+					<span className="font-normal text-sm text-text-accent leading-[130%] tracking-[0.01em] transition-colors group-hover:text-text-primary">
+						{t("addToken")}
+					</span>
+					<PlusRoundedIcon className="h-4 w-4" fill="#18171C" />
+				</Button>
 			</div>
 
 			<div className="max-w-[600px] flex-1 overflow-auto pr-6">
@@ -181,21 +194,35 @@ export const AssetSetup = observer(() => {
 						</tr>
 					</thead>
 					<tbody className="text-white">
-						{/* {portfolioAssets?.map((row) => (
-							<tr
-								key={row.address}
-								className="border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
-							>
-								<td className="py-4 pl-3 text-left">{row?.share}</td>
+						{portfolioAssets?.map((row) => {
+							const dollarQuantity =
+								row?.quantity &&
+								row.price &&
+								new BigNumber(row?.quantity)
+									.multipliedBy(row.price)
+									.multipliedBy(price);
 
-								<td className="py-4 pl-3 text-left">
-									{shorten(new BigNumber(row?.price?.price || 0))}
-								</td>
-								<td className="py-3 pl-4 text-left">
-									{shorten(new BigNumber(row?.quantity).multipliedBy(10 ** -6))}
-								</td>
-							</tr>
-						))} */}
+							return (
+								<tr
+									key={row.address}
+									className="border-b border-b-fill-primary-700 transition-colors duration-400 ease-out hover:bg-fill-primary-700"
+								>
+									<td className="py-4 pl-3 text-left">
+										{shrinkNumber(row.currentShare, 3)} %
+									</td>
+
+									<td className="py-4 pl-3 text-left">
+										{shrinkNumber(row.price, 4, false)}
+									</td>
+									<td className="py-3 pl-4 text-left">
+										{shrinkNumber(row?.quantity, 3, true)}{" "}
+										<span className="text-[#8A8B8C]">
+											({shrinkNumber(dollarQuantity?.toString())}$)
+										</span>
+									</td>
+								</tr>
+							);
+						})}
 					</tbody>
 				</table>
 			</div>

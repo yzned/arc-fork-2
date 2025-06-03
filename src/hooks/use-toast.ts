@@ -180,7 +180,6 @@ function useToast() {
 	const [state, setState] = useState<State>(memoryState);
 	const [isPaused, setIsPaused] = useState(false);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: shadcn component
 	useEffect(() => {
 		setIsPaused(false);
 		listeners.push(setState);

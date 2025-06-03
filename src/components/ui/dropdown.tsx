@@ -10,9 +10,9 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { useOnClickOutside } from "usehooks-ts";
 import ChevronIcon from "../../icons/chevron.svg?react";
 import SmallXIcon from "../../icons/smallX.svg?react";
-import { useOnClickOutside } from "usehooks-ts";
 
 export interface DropdownItemType {
 	name?: string;

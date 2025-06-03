@@ -32,24 +32,23 @@ export const formatAddress = (address?: string) => {
 	return address;
 };
 
-const generateNonce = () => {
+export const generateNonce = () => {
 	const array = new Uint32Array(2);
 	crypto.getRandomValues(array);
 	return (BigInt(array[0]) << 32n) | BigInt(array[1]);
 };
 
-const IMPL_ADDRESS = "0x14090b42338e02C786cDd6F29Bb83553FDe8f084";
-
 export const getMultipoolContractAddress = ({
 	chainId,
 	factoryAddress,
-}: { chainId: number; factoryAddress: Address }) => {
+	implAddress,
+}: { chainId: number; factoryAddress: Address; implAddress: string }) => {
 	const nonce = generateNonce();
 
 	const initCode = encodeDeployData({
 		abi: ERC1967.abi,
 		bytecode: ERC1967.bytecode.object as Address,
-		args: [IMPL_ADDRESS as Address, "0x" as Address],
+		args: [implAddress as Address, "0x" as Address],
 	});
 
 	const initCodeHash = keccak256(toBytes(initCode));
@@ -82,13 +81,47 @@ function computeCreate2Address(
 	return `0x${hash.slice(-40)}` as Address;
 }
 
-export const encodeUniV3PriceData = (
+export const decodePriceData = (encodedData: `0x${string}`) => {
+	if (encodedData.length < 66) {
+		throw new Error("Invalid encoded data length");
+	}
+
+	let offset = 2;
+
+	const priceOracleIndexHex = encodedData.slice(offset, offset + 2);
+	const priceOracleIndex = Number.parseInt(priceOracleIndexHex, 16);
+	offset += 2;
+
+	const oracleAddress =
+		`0x${encodedData.slice(offset, offset + 40)}` as Address;
+	offset += 40;
+
+	const reversedHex = encodedData.slice(offset, offset + 2);
+	const reversed = Number.parseInt(reversedHex, 16) === 1;
+	offset += 2;
+
+	const twapIntervalHex = encodedData.slice(offset, offset + 16);
+	const twapInterval = BigInt(`0x${twapIntervalHex}`);
+	offset += 16;
+
+	offset += 4;
+
+	return {
+		oracleAddress,
+		reversed,
+		twapInterval,
+		priceOracleIndex,
+	};
+};
+
+export const encodePriceData = (
 	oracleAddress: Address,
 	reversed: boolean,
 	twapInterval: bigint,
+	priceOracleIndex?: number,
 ): `0x${string}` => {
 	return concat([
-		pad(toHex(0), { size: 1 }),
+		pad(toHex(priceOracleIndex || 0), { size: 1 }),
 
 		oracleAddress,
 
@@ -138,13 +171,20 @@ function numberToSubscript(num: number) {
 		.join("");
 }
 
-export function shrinkNumber(n: number, decimals?: number) {
-	if (n === 0) return "0";
+export function shrinkNumber(
+	n: number | string | undefined,
+	decimals?: number,
+	percent?: boolean,
+) {
+	if (n === undefined || n === null) return "-";
+	if (n === 0 || n === "0") return "0";
 
-	const absN = Math.abs(n);
-	const sign = n < 0 ? "-" : "";
+	const x = typeof n === "string" ? (percent ? Number(n) * 100 : Number(n)) : n;
 
-	// Handle small numbers (absN < 0.01)
+	const absN = Math.abs(x);
+	const sign = x < 0 ? "-" : "";
+	const isInteger = Number.isInteger(absN);
+
 	if (absN < 0.01) {
 		const s = absN.toExponential(50);
 		const [mantissa, expPart] = s.split("e");
@@ -161,16 +201,17 @@ export function shrinkNumber(n: number, decimals?: number) {
 		return `${sign}0.0${subscriptStr}${mainDigits}`;
 	}
 
-	// Handle medium numbers (0.01 <= absN < 1000)
 	if (absN < 1000) {
+		if (isInteger) {
+			return sign + absN.toString();
+		}
 		const formatted = absN
 			.toFixed(decimals)
-			.replace(/(\.\d*?[1-9])0+$/, "$1") // Remove trailing zeros
-			.replace(/\.$/, ""); // Remove trailing dot
+			.replace(/(\.\d*?[1-9])0+$/, "$1")
+			.replace(/\.$/, "");
 		return sign + formatted;
 	}
 
-	// Handle large numbers (absN >= 1000)
 	const suffixes = ["", "k", "M", "G", "T", "P", "E", "Z", "Y"];
 	let steps = 0;
 	let current = absN;
@@ -181,18 +222,21 @@ export function shrinkNumber(n: number, decimals?: number) {
 	}
 
 	if (current >= 1000) {
-		// Beyond suffixes, use scientific notation
 		const exponent = (steps + 1) * 3;
 		current /= 1000;
 		const sciStr = current.toFixed(decimals).replace(/\.?0+$/, "");
 		return `${sign}${sciStr}e${exponent}`;
 	}
 
-	// Format with specified decimals
-	const formatted = current
-		.toFixed(decimals)
-		.replace(/(\.\d*?[1-9])0+$/, "$1") // Remove trailing zeros
-		.replace(/\.$/, ""); // Remove trailing dot
+	let formatted: string;
+	if (isInteger && steps > 0 && Number.isInteger(current)) {
+		formatted = current.toString();
+	} else {
+		formatted = current
+			.toFixed(decimals)
+			.replace(/(\.\d*?[1-9])0+$/, "$1")
+			.replace(/\.$/, "");
+	}
 
 	return `${sign}${formatted}${suffixes[steps]}`;
 }

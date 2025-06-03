@@ -1,15 +1,15 @@
 import { Input } from "@/components/ui/input";
-import { useAccountStore } from "@/contexts/AccountContext";
 import CheckIcon from "@/icons/checkMark.svg?react";
 import ChevronIcon from "@/icons/chevron.svg?react";
 import RoundedCheck from "@/icons/roundedCheck.svg?react";
 
 import type { AvailableChainTokensDataFormated } from "@/api/types";
 import { getDecimals, getPoolsData } from "@/api/uniswap";
+import { useGetPrice } from "@/hooks/use-get-price";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
 import { UNI_FEES } from "@/lib/constants";
-import { shorten } from "@/lib/formatNumber";
 import type { ShortPoolData } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, shrinkNumber } from "@/lib/utils";
 import { Token } from "@uniswap/sdk-core";
 import { Pool, computePoolAddress } from "@uniswap/v3-sdk";
 import BigNumber from "bignumber.js";
@@ -22,15 +22,15 @@ import {
 	useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useOnClickOutside } from "usehooks-ts";
 import { type Address, zeroAddress } from "viem";
-import { usePublicClient } from "wagmi";
+import { useBalance, usePublicClient } from "wagmi";
 import FilterIcon from "/src/icons/filter.svg?react";
 import SearchIcon from "/src/icons/search.svg?react";
 import SmallXIcon from "/src/icons/smallX.svg?react";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
 import { InfoTooltip } from "./tooltips/InformationTooltip";
-import { useOnClickOutside } from "usehooks-ts";
 
 interface FindAssetProps<T, S> {
 	data: T[];
@@ -70,6 +70,7 @@ export function FindAsset<
 	variant = "default",
 	withSearch = true,
 }: FindAssetProps<T, S>) {
+	const [search, setSearch] = useState("");
 	const [selectAsset, setSelectAsset] = useState<T | null>(
 		defaultActiveItem || null,
 	);
@@ -120,13 +121,17 @@ export function FindAsset<
 			{withSearch && (
 				<div
 					data-shadow={hasScrollShadow}
-					className="flex h-[80px] flex-col justify-center px-4 transition-all data-[shadow=false]:shadow-[0_8px_16px_-8px_rgba(0,0,0,0.25)]"
+					className="relative flex h-[80px] flex-col justify-center px-4 transition-all "
 				>
 					<div className="relative flex items-center">
 						<Input
 							placeholder="Search asset..."
 							type=""
 							className="w-full pl-8 text-text-primary"
+							value={search}
+							onChange={(e) => {
+								setSearch(e.target.value);
+							}}
 						/>
 
 						<SearchIcon className="absolute top-[3px] left-2" />
@@ -209,22 +214,33 @@ export function FindAsset<
 
 			<div
 				className={cn(
-					" flex h-full flex-col gap-1 overflow-scroll",
+					"flex h-full flex-col gap-1 overflow-scroll",
 					listClassName,
 				)}
 				ref={scrollContainerRef}
 			>
-				{data?.map((item) => (
-					<FindAssetItem
-						item={item}
-						variant={variant}
-						selectAsset={selectAsset}
-						setSelectAsset={setSelectAsset}
-						onSelectAsset={onSelectAsset}
-						key={item.address}
-						additionalActiveItemInfo={additionalActiveItemInfo}
-					/>
-				))}
+				{data?.map((item) => {
+					// apply search
+					if (withSearch && search !== "") {
+						if (
+							!item.symbol?.toLowerCase().includes(search.toLowerCase()) &&
+							!item.name?.toLowerCase().includes(search.toLowerCase())
+						) {
+							return null;
+						}
+					}
+					return (
+						<FindAssetItem
+							item={item}
+							variant={variant}
+							selectAsset={selectAsset}
+							setSelectAsset={setSelectAsset}
+							onSelectAsset={onSelectAsset}
+							key={item.address}
+							additionalActiveItemInfo={additionalActiveItemInfo}
+						/>
+					);
+				})}
 			</div>
 		</div>
 	);
@@ -242,9 +258,12 @@ export function FindAssetItem<
 	additionalActiveItemInfo,
 }: FindAssetItemProps<T, S>) {
 	const { t } = useTranslation(["main"]);
-	const { currentChain } = useAccountStore();
+	const { chain } = useMetadataChain();
+	const resilt = useBalance();
 
 	const isActive = item?.address === selectAsset?.address;
+
+	const { price } = useGetPrice();
 
 	if (variant === "with-oracles") {
 		const handleAssetSelect = async () => {
@@ -257,25 +276,25 @@ export function FindAssetItem<
 				const decimals = await getDecimals({
 					addresses: [
 						item.address as Address,
-						currentChain?.nativeTokenAddress as Address,
+						chain?.nativeTokenAddress as Address,
 					],
 				});
 
 				const tokenA = new Token(
-					currentChain?.id || 42161,
+					chain?.id || 42161,
 					item.address as Address,
 					Number(decimals[0]),
 				);
 
 				const tokenB = new Token(
-					currentChain?.id || 42161,
-					currentChain?.nativeTokenAddress as Address,
+					chain?.id || 42161,
+					chain?.nativeTokenAddress as Address,
 					Number(decimals[1]),
 				);
 
 				for (const fee of UNI_FEES) {
 					const poolAddress = computePoolAddress({
-						factoryAddress: currentChain?.uniswapV3FactoryAddress as Address,
+						factoryAddress: chain?.uniswapV3FactoryAddress as Address,
 						tokenA,
 						tokenB,
 						fee,
@@ -289,6 +308,7 @@ export function FindAssetItem<
 						onSelectAsset?.({
 							...item,
 							poolAddress,
+							priceFeedType: "UniswapV3",
 						});
 						break;
 					}
@@ -326,9 +346,9 @@ export function FindAssetItem<
 						setPools([]);
 
 						const pools = await getPoolsData(
-							(currentChain?.nativeTokenAddress || zeroAddress) as Address,
+							(chain?.nativeTokenAddress || zeroAddress) as Address,
 							(item?.address || zeroAddress) as Address,
-							currentChain?.uniswapV3FactoryAddress as Address,
+							chain?.uniswapV3FactoryAddress as Address,
 						);
 
 						const poolsResult = await Promise.all(
@@ -336,9 +356,9 @@ export function FindAssetItem<
 								const rawLiquidity = new BigNumber(pool.liquidity.toString());
 
 								const isToken0Native =
-									pool.token0.address === currentChain?.nativeTokenAddress;
+									pool.token0.address === chain?.nativeTokenAddress;
 								const isToken1Native =
-									pool.token1.address === currentChain?.nativeTokenAddress;
+									pool.token1.address === chain?.nativeTokenAddress;
 
 								let liquidityInNative: BigNumber;
 								let price: BigNumber | undefined;
@@ -389,7 +409,7 @@ export function FindAssetItem<
 			}
 
 			fetchPools();
-		}, [item.address, currentChain?.nativeTokenAddress, isActive]);
+		}, [item.address, chain?.nativeTokenAddress, isActive]);
 
 		return (
 			<div
@@ -415,7 +435,7 @@ export function FindAssetItem<
 						<div className="flex gap-4">
 							<img
 								src={item.logo || "/icons/empty-token.svg"}
-								className="h-10 w-10 rounded-full"
+								className="h-10 w-10 overflow-hidden rounded-full"
 								alt={""}
 							/>
 							<div className="flex flex-col items-start justify-center">
@@ -501,7 +521,7 @@ export function FindAssetItem<
 													{new BigNumber(pool?.liquidity || 0)
 														.toFixed(6)
 														.toString()}{" "}
-													{currentChain?.nativeCurrency.symbol}
+													{resilt.data?.symbol}
 												</span>
 											</div>
 											<div className="flex items-center justify-between text-[12px]">
@@ -512,7 +532,7 @@ export function FindAssetItem<
 													{new BigNumber(pool?.price || 0)
 														.toFixed(6)
 														.toString()}{" "}
-													{currentChain?.nativeCurrency.symbol}
+													{resilt.data?.symbol}
 												</span>
 											</div>
 										</div>
@@ -561,7 +581,7 @@ export function FindAssetItem<
 					<div className="flex gap-4">
 						<img
 							src={item.logo || "/icons/empty-token.svg"}
-							className="h-10 w-10"
+							className="h-10 w-10 overflow-hidden rounded-full"
 							alt={item.symbol || "token"}
 						/>
 						<div className="flex flex-col items-start justify-center">
@@ -575,7 +595,10 @@ export function FindAssetItem<
 					</div>
 					<div className="flex flex-col justify-center text-[14px]">
 						<span className="text-text-primary">
-							{shorten(new BigNumber(item.price || 0))} $
+							{shrinkNumber(
+								new BigNumber(item.price || 0).multipliedBy(price).toNumber(),
+							)}{" "}
+							$
 						</span>
 					</div>
 				</div>

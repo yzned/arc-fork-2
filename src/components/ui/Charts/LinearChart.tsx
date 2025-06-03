@@ -6,8 +6,8 @@ import {
 } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useDebounceValue } from "@/hooks/use-debounce-value";
+import { useGetPrice } from "@/hooks/use-get-price";
 import { twoPow96 } from "@/lib/constants";
-import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import BigNumber from "bignumber.js";
@@ -33,7 +33,10 @@ type CandleChartProps = {
 	height?: number;
 };
 
-function formatPriceData(x: string): {
+function formatPriceData(
+	x: string,
+	dollarPrice: number,
+): {
 	result: number;
 	exponent: number;
 } {
@@ -45,6 +48,7 @@ function formatPriceData(x: string): {
 	const multipliedBy = new BigNumber(10).pow(exponent);
 	const result = new BigNumber(formatedNumber)
 		.multipliedBy(multipliedBy)
+		.multipliedBy(dollarPrice)
 		.toNumber();
 	return { result, exponent };
 }
@@ -61,15 +65,20 @@ export const LinearChart = observer(
 		const { chartResolution } = useExplorePortfolio();
 		const chartContainerRef = useRef<HTMLDivElement>(null);
 
+		const { price } = useGetPrice();
+
 		const [previousCandleState, setPreviousCandle] =
 			useState<CandleDataRequest>();
+
 		const [currentFrom, setCurrentFrom] = useDebounceValue(0, 500);
+
 		const [chartOHLC, setChartOHLC] = useState<ISeriesApi<
 			"Line",
 			Time,
 			LineData<Time> | WhitespaceData<Time>
 		> | null>(null);
-		const [candleData, setCandleData] = useState<CandleDataFormated>({
+
+		const [_, setCandleData] = useState<CandleDataFormated>({
 			time: Date.now().toString(),
 			open: 0,
 			high: 0,
@@ -79,7 +88,7 @@ export const LinearChart = observer(
 
 		const { mutate: getCachedCandles, mutateAsync: getCachedCandlesAsync } =
 			useMutation({
-				mutationKey: [queryKeys.multipoolsList, chartResolution],
+				mutationKey: [queryKeys.multipoolsList, chartResolution, id],
 				mutationFn: async () => {
 					const data = await GetMultipoolChartData({
 						m: id as Address,
@@ -105,7 +114,7 @@ export const LinearChart = observer(
 					);
 
 					const candleData = uniqueData.map((item) => {
-						const { result: formattedClose } = formatPriceData(item.c);
+						const { result: formattedClose } = formatPriceData(item.c, price);
 
 						return {
 							time: Number(item.t) as Time,
@@ -118,7 +127,7 @@ export const LinearChart = observer(
 			});
 
 		useQuery({
-			queryKey: [queryKeys.multipoolsList, chartResolution, currentFrom],
+			queryKey: [queryKeys.multipoolsList, chartResolution, currentFrom, id],
 			queryFn: async () => {
 				if (currentFrom >= -15) {
 					return [];
@@ -140,7 +149,7 @@ export const LinearChart = observer(
 				});
 
 				const history = data.map((item) => {
-					const { result: formattedClose } = formatPriceData(item.c);
+					const { result: formattedClose } = formatPriceData(item.c, price);
 
 					return {
 						time: Number(item.t) as Time,
@@ -160,7 +169,7 @@ export const LinearChart = observer(
 		});
 
 		useQuery({
-			queryKey: [queryKeys.multipoolsList, chartResolution],
+			queryKey: [queryKeys.multipoolsList, chartResolution, id],
 			queryFn: async () => {
 				if (!chartOHLC) {
 					return;
@@ -216,7 +225,7 @@ export const LinearChart = observer(
 						chartOHLC.setData(newCachedCandles);
 					}
 				}
-				const { result: close } = formatPriceData(currentCandle.c);
+				const { result: close } = formatPriceData(currentCandle.c, price);
 
 				switch (chartResolution) {
 					case "60":
@@ -369,60 +378,6 @@ export const LinearChart = observer(
 		return (
 			<div className="relative h-full w-full ">
 				<div className="absolute top-4 left-4 z-10 flex flex-col gap-2 bg-transparent font-droid text-[10px] text-text-secondary sm:text-[14px]">
-					<div className="hidden flex-row gap-4 md:flex">
-						<span>
-							O{" "}
-							<span
-								className={cn(
-									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
-									candleData?.open < candleData?.close &&
-										"text-positive-primary",
-								)}
-							>
-								{candleData?.open}
-							</span>
-						</span>
-						<span>
-							H{" "}
-							<span
-								className={cn(
-									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
-									candleData?.open < candleData?.close &&
-										"text-positive-primary",
-								)}
-							>
-								{candleData?.high}
-							</span>
-						</span>
-						<span>
-							L{" "}
-							<span
-								className={cn(
-									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
-									candleData?.open < candleData?.close &&
-										"text-positive-primary",
-								)}
-							>
-								{candleData?.low}
-							</span>
-						</span>
-						<span>
-							C{" "}
-							<span
-								className={cn(
-									candleData?.open > candleData?.close &&
-										"text-negative-secondary",
-									candleData?.open < candleData?.close &&
-										"text-positive-primary",
-								)}
-							>
-								{candleData?.close}
-							</span>
-						</span>
-					</div>
 					<div className="flex gap-4">
 						{/* <span>
 							Base volume{" "}

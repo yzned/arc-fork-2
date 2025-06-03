@@ -1,11 +1,12 @@
 import { GetMultipoolChartData, GetMultipoolChartStats } from "@/api/explore";
 import {
+	type CandleDataFormated,
 	type CandleDataRequest,
 	queryKeys,
-	type CandleDataFormated,
 } from "@/api/types";
 import { useExplorePortfolio } from "@/contexts/ExplorePortfolioContext";
 import { useDebounceValue } from "@/hooks/use-debounce-value";
+import { useGetPrice } from "@/hooks/use-get-price";
 import { twoPow96 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -15,10 +16,10 @@ import {
 	type CandlestickData,
 	CandlestickSeries,
 	ColorType,
-	createChart,
 	type ISeriesApi,
 	type Time,
 	type WhitespaceData,
+	createChart,
 } from "lightweight-charts";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
@@ -33,7 +34,10 @@ type CandleChartProps = {
 	height?: number;
 };
 
-function formatPriceData(x: string): {
+function formatPriceData(
+	x: string,
+	dollarPrice: number,
+): {
 	result: number;
 	exponent: number;
 } {
@@ -45,6 +49,7 @@ function formatPriceData(x: string): {
 	const multipliedBy = new BigNumber(10).pow(exponent);
 	const result = new BigNumber(formatedNumber)
 		.multipliedBy(multipliedBy)
+		.multipliedBy(dollarPrice)
 		.toNumber();
 	return { result, exponent };
 }
@@ -60,6 +65,8 @@ export const CandleChart = observer(
 
 		const { chartResolution } = useExplorePortfolio();
 		const chartContainerRef = useRef<HTMLDivElement>(null);
+
+		const { price } = useGetPrice();
 
 		const [previousCandleState, setPreviousCandle] =
 			useState<CandleDataRequest>();
@@ -82,7 +89,7 @@ export const CandleChart = observer(
 
 		const { mutate: getCachedCandles, mutateAsync: getCachedCandlesAsync } =
 			useMutation({
-				mutationKey: [queryKeys.multipoolsList, chartResolution],
+				mutationKey: [queryKeys.multipoolsList, chartResolution, id],
 				mutationFn: async () => {
 					const data = await GetMultipoolChartData({
 						m: id as Address,
@@ -108,10 +115,10 @@ export const CandleChart = observer(
 					);
 
 					const candleData = uniqueData.map((item) => {
-						const { result: formattedHigh } = formatPriceData(item.h);
-						const { result: formattedLow } = formatPriceData(item.l);
-						const { result: formattedClose } = formatPriceData(item.c);
-						const { result: formattedOpen } = formatPriceData(item.o);
+						const { result: formattedHigh } = formatPriceData(item.h, price);
+						const { result: formattedLow } = formatPriceData(item.l, price);
+						const { result: formattedClose } = formatPriceData(item.c, price);
+						const { result: formattedOpen } = formatPriceData(item.o, price);
 
 						return {
 							time: Number(item.t) as Time,
@@ -127,7 +134,7 @@ export const CandleChart = observer(
 			});
 
 		useQuery({
-			queryKey: [queryKeys.multipoolsList, chartResolution, currentFrom],
+			queryKey: [queryKeys.multipoolsList, chartResolution, currentFrom, id],
 			queryFn: async () => {
 				if (currentFrom >= -15) {
 					return [];
@@ -149,10 +156,10 @@ export const CandleChart = observer(
 				});
 
 				const history = data.map((item) => {
-					const { result: formattedHigh } = formatPriceData(item.h);
-					const { result: formattedLow } = formatPriceData(item.l);
-					const { result: formattedClose } = formatPriceData(item.c);
-					const { result: formattedOpen } = formatPriceData(item.o);
+					const { result: formattedHigh } = formatPriceData(item.h, price);
+					const { result: formattedLow } = formatPriceData(item.l, price);
+					const { result: formattedClose } = formatPriceData(item.c, price);
+					const { result: formattedOpen } = formatPriceData(item.o, price);
 
 					return {
 						time: Number(item.t) as Time,
@@ -175,7 +182,7 @@ export const CandleChart = observer(
 		});
 
 		useQuery({
-			queryKey: [queryKeys.multipoolsList, chartResolution],
+			queryKey: [queryKeys.multipoolsList, chartResolution, id],
 			queryFn: async () => {
 				if (!chartOHLC) {
 					return;
@@ -225,10 +232,10 @@ export const CandleChart = observer(
 					}
 				}
 
-				const { result: open } = formatPriceData(currentCandle.o);
-				const { result: high } = formatPriceData(currentCandle.h);
-				const { result: low } = formatPriceData(currentCandle.l);
-				const { result: close } = formatPriceData(currentCandle.c);
+				const { result: open } = formatPriceData(currentCandle.o, price);
+				const { result: high } = formatPriceData(currentCandle.h, price);
+				const { result: low } = formatPriceData(currentCandle.l, price);
+				const { result: close } = formatPriceData(currentCandle.c, price);
 
 				switch (chartResolution) {
 					case "60":

@@ -1,9 +1,9 @@
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Dropdown } from "../ui/dropdown";
+import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
 import PlusRoundedIcon from "@/icons/plus-rounded.svg?react";
@@ -13,8 +13,9 @@ import RoundedCheckIcon from "../../icons/roundedCheck.svg?react";
 
 import { useCreatePortfolio } from "@/contexts/CreatePortfolioContext";
 import { useTranslation } from "react-i18next";
+import { v4 as uuidv4 } from "uuid";
 
-import { useAccountStore } from "@/contexts/AccountContext";
+import { useMetadataChain } from "@/hooks/use-metadata-chain";
 import { type Address, zeroAddress } from "viem";
 import { TokenTable } from "../ui/tokenTable";
 import { TemplatesModal } from "./templates";
@@ -55,7 +56,7 @@ export const TokenSetup = observer(() => {
 		setInitialLiqudityAmount(e.target.value);
 	};
 
-	const { currentChain } = useAccountStore();
+	const { chain } = useMetadataChain();
 
 	return (
 		<div className="flex flex-col gap-10 p-4 ">
@@ -88,7 +89,7 @@ export const TokenSetup = observer(() => {
 					className="h-0 w-full overflow-hidden opacity-0 transition-all data-[opened=true]:h-[160px] data-[opened=true]:opacity-100"
 				>
 					<div className="flex h-full flex-row gap-2">
-						{currentChain?.creationTemplates?.map((item, index) => {
+						{chain?.creationTemplates?.map((item, index) => {
 							return (
 								<div
 									key={item.name}
@@ -200,8 +201,8 @@ export const TokenSetup = observer(() => {
 							setInitialLiquidityToken();
 						}
 					}}
-					onCancelEditToken={(id) => {
-						cancelEditToken(id);
+					onCancelEditToken={(item) => {
+						cancelEditToken(item.id);
 					}}
 					onEditToken={(item) => {
 						editToken(item);
@@ -212,7 +213,9 @@ export const TokenSetup = observer(() => {
 					<Button
 						variant={"secondary"}
 						onClick={() => {
-							addNewToken();
+							const id = uuidv4();
+
+							addNewToken(id);
 						}}
 						className="group w-fit"
 					>

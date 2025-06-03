@@ -5,7 +5,6 @@ import type { FC } from "react";
 interface PriceChangeProps {
 	growing: boolean;
 	unit?: "percents" | "dollars";
-	decimals?: number;
 	value: string;
 	className?: string;
 }
