@@ -6,6 +6,7 @@ import { Same } from "@/api/uniswap";
 import MultipoolFactory from "@/lib/abi/MultipoolFactory";
 import {
 	encodePriceData,
+	generateNonce,
 	getMultipoolContractAddress,
 	getValidAddress,
 	toBase64,
@@ -14,8 +15,6 @@ import { useTranslation } from "react-i18next";
 import {
 	type Address,
 	encodeAbiParameters,
-	encodeFunctionData,
-	formatUnits,
 	maxUint256,
 	parseUnits,
 	zeroAddress,
@@ -23,7 +22,6 @@ import {
 import {
 	useAccount,
 	useChainId,
-	useEstimateGas,
 	usePublicClient,
 	useReadContract,
 	useWriteContract,
@@ -32,34 +30,14 @@ import {
 import { PRICE_FEEDS, feesCoefficients } from "@/lib/constants";
 import { useMetadataChain } from "./use-metadata-chain";
 import { useToast } from "./use-toast";
-
-// const computeMpAddress = ({
-// 	chainId,
-// 	factoryAddress,
-// }: { chainId: number; factoryAddress: Address }) => {
-// 	const nonce = generateNonce();
-
-// 	const salt = keccak256(
-// 		encodePacked(["uint256", "uint256"], [BigInt(chainId), BigInt(nonce)]),
-// 	);
-
-// 	const bytecodeHash = keccak256(
-// 		encodePacked(["bytes"], [MultipoolFactory.bytecode.object]),
-// 	);
-
-// 	const computedMpAddress = getCreate2Address({
-// 		from: (factoryAddress as Address) || zeroAddress,
-// 		salt,
-// 		bytecode: MultipoolFactory.bytecode.object,
-// 		bytecodeHash,
-// 	});
-
-// 	return { computedMpAddress, nonce };
-// };
+import { CreateMultipool } from "@/api/create";
+import MultipoolRouter from "@/lib/abi/MultipoolRouter";
+import type { ChainId } from "@/lib/types";
 
 export const useCreatePortfolio = () => {
 	const {
 		name,
+		description,
 		symbol,
 		deviationFee,
 		deviationLimit,
@@ -76,6 +54,7 @@ export const useCreatePortfolio = () => {
 		setErrorStepInCreation,
 		setFutureMpAddress,
 		futureMultipoolAddress,
+		setMintTxHash,
 	} = useCreatePortfolioContext();
 
 	const { address } = useAccount();
@@ -102,21 +81,9 @@ export const useCreatePortfolio = () => {
 		},
 	});
 
-	// const { nonce, computedMpAddress } = computeMpAddress({
-	// 	chainId: chainId || 10143,
-	// 	factoryAddress: (chain?.factoryAddress as Address) || zeroAddress,
-	// });
-
 	const assetAddresses = tokens?.map(
 		(token) => (token.address as Address) || zeroAddress,
 	);
-
-	const { nonce, contractAddress: multipoolAddress } =
-		getMultipoolContractAddress({
-			chainId: chainId || 10143,
-			factoryAddress: (chain?.factoryAddress as Address) || zeroAddress,
-			implAddress: chain.factoryImplAddress || zeroAddress,
-		});
 
 	const targetShares = tokens?.map((token) => Number(token.share || 0) * 100);
 
@@ -153,7 +120,6 @@ export const useCreatePortfolio = () => {
 		oracleAddress: (chain?.oracleAddress as Address) || zeroAddress,
 		strategyManager: address || zeroAddress,
 
-		nonce: BigInt(nonce),
 		owner: address || zeroAddress,
 
 		protocolFeeReceiver: zeroAddress,
@@ -173,23 +139,23 @@ export const useCreatePortfolio = () => {
 	// 	account: address || zeroAddress,
 	// });
 
-	const { data: updateAssetsGasEstimate } = useEstimateGas({
-		to: multipoolAddress as Address,
-		account: address,
-		query: {
-			enabled: !!multipoolAddress,
-		},
-		data: encodeFunctionData({
-			abi: MultipoolFactory,
-			functionName: "createMultipool",
-			args: [mpCreationArgs],
-		}),
-	});
+	// const { data: updateAssetsGasEstimate } = useEstimateGas({
+	// 	to: multipoolAddress as Address,
+	// 	account: address,
+	// 	query: {
+	// 		enabled: !!multipoolAddress,
+	// 	},
+	// 	data: encodeFunctionData({
+	// 		abi: MultipoolFactory,
+	// 		functionName: "createMultipool",
+	// 		args: [mpCreationArgs],
+	// 	}),
+	// });
 
-	const createMultipoolGasEstimate = formatUnits(
-		updateAssetsGasEstimate || 0n,
-		chain?.nativeCurrency?.decimals || 18,
-	);
+	// const createMultipoolGasEstimate = formatUnits(
+	// 	updateAssetsGasEstimate || 0n,
+	// 	chain?.nativeCurrency?.decimals || 18,
+	// );
 
 	const handleError = ({
 		title,
@@ -246,12 +212,22 @@ export const useCreatePortfolio = () => {
 				}) || [],
 			);
 
+			const nonce = generateNonce();
+
+			const { mpAddress } = getMultipoolContractAddress({
+				chainId,
+				factoryAddress: chain.factoryAddress,
+				sender: address as Address,
+				nonce,
+				implAddress: "0x06a34AE8174349606D22a00d6eE6aCea448772e4",
+			});
+
 			const txHash = await writeContractAsync({
 				abi: MultipoolFactory,
 				address: chain?.factoryAddress as Address,
 				functionName: "createMultipool",
 				value: BigInt(1e16),
-				args: [{ ...mpCreationArgs, priceData: priceData }],
+				args: [{ ...mpCreationArgs, priceData: priceData, nonce: nonce }],
 				account: address,
 			});
 
@@ -259,19 +235,18 @@ export const useCreatePortfolio = () => {
 				hash: txHash,
 			});
 
+			setFutureMpAddress(mpAddress);
+
 			if (logo && receipt?.status === "success") {
 				const base64Logo = await toBase64(logo);
-				console.log("base64Logo: ", base64Logo);
 
-				// await CreateMultipool({
-				// 	d: description || "",
-				// 	n: name || "",
-				// 	s: symbol || "",
-				// 	l: base64Logo || "",
-				// 	m: "0xAb4966350C0b9e24BC1D0D18FDF0C474A58B7047",
-				// });
-
-				setFutureMpAddress(multipoolAddress);
+				await CreateMultipool({
+					d: description || "",
+					n: name || "",
+					s: symbol || "",
+					l: base64Logo || "",
+					m: mpAddress,
+				});
 			}
 
 			if (!isError) {
@@ -301,39 +276,6 @@ export const useCreatePortfolio = () => {
 					errorStep: 1,
 				});
 			}
-
-			// const txHash = await writeContractAsync({
-			// 	abi: MultipoolFactory.abi,
-			// 	address: chain?.factoryAddress as Address,
-			// 	functionName: "createMultipool",
-			// 	value: BigInt(1e6),
-			// 	args: [
-			// 		{
-			// 			name: "MONAD ETF",
-			// 			symbol: "mETF",
-			// 			initialSharePrice: BigInt(1),
-			// 			deviationIncreaseFee: Number(1), //Deviation fee,
-			// 			deviationLimit: Number(1),
-			// 			feeToCashbackRatio: Number(1), ///Cashback fee share
-			// 			baseFee: Number(1),
-			// 			managementFee: Number(1),
-			// 			assetAddresses: [
-			// 				"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
-			// 				"0x00F26C926345D6F8e1BfCa684873C35070DC49Fd",
-			// 			],
-			// 			targetShares: [5000, 5000],
-			// 			initialLiquidityAsset: zeroAddress,
-			// 			managementFeeRecepient: wallets[0].address as Address,
-			// 			oracleAddress: chain?.oracleAddress as Address,
-			// 			strategyManager: wallets[0].address as Address,
-			// 			priceData: [priceDataAprioriMonad, priceDataMolandak],
-			// 			nonce: BigInt(nonce),
-			// 			owner: wallets[0].address as Address,
-			// 			protocolFeeReceiver: zeroAddress,
-			// 		},
-			// 	],
-			// 	account: wallets[0].address as Address,
-			// });
 		} catch (e) {
 			handleError({
 				title: t("createPortfolio"),
@@ -388,12 +330,12 @@ export const useCreatePortfolio = () => {
 						initialLiquidityToken?.decimals ?? 18,
 					),
 					isExactInput: true,
-					receiverData: {
-						receiverAddress: address || zeroAddress,
-						refundAddress: address || zeroAddress,
-						refundEthToReceiver: true,
-					},
-					ethValue: BigInt(1e15),
+
+					receiverAddress: address || zeroAddress,
+					refundAddress: address || zeroAddress,
+					refundEthToReceiver: true,
+
+					ethValue: BigInt(1e16),
 					minimumReceive: BigInt(0),
 				},
 				callsBefore: [
@@ -419,80 +361,39 @@ export const useCreatePortfolio = () => {
 				callsAfter: [],
 			};
 
-			console.log("swapArgs: ", swapArgs);
+			const txHash = await writeContractAsync({
+				value: BigInt(1e16),
+				address: chain?.routerAddress as Address,
+				abi: MultipoolRouter,
+				functionName: "swap",
+				args: [
+					swapArgs.poolAddress as Address,
+					swapArgs.swapArgs,
+					swapArgs.callsBefore,
+					swapArgs.callsAfter,
+				],
+				chainId: chainId as ChainId,
+				account: address,
+			});
 
-			// const swapArgs = {
-			// 	poolAddress: "0xB25D309C4f1522F2322045bb482a2eaA6057545d",
-			// 	swapArgs: {
-			// 		oraclePrice: {
-			// 			contractAddress: zeroAddress as Address, /// random address
-			// 			timestamp: BigInt(Math.floor(Date.now() / 1000)),
-			// 			sharePrice: BigInt(1e2),
-			// 			signature: zeroAddress as Address, /// random address
-			// 		},
-			// 		assetIn: "0xb2f82D0f38dc453D596Ad40A37799446Cc89274A" as Address,
-			// 		assetOut: "0xB25D309C4f1522F2322045bb482a2eaA6057545d" as Address,
-			// 		swapAmount: parseUnits((0.1)?.toString() || "0", 18),
-			// 		isExactInput: true,
-			// 		receiverData: {
-			// 			receiverAddress: (wallets[0]?.address as Address) || zeroAddress,
-			// 			refundAddress: (wallets[0]?.address as Address) || zeroAddress,
-			// 			refundEthToReceiver: true,
-			// 		},
-			// 		ethValue: BigInt(1e15),
-			// 	},
-			// 	callsBefore: [
-			// 		{
-			// 			callType: 0,
-			// 			data: encodeAbiParameters(
-			// 				[
-			// 					{ name: "token", type: "address" },
-			// 					{ name: "targetOrOrigin", type: "address" },
-			// 					{ name: "amount", type: "uint256" },
-			// 				],
-			// 				[
-			// 					"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
-			// 					"0xB25D309C4f1522F2322045bb482a2eaA6057545d",
-			// 					parseUnits((0.1)?.toString() || "0", 18),
-			// 				],
-			// 			),
-			// 		},
-			// 	],
-			// 	callsAfter: [],
-			// };
+			if (!isError) {
+				toast({
+					title: t("depositInitialLiquidity"),
+					description: t("successfullySigned"),
+					variant: "success",
+					withTimeline: true,
+				});
 
-			// const txHash = await writeContractAsync({
-			// 	value: BigInt(1e15),
-			// 	address: chain?.routerAddress as Address,
-			// 	abi: MultipoolRouter,
-			// 	functionName: "swap",
-			// 	args: [
-			// 		swapArgs.poolAddress as Address,
-			// 		swapArgs.swapArgs,
-			// 		swapArgs.callsBefore,
-			// 		swapArgs.callsAfter,
-			// 	],
-			// 	chainId: chainId as ChainId,
-			// 	account: address,
-			// });
+				setMintTxHash(txHash);
 
-			// if (!isError) {
-			// 	toast({
-			// 		title: t("depositInitialLiquidity"),
-			// 		description: t("successfullySigned"),
-			// 		variant: "success",
-			// 		withTimeline: true,
-			// 	});
-
-			// 	setMintTxHash(txHash);
-			// 	setCurrentCreateModalState("final");
-			// } else {
-			// 	handleError({
-			// 		title: t("depositInitialLiquidity"),
-			// 		description: t("errorSigning"),
-			// 		errorStep: 3,
-			// 	});
-			// }
+				setCurrentCreateModalState("final");
+			} else {
+				handleError({
+					title: t("depositInitialLiquidity"),
+					description: t("errorSigning"),
+					errorStep: 3,
+				});
+			}
 		} catch (e) {
 			console.log(e);
 		}
@@ -503,41 +404,6 @@ export const useCreatePortfolio = () => {
 		approveMint,
 		isPending,
 		mint,
-		createMultipoolGasEstimate,
+		createMultipoolGasEstimate: 0,
 	};
 };
-
-// const priceDataAprioriMonad = encodePriceData(
-// 	"0x0E5b205A058101584d0b94736212A517730F5FC0" as Address,
-// 	true,
-// 	BigInt(0),
-// );
-// const priceDataMolandak = encodePriceData(
-// 	"0x00F26C926345D6F8e1BfCa684873C35070DC49Fd" as Address,
-// 	true,
-// 	BigInt(0),
-// );
-
-// const mpCreationArgs = {
-// 	name: "MONAD ETF",
-// 	symbol: "mETF",
-// 	initialSharePrice: BigInt(1),
-// 	deviationIncreaseFee: Number(1), //Deviation fee,
-// 	deviationLimit: Number(1),
-// 	feeToCashbackRatio: Number(1), ///Cashback fee share
-// 	baseFee: Number(1),
-// 	managementFee: Number(1),
-// 	assetAddresses: [
-// 		"0xb2f82D0f38dc453D596Ad40A37799446Cc89274A",
-// 		"0x00F26C926345D6F8e1BfCa684873C35070DC49Fd",
-// 	],
-// 	targetShares: [5000, 5000],
-// 	initialLiquidityAsset: zeroAddress,
-// 	managementFeeRecepient: wallets[0]?.address as Address,
-// 	oracleAddress: chain?.oracleAddress as Address,
-// 	strategyManager: wallets[0]?.address as Address,
-// 	priceData: [priceDataAprioriMonad, priceDataMolandak],
-// 	nonce: BigInt(nonce),
-// 	owner: wallets[0]?.address as Address,
-// 	protocolFeeReceiver: zeroAddress,
-// };

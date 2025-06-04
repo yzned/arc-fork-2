@@ -3,7 +3,7 @@ import { type AvailableChainTokensDataFormated, queryKeys } from "@/api/types";
 import ERC20 from "@/lib/abi/ERC20";
 import { TAGS } from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import type { Address } from "viem";
+import { formatUnits, type Address } from "viem";
 import { useAccount, useChainId, usePublicClient } from "wagmi";
 import { useNativeToken } from "./useNativeToken";
 import BigNumber from "bignumber.js";
@@ -15,8 +15,9 @@ export const useTokensList = () => {
 	const nativeToken = useNativeToken();
 	const { address } = useAccount();
 	const client = usePublicClient();
+
 	return useQuery({
-		queryKey: [queryKeys.tokensList, chainId],
+		queryKey: [queryKeys.tokensList, chainId, address],
 		refetchInterval: 1000 * 60,
 		queryFn: async () => {
 			const rowData = await GetTokens({ chainId: chainId });
@@ -30,6 +31,15 @@ export const useTokensList = () => {
 					chainId,
 				})),
 			});
+
+			const nativeBalanceRow = await client?.getBalance({
+				address: address as Address,
+			});
+
+			const nativeBalance = formatUnits(
+				nativeBalanceRow || 0n,
+				nativeToken.decimals,
+			);
 
 			const parsedData: AvailableChainTokensDataFormated[] = rowData.map(
 				(token, index) => {
@@ -55,7 +65,10 @@ export const useTokensList = () => {
 				},
 			);
 
-			parsedData.unshift(nativeToken);
+			parsedData.unshift({
+				...nativeToken,
+				quantityOnWallet: new BigNumber(nativeBalance?.toString() || 0),
+			});
 
 			return parsedData;
 		},

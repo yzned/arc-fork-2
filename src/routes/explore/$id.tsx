@@ -46,7 +46,8 @@ import { useTokensList } from "@/hooks/queries/useTokensList";
 import { useGetPrice } from "@/hooks/use-get-price";
 import { useOnClickOutside } from "usehooks-ts";
 import type { Address } from "viem";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount } from "wagmi";
+import { usePnlPositions } from "@/hooks/queries/usePnlPositions";
 
 export const Route = createFileRoute("/explore/$id")({
 	component: RouteComponent,
@@ -99,7 +100,6 @@ export const MainSection = observer(() => {
 	} = useExplorePortfolio();
 
 	const { address } = useAccount();
-	const { data } = useBalance();
 
 	const { id } = useParams({ from: "/explore/$id" });
 
@@ -120,6 +120,7 @@ export const MainSection = observer(() => {
 	const navigate = useNavigate();
 
 	const { price } = useGetPrice();
+	const { data: pnlData } = usePnlPositions();
 
 	return (
 		<div className="overflow-hidden bg-bg-floor-1">
@@ -434,18 +435,30 @@ export const MainSection = observer(() => {
 							</span>
 
 							<div className="flex items-center gap-4">
-								<PriceChange growing value="23.23" />
+								<PriceChange
+									growing={
+										pnlData?.relativeCommonPnl?.isGreaterThan(0) || false
+									}
+									value={shrinkNumber(pnlData?.relativeCommonPnl?.toString())}
+								/>
 								<div className="flex items-center gap-1 text-[14px]">
 									<span className="text-text-primary">
-										0.54 {data?.symbol}{" "}
+										{shrinkNumber(pnlData?.absoluteCommonPnl?.toString())}
 									</span>
-									<span className="text-text-secondary">($37,623)</span>
+									<span className="text-text-secondary">
+										{shrinkNumber(
+											pnlData?.absoluteCommonPnl
+												?.multipliedBy(price)
+												.toString(),
+										)}{" "}
+										$
+									</span>
 								</div>
 							</div>
 						</div>
 
 						<div className="flex items-center gap-4">
-							<div className="flex gap-1">
+							{/* <div className="flex gap-1">
 								<Button className="w-fit" size="M" variant="selector">
 									{t("day")}
 								</Button>
@@ -461,7 +474,7 @@ export const MainSection = observer(() => {
 								<Button className="w-fit" size="M" variant="selector">
 									{t("allTime")}
 								</Button>
-							</div>
+							</div> */}
 
 							<Button
 								variant={"ghost"}

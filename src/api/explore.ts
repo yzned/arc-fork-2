@@ -57,7 +57,7 @@ export async function GetMultipoolInfo(params: {
  * Retrieves the positions associated with a specific user address.
  *
  * Each position object contains:
- * - multipool: The address of the multipool.
+ * - m: The address of the multipool.
  * - q: PnL absolute in native token (string).
  * - p: PnL percent (string).
  * - o: Open position price (number).

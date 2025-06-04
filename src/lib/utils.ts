@@ -5,6 +5,7 @@ import {
 	concat,
 	encodeDeployData,
 	encodePacked,
+	getCreate2Address,
 	isAddress,
 	keccak256,
 	pad,
@@ -42,44 +43,39 @@ export const getMultipoolContractAddress = ({
 	chainId,
 	factoryAddress,
 	implAddress,
-}: { chainId: number; factoryAddress: Address; implAddress: string }) => {
-	const nonce = generateNonce();
-
-	const initCode = encodeDeployData({
+	sender,
+	nonce,
+}: {
+	chainId: number;
+	factoryAddress: Address;
+	implAddress: string;
+	sender: Address;
+	nonce: bigint;
+}) => {
+	const bytecode = encodeDeployData({
 		abi: ERC1967.abi,
 		bytecode: ERC1967.bytecode.object as Address,
 		args: [implAddress as Address, "0x" as Address],
 	});
 
-	const initCodeHash = keccak256(toBytes(initCode));
+	const bytecodeHash = keccak256(toBytes(bytecode));
 
 	const salt = keccak256(
-		encodePacked(["uint256", "uint256"], [BigInt(chainId), BigInt(nonce)]),
+		encodePacked(
+			["uint256", "uint256", "address"],
+			[BigInt(chainId), BigInt(nonce), sender],
+		),
 	);
 
-	const create2Address = computeCreate2Address(
-		factoryAddress,
+	const create2Address = getCreate2Address({
+		from: factoryAddress,
 		salt,
-		initCodeHash,
-	);
+		bytecode,
+		bytecodeHash,
+	});
 
-	return { contractAddress: create2Address, nonce, initCodeHash, salt };
+	return { mpAddress: create2Address, nonce, bytecodeHash, salt };
 };
-
-function computeCreate2Address(
-	factoryAddress: Address,
-	salt: `0x${string}`,
-	initCodeHash: `0x${string}`,
-): Address {
-	const packed = encodePacked(
-		["bytes1", "address", "bytes32", "bytes32"],
-		["0xff", factoryAddress, salt, initCodeHash],
-	);
-
-	const hash = keccak256(toBytes(packed));
-
-	return `0x${hash.slice(-40)}` as Address;
-}
 
 export const decodePriceData = (encodedData: `0x${string}`) => {
 	if (encodedData.length < 66) {

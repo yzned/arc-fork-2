@@ -12,10 +12,8 @@ export function useSwapArgs() {
 	const currentPortfolio = useCurrentPortfolio();
 	const { selectedAsset, rightSectionState, mintBurnAmount } =
 		useExplorePortfolio();
-	const { data, error } = useMinimumReceive();
+	const { data } = useMinimumReceive();
 	const { data: callsBeforeResult } = useCallsBefore();
-
-	console.log("error", error);
 
 	if (!selectedAsset) {
 		return undefined;

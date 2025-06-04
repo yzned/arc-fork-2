@@ -47,8 +47,6 @@ export async function getMultipoolsList(
 		multipoolAddresses,
 	});
 
-	console.log("metadata: ", metadata);
-
 	const data = shortData.map((item) => {
 		const twoPow96 = new BigNumber(2).pow(96);
 

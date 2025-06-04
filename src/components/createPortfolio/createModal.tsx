@@ -44,6 +44,8 @@ export const CreateModalContent = observer(() => {
 	const { approveMint, isPending, createPortfolio, mint } =
 		useCreatePortfolio();
 
+	console.log("currentCreateModalState: ", currentCreateModalState);
+
 	const handleSign = () => {
 		if (currentCreateModalState === "create") {
 			createPortfolio();
@@ -54,6 +56,7 @@ export const CreateModalContent = observer(() => {
 		if (currentCreateModalState === "mint") {
 			mint();
 		}
+
 		if (currentCreateModalState === "final") {
 			navigate({
 				to: "/explore/$id",

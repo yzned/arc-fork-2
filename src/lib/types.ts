@@ -152,4 +152,13 @@ export interface PorfolioAsset {
 	poolAddress?: string;
 }
 
+export interface PositionsAsset {
+	price: BigNumber;
+	address?: Address;
+	logo?: string;
+	symbol?: string;
+	quantity: BigNumber;
+	tvl?: BigNumber;
+}
+
 export type AssetData = [boolean, bigint, bigint, bigint];
